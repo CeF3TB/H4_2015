@@ -19,7 +19,7 @@ EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore 
 all: fastPlotter
 
 
-fastPlotter: fastPlotter fastPlotter.o DrawTools.o
+fastPlotter: fastPlotter.o DrawTools.o
 	 $(CC) -Wall $(INCLUDES) -o ./bin/fastPlotter $(EXE_DIR)/fastPlotter.cpp $(LIB_DIR)/fastPlotter.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
 
 DrawTools.o: ../CommonTools/src/DrawTools.cc
@@ -27,7 +27,6 @@ DrawTools.o: ../CommonTools/src/DrawTools.cc
 
 fastPlotter.o: ./src/fastPlotter.cc
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/fastPlotter.o -c ./src/fastPlotter.cc $(ROOTFLAG) $(EXTRALIBS)
-
 
 
 
