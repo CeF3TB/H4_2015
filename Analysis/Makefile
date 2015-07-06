@@ -31,4 +31,4 @@ fastPlotter.o: ./src/fastPlotter.cc
 
 
 clean:
-	rm *.o
+	rm bin/*.o;rm lib/*.o
