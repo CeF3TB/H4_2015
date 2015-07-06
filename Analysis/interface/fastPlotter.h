@@ -13,6 +13,7 @@
 #include <TFile.h>
 #include <iostream>
 #include <cstdlib>
+#include <TPaveText.h>
 
 // Header file for the classes stored in the TTree if any.
 #include <vector>
