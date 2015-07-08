@@ -19,6 +19,9 @@ EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore 
 all: fastPlotter
 
 
+drawLinearity: Event.o LinearityLooper.o DrawTools.o
+	 $(CC) -Wall $(INCLUDES) -o ./bin/drawLinearity $(EXE_DIR)/drawLinearity.cpp $(LIB_DIR)/Event.o $(LIB_DIR)/LinearityLooper.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)	
+
 fastPlotter: fastPlotter.o DrawTools.o
 	 $(CC) -Wall $(INCLUDES) -o ./bin/fastPlotter $(EXE_DIR)/fastPlotter.cpp $(LIB_DIR)/fastPlotter.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
 
@@ -28,6 +31,11 @@ DrawTools.o: ../CommonTools/src/DrawTools.cc
 fastPlotter.o: ./src/fastPlotter.cc
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/fastPlotter.o -c ./src/fastPlotter.cc $(ROOTFLAG) $(EXTRALIBS)
 
+Event.o: ./src/Event.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/Event.o -c ./src/Event.cc $(ROOTFLAG) $(EXTRALIBS)
+
+LinearityLooper.o: ./src/LinearityLooper.cc Event.o
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/LinearityLooper.o -c ./src/LinearityLooper.cc $(ROOTFLAG) $(EXTRALIBS)
 
 
 clean:
