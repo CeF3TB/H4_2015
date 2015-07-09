@@ -1,4 +1,3 @@
-#define fastPlotter_cxx
 #include "LinearityLooper.h"
 #include "DrawTools.h"
 #include <TH2.h>

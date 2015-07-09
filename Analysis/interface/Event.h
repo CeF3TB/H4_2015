@@ -7,6 +7,9 @@
 
 #ifndef Event_h
 #define Event_h
+#define NFIBERS 4
+#define NDIGICHANNELS 8
+#define NDIGISAMPLES 1024
 
 #include <TROOT.h>
 #include <TChain.h>
