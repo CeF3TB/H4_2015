@@ -12,14 +12,15 @@
 #include "RooLandau.h"
 #include "RooFFTConvPdf.h"
 #include "RooPlot.h"
-
+#include "TVectorD.h"
 
 void WaveformUtil::Loop(){
 
   if (fChain == 0) return;
 
   Long64_t nentries = fChain->GetEntries();
-
+  std::cout<<"nentries"<<nentries<<std::endl;
+  //    nentries=7000;
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
 
@@ -29,32 +30,41 @@ void WaveformUtil::Loop(){
     }
   }
 
+
+  TString runNumberString;
+  int digiFreq;
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
     // if (Cut(ientry) < 0) continue;      
+    if(jentry==0){
+      runNumberString.Form("%d",runNumber);
+      digiFreq=digi_frequency;
+    }
+    if(jentry%1000 == 0)std::cout<<"Processing entry:"<<jentry<<std::endl;
     for (int i=0;i<1024*4;++i){
       //	std::cout<<"channel:"<<digi_value_ch->at(i)<<digi_value->at(i)<<" "<<digi_value_time->at(i)<<std::endl;
       if(digi_value_ch->at(i) > 3)continue;
+      if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
       mean[digi_value_ch->at(i)][i-1024*digi_value_ch->at(i)]+=(float)(digi_value->at(i)/nentries);
       if(i<1024)time[i]=digi_value_time->at(i);
     }
   }
 
-//  for (int i=0;i<NFIBERS;++i){
-//    for (int j=0;j<NDIGISAMPLES;++j){
-//      //std::cout<<"(i,j):"<<i<<","<<j<<" "<<mean[i][j]/nentries<<std::endl;
-//      mean[i][j]/=nentries;
-//    }
-//  }
+  TFile* outFile = TFile::Open("outWaveFormUtil_"+runNumberString+".root","recreate");
+  int lowRange[4],highRange[4];
+  TVectorD integrals(4);
 
-
-
-  TFile* outFile = TFile::Open("outWaveform.root","recreate");
-
-  TRandom3 *r = new TRandom3(0);
+  lowRange[0]=130;
+  lowRange[1]=170;
+  lowRange[2]=145;
+  lowRange[3]=170;
+  highRange[0]=900;
+  highRange[1]=720;
+  highRange[2]=500;
+  highRange[3]=720;
 
   for (int i=0;i<NFIBERS;++i){
     meanWaveGraphs[i]=new TGraph(1024, time, mean[i]);
@@ -64,20 +74,19 @@ void WaveformUtil::Loop(){
 
     meanWaveHistos[i]=new TH1F("waveform_histo_"+fiber,"",1024,0,time[1023]);
     for (int j=0;j<NDIGISAMPLES;++j){  
-      for(int k=0;k<mean[i][j]*nentries;k++){//this nentries here is just to get correct errors, slow method
+      for(int k=0;k<mean[i][j];k++){
 	meanWaveHistos[i]->Fill(time[j]);
       }
     }
+    meanWaveHistos[i]->Scale(nentries);
     meanWaveHistos[i]->Sumw2();
-    meanWaveHistos[i]->Scale(1./nentries);
+    meanWaveHistos[i]->Scale(1./nentries);//this trick is just to get correct errors
     meanWaveHistos[i]->Write();
     meanWaveGraphs[i]->Write();
 
-  }
-
 
     RooRealVar t("t","time", time[0], time[1023]);
-    RooDataHist data("data","dataset with t",t,RooFit::Import(*meanWaveHistos[1]) );
+    RooDataHist data("data","dataset with t",t,RooFit::Import(*meanWaveHistos[i]) );
     //    RooDataSet data("data","dataset with t",t);
 
 
@@ -96,8 +105,7 @@ void WaveformUtil::Loop(){
     RooFFTConvPdf lxg("lxg","landau (X) gauss",t,landau,gauss) ;
 
     // Fit gxlx to data
-    lxg.fitTo(data,RooFit::Range(time[100],time[1000])) ;
-    //    landau.fitTo(data) ;
+    lxg.fitTo(data,RooFit::Range(time[lowRange[i]],time[highRange[i]])) ;
 
     // Plot data, landau pdf, landau (X) gauss pdf
     RooPlot* frame = t.frame(RooFit::Title("")) ;
@@ -105,13 +113,20 @@ void WaveformUtil::Loop(){
     data.plotOn(frame,RooFit::DataError(RooAbsData::SumW2)) ;
 
     lxg.plotOn(frame) ;
-    //landau.plotOn(frame) ;
-    landau.plotOn(frame,RooFit::LineStyle(kDashed)) ;
 
-    TCanvas c1;
+    TCanvas c1("c_"+fiber);
     frame->Draw();
     c1.Write();
 
+    TH1* histopdf=lxg.createHistogram("t",1024);
+    histopdf->SetName("fitted_histo_"+fiber);
+    float finalFastSample=230;
+    if(digiFreq==1)finalFastSample=185;
+    integrals[i]=histopdf->Integral(4,finalFastSample);//the pdf is already normalized to 1
+    histopdf->Write();
+  }
+
+  integrals.Write("integrals_fast");
 
 
   outFile->Write();

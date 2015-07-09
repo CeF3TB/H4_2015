@@ -19,7 +19,7 @@ EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore 
 all: fastPlotter drawLinearity drawWaveform
 
 drawWaveform: Event.o WaveFormUtil.o DrawTools.o
-	 $(CC) -Wall $(INCLUDES) -o ./bin/drawWaveform $(EXE_DIR)/drawWaveform.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/WaveFormUtil.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)	
+	 $(CC) -Wall $(INCLUDES) -o ./bin/drawWaveform $(EXE_DIR)/drawWaveform.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/WaveFormUtil.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
 
 drawLinearity: Event.o LinearityLooper.o DrawTools.o
 	 $(CC) -Wall $(INCLUDES) -o ./bin/drawLinearity $(EXE_DIR)/drawLinearity.cpp $(LIB_DIR)/Event.o $(LIB_DIR)/LinearityLooper.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)	

@@ -32,6 +32,7 @@ public :
    UInt_t          runNumber;
    UInt_t          spillNumber;
    UInt_t          evtNumber;
+   UInt_t          digi_frequency;
    vector<float>   *BGOvalues;
    vector<float>   *SCINTvalues;
    vector<float>   *HODOSMALLvalues;
@@ -62,6 +63,8 @@ public :
    vector<float>   *digi_max_amplitude_bare;
    vector<float>   *digi_time_at_max_bare;
    vector<float>   *digi_charge_integrated_bare;
+   vector<float>   *digi_charge_integrated_bare_fast;
+   vector<float>   *digi_charge_integrated_bare_slow;
    vector<float>   *digi_max_amplitude_bare_noise_sub;
    vector<float>   *digi_time_at_max_bare_noise_sub;
    vector<float>   *digi_charge_integrated_bare_noise_sub;
@@ -77,6 +80,7 @@ public :
 
    // List of branches
    TBranch        *b_runNumber;   //!
+   TBranch        *b_digi_frequency;   //!
    TBranch        *b_spillNumber;   //!
    TBranch        *b_evtNumber;   //!
    TBranch        *b_BGOvalues;   //!
@@ -109,6 +113,8 @@ public :
    TBranch        *b_digi_max_amplitude_bare;   //!
    TBranch        *b_digi_time_at_max_bare;   //!
    TBranch        *b_digi_charge_integrated_bare;   //!
+   TBranch        *b_digi_charge_integrated_bare_fast;   //!
+   TBranch        *b_digi_charge_integrated_bare_slow;   //!
    TBranch        *b_digi_max_amplitude_bare_noise_sub;   //!
    TBranch        *b_digi_time_at_max_bare_noise_sub;   //!
    TBranch        *b_digi_charge_integrated_bare_noise_sub;   //!
@@ -210,6 +216,8 @@ void Event::Init(TTree *tree)
    digi_max_amplitude_bare = 0;
    digi_time_at_max_bare = 0;
    digi_charge_integrated_bare = 0;
+   digi_charge_integrated_bare_fast = 0;
+   digi_charge_integrated_bare_slow = 0;
    digi_max_amplitude_bare_noise_sub = 0;
    digi_time_at_max_bare_noise_sub = 0;
    digi_charge_integrated_bare_noise_sub = 0;
@@ -229,6 +237,7 @@ void Event::Init(TTree *tree)
    fChain->SetMakeClass(1);
 
    fChain->SetBranchAddress("runNumber", &runNumber, &b_runNumber);
+   fChain->SetBranchAddress("digi_frequency", &digi_frequency, &b_digi_frequency);
    fChain->SetBranchAddress("spillNumber", &spillNumber, &b_spillNumber);
    fChain->SetBranchAddress("evtNumber", &evtNumber, &b_evtNumber);
    fChain->SetBranchAddress("BGOvalues", &BGOvalues, &b_BGOvalues);
@@ -261,6 +270,8 @@ void Event::Init(TTree *tree)
    fChain->SetBranchAddress("digi_max_amplitude_bare", &digi_max_amplitude_bare, &b_digi_max_amplitude_bare);
    fChain->SetBranchAddress("digi_time_at_max_bare", &digi_time_at_max_bare, &b_digi_time_at_max_bare);
    fChain->SetBranchAddress("digi_charge_integrated_bare", &digi_charge_integrated_bare, &b_digi_charge_integrated_bare);
+   fChain->SetBranchAddress("digi_charge_integrated_bare_fast", &digi_charge_integrated_bare_fast, &b_digi_charge_integrated_bare_fast);
+   fChain->SetBranchAddress("digi_charge_integrated_bare_slow", &digi_charge_integrated_bare_slow, &b_digi_charge_integrated_bare_slow);
    fChain->SetBranchAddress("digi_max_amplitude_bare_noise_sub", &digi_max_amplitude_bare_noise_sub, &b_digi_max_amplitude_bare_noise_sub);
    fChain->SetBranchAddress("digi_time_at_max_bare_noise_sub", &digi_time_at_max_bare_noise_sub, &b_digi_time_at_max_bare_noise_sub);
    fChain->SetBranchAddress("digi_charge_integrated_bare_noise_sub", &digi_charge_integrated_bare_noise_sub, &b_digi_charge_integrated_bare_noise_sub);
