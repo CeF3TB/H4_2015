@@ -56,7 +56,7 @@ void CherenkovAnalyzer::Loop(){
     if(jentry%1000 == 0)std::cout<<"Processing entry:"<<jentry<<std::endl;
       for (int i=0;i<NFIBERS;++i){
 	if(digi_max_amplitude->at(i)>10000 || digi_max_amplitude->at(i)<0)continue;
-	float chargeWlsUnderCher=(digi_charge_integrated_bare_slow->at(i)*integrals[i])/(1-integrals[i])//amount of wls charge under cherenkov peak. estimated by fit
+	float chargeWlsUnderCher=(digi_charge_integrated_bare_slow->at(i)*integrals[i])/(1-integrals[i]);//amount of wls charge under cherenkov peak. estimated by fit
 	digi_charge_integrated_cher[i]=digi_charge_integrated_bare_fast->at(i) - chargeWlsUnderCher;
 	digi_charge_integrated_wls[i]=digi_charge_integrated_bare_slow->at(i) + chargeWlsUnderCher;
 	outputTree->Fill();
