@@ -16,7 +16,11 @@ EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore 
 
 
 
-all: fastPlotter drawLinearity drawWaveform
+all: analyzeCherenkov fastPlotter drawLinearity drawWaveform 
+
+analyzeCherenkov: Event.o CherenkovAnalyzer.o DrawTools.o
+	 $(CC) -Wall $(INCLUDES) -o ./bin/analyzeCherenkov $(EXE_DIR)/analyzeCherenkov.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/CherenkovAnalyzer.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
+
 
 drawWaveform: Event.o WaveformUtil.o DrawTools.o
 	 $(CC) -Wall $(INCLUDES) -o ./bin/drawWaveform $(EXE_DIR)/drawWaveform.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/WaveformUtil.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
@@ -41,6 +45,9 @@ LinearityLooper.o: ./src/LinearityLooper.cc Event.o
 
 WaveformUtil.o: ./src/WaveformUtil.cc Event.o
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/WaveformUtil.o -c ./src/WaveformUtil.cc $(ROOTFLAG) $(EXTRALIBS)
+
+CherenkovAnalyzer.o: ./src/CherenkovAnalyzer.cc Event.o
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/CherenkovAnalyzer.o -c ./src/CherenkovAnalyzer.cc $(ROOTFLAG) $(EXTRALIBS)
 
 
 clean:
