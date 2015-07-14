@@ -14,6 +14,21 @@
 #include "RooPlot.h"
 #include "TVectorD.h"
 
+#include "interface/channelInfo.h"
+#include "interface/HodoCluster.h"
+
+
+
+void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos );
+void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos );
+void doHodoReconstructionBool( std::vector<bool> values, int &nClusters, int *nFibres, float *pos, float fibreWidth, int clusterMaxFibres, float Cut );
+std::vector<HodoCluster*> getHodoClustersBool( std::vector<bool> hodo, float fibreWidth, int nClusterMax, float Cut );
+void doHodoReconstruction( std::vector<float> values, int &nClusters, int *nFibres, float *pos, float fibreWidth, int clusterMaxFibres, float Cut );
+std::vector<HodoCluster*> getHodoClusters( std::vector<float> hodo, float fibreWidth, int nClusterMax, float Cut );
+void copyArray( int n, float *source, float *target );
+
+
+
 void WaveformUtil::Loop(){
 
   if (fChain == 0) return;
@@ -44,6 +59,8 @@ void WaveformUtil::Loop(){
       digiFreq=digi_frequency;
     }
     if(jentry%1000 == 0)std::cout<<"Processing entry:"<<jentry<<std::endl;
+    if(passesHodoSelection()==false)continue;
+
     for (int i=0;i<1024*4;++i){
       //	std::cout<<"channel:"<<digi_value_ch->at(i)<<digi_value->at(i)<<" "<<digi_value_time->at(i)<<std::endl;
       if(digi_value_ch->at(i) > 3)continue;
@@ -136,4 +153,207 @@ void WaveformUtil::Loop(){
 
 
 
+bool WaveformUtil::passesHodoSelection(){
+  int nClusters_hodoX1;
+  int nFibres_hodoX1[HODOX1_CHANNELS]; 
+  float pos_hodoX1[HODOX1_CHANNELS];   
 
+  int nClusters_hodoY1;
+  int nFibres_hodoY1[HODOY1_CHANNELS]; 
+  float pos_hodoY1[HODOY1_CHANNELS];   
+
+  int nClusters_hodoX2;
+  int nFibres_hodoX2[HODOX2_CHANNELS]; 
+  float pos_hodoX2[HODOX2_CHANNELS];   
+
+
+  int nClusters_hodoY2;
+  int nFibres_hodoY2[HODOY2_CHANNELS]; 
+  float pos_hodoY2[HODOY2_CHANNELS];   
+
+  
+  std::vector<bool> hodoX1_values(HODOX1_CHANNELS, -1.);
+  std::vector<bool> hodoY1_values(HODOY1_CHANNELS, -1.);
+  assignValuesBool( hodoX1_values, *HODOX1, 0. );
+  assignValuesBool( hodoY1_values, *HODOY1, 0. );
+  
+  
+  std::vector<bool> hodoX2_values(HODOX2_CHANNELS, -1.);
+  std::vector<bool> hodoY2_values(HODOY2_CHANNELS, -1.);
+  assignValuesBool( hodoX2_values, *HODOX2, 0 );
+  assignValuesBool( hodoY2_values, *HODOY2, 0 );
+  
+  
+     // hodo cluster reconstruction
+  int clusterMaxFibres = 4;
+  doHodoReconstructionBool( hodoX1_values    , nClusters_hodoX1    , nFibres_hodoX1    , pos_hodoX1    , 0.5, clusterMaxFibres, 0. );
+  doHodoReconstructionBool( hodoY1_values    , nClusters_hodoY1    , nFibres_hodoY1    , pos_hodoY1    , 0.5, clusterMaxFibres, 0. );
+  doHodoReconstructionBool( hodoX2_values    , nClusters_hodoX2    , nFibres_hodoX2    , pos_hodoX2    , 0.5, clusterMaxFibres , 0.);
+  doHodoReconstructionBool( hodoY2_values    , nClusters_hodoY2    , nFibres_hodoY2    , pos_hodoY2    , 0.5, clusterMaxFibres, 0. );
+  
+
+
+  
+  if(nClusters_hodoX1!=1 || nClusters_hodoX2!=1 || nClusters_hodoY1!=1 || nClusters_hodoY2!=1) {return false;
+  }else{
+  return true;
+  }
+}
+
+
+
+void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos ) {
+
+  for( unsigned i=0; i<target.size(); ++i ) 
+    target[i] = source[startPos+i];
+
+}
+
+
+void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos ) {
+
+  for( unsigned i=0; i<target.size(); ++i ) 
+    target[i] = source[startPos+i];
+
+}
+
+
+
+
+std::vector<HodoCluster*> getHodoClusters( std::vector<float> hodo, float fibreWidth, int nClusterMax, float Cut ) {
+
+  std::vector<HodoCluster*> clusters;
+
+  HodoCluster* currentCluster = new HodoCluster( hodo.size(), fibreWidth );
+
+  for( unsigned i=0; i<hodo.size(); ++i ) {
+
+    if( hodo[i] > Cut) { // hit
+
+      if( currentCluster->getSize() < nClusterMax ) {
+
+        currentCluster->addFibre( i );
+
+      } else {
+
+        clusters.push_back( currentCluster ); // store old one
+        currentCluster = new HodoCluster( hodo.size(), fibreWidth );   // create a new one
+        currentCluster->addFibre( i );        // get that fibre!
+
+      }
+
+    } else { // as soon as you find a hole
+      
+      if( currentCluster->getSize() > 0 ) {
+     
+        clusters.push_back( currentCluster ); // store old one
+        currentCluster = new HodoCluster( hodo.size(), fibreWidth );   // create a new one
+
+      }
+
+    }
+
+
+  } // for fibres
+
+
+  if( currentCluster->getSize()>0 )
+    clusters.push_back( currentCluster ); // store last cluster
+
+
+  return clusters;
+
+}
+
+
+
+
+void doHodoReconstruction( std::vector<float> values, int &nClusters, int *nFibres, float *pos, float fibreWidth, int clusterMaxFibres, float Cut ) {
+
+  std::vector<HodoCluster*> clusters = getHodoClusters( values, fibreWidth, clusterMaxFibres, Cut );
+
+  nClusters = clusters.size();
+  for( unsigned i=0; i<clusters.size(); ++i ) {
+    nFibres[i] = clusters[i]->getSize();
+    pos[i] = clusters[i]->getPosition();
+  }
+
+}
+
+
+void copyArray( int n, float *source, float *target ) {
+
+  for( unsigned i=0; i<n; ++i ) 
+    target[i] = source[i];
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+std::vector<HodoCluster*> getHodoClustersBool( std::vector<bool> hodo, float fibreWidth, int nClusterMax, float Cut ) {
+
+  std::vector<HodoCluster*> clusters;
+
+  HodoCluster* currentCluster = new HodoCluster( hodo.size(), fibreWidth );
+
+  for( unsigned i=0; i<hodo.size(); ++i ) {
+
+    if( hodo[i] > Cut) { // hit
+
+      if( currentCluster->getSize() < nClusterMax ) {
+
+        currentCluster->addFibre( i );
+
+      } else {
+
+        clusters.push_back( currentCluster ); // store old one
+        currentCluster = new HodoCluster( hodo.size(), fibreWidth );   // create a new one
+        currentCluster->addFibre( i );        // get that fibre!
+
+      }
+
+    } else { // as soon as you find a hole
+      
+      if( currentCluster->getSize() > 0 ) {
+     
+        clusters.push_back( currentCluster ); // store old one
+        currentCluster = new HodoCluster( hodo.size(), fibreWidth );   // create a new one
+
+      }
+
+    }
+
+
+  } // for fibres
+
+
+  if( currentCluster->getSize()>0 )
+    clusters.push_back( currentCluster ); // store last cluster
+
+
+  return clusters;
+
+}
+
+
+void doHodoReconstructionBool( std::vector<bool> values, int &nClusters, int *nFibres, float *pos, float fibreWidth, int clusterMaxFibres, float Cut ) {
+
+  std::vector<HodoCluster*> clusters = getHodoClustersBool( values, fibreWidth, clusterMaxFibres, Cut );
+
+  nClusters = clusters.size();
+  for( unsigned i=0; i<clusters.size(); ++i ) {
+    nFibres[i] = clusters[i]->getSize();
+    pos[i] = clusters[i]->getPosition();
+  }
+
+}

@@ -24,6 +24,7 @@ class WaveformUtil: public Event{
   WaveformUtil(TTree *tree=0);
   void     Loop();
   ~WaveformUtil();
+  bool passesHodoSelection();
 };
 
 #endif
