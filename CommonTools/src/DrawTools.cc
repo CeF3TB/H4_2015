@@ -87,7 +87,7 @@ TStyle* DrawTools::setStyle() {
   style->SetPadTopMargin(0.05);
   style->SetPadBottomMargin(0.15);//0.13);
   style->SetPadLeftMargin(0.15);//0.16);
-  style->SetPadRightMargin(0.15);//0.02);
+  style->SetPadRightMargin(0.10);//0.02);
 
   // For the Global title:
 
