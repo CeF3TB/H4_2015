@@ -16,14 +16,18 @@ EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore 
 
 
 
-all: analyzeCherenkov fastPlotter drawLinearity drawWaveform 
+all: alignTracking analyzeCherenkov fastPlotter drawLinearity drawWaveform 
+
+alignTracking:  HodoCluster.o AlignmentOfficer.o TagHelper.o DrawTools.o
+	$(CC) -Wall $(INCLUDES) -o ./bin/alignTracking $(EXE_DIR)/alignTracking.cpp $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/AlignmentOfficer.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
+
 
 analyzeCherenkov: Event.o CherenkovAnalyzer.o DrawTools.o
 	 $(CC) -Wall $(INCLUDES) -o ./bin/analyzeCherenkov $(EXE_DIR)/analyzeCherenkov.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/CherenkovAnalyzer.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
 
 
-drawWaveform: Event.o WaveformUtil.o DrawTools.o
-	 $(CC) -Wall $(INCLUDES) -o ./bin/drawWaveform $(EXE_DIR)/drawWaveform.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/WaveformUtil.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
+drawWaveform: Event.o WaveformUtil.o DrawTools.o HodoCluster.o
+	 $(CC) -Wall $(INCLUDES) -o ./bin/drawWaveform $(EXE_DIR)/drawWaveform.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/WaveformUtil.o  $(LIB_DIR)/DrawTools.o  $(LIB_DIR)/HodoCluster.o $(ROOTFLAG) $(EXTRALIBS)
 
 drawLinearity: Event.o LinearityLooper.o DrawTools.o
 	 $(CC) -Wall $(INCLUDES) -o ./bin/drawLinearity $(EXE_DIR)/drawLinearity.cpp $(LIB_DIR)/Event.o $(LIB_DIR)/LinearityLooper.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)	
@@ -43,11 +47,20 @@ Event.o: ./src/Event.cc
 LinearityLooper.o: ./src/LinearityLooper.cc Event.o
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/LinearityLooper.o -c ./src/LinearityLooper.cc $(ROOTFLAG) $(EXTRALIBS)
 
-WaveformUtil.o: ./src/WaveformUtil.cc Event.o
+WaveformUtil.o: ./src/WaveformUtil.cc Event.o HodoCluster.o
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/WaveformUtil.o -c ./src/WaveformUtil.cc $(ROOTFLAG) $(EXTRALIBS)
 
 CherenkovAnalyzer.o: ./src/CherenkovAnalyzer.cc Event.o
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/CherenkovAnalyzer.o -c ./src/CherenkovAnalyzer.cc $(ROOTFLAG) $(EXTRALIBS)
+
+HodoCluster.o: ./src/HodoCluster.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/HodoCluster.o -c src/HodoCluster.cc $(ROOTFLAG) $(EXTRALIBS)
+
+AlignmentOfficer.o: ./src/AlignmentOfficer.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/AlignmentOfficer.o -c src/AlignmentOfficer.cc $(ROOTFLAG) $(EXTRALIBS)
+
+TagHelper.o: ./src/TagHelper.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/TagHelper.o -c src/TagHelper.cc $(ROOTFLAG) $(EXTRALIBS)
 
 
 clean:

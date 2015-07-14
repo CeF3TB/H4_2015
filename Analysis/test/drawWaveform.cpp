@@ -33,7 +33,7 @@ int main( int argc, char* argv[] ) {
 
   WaveformUtil t(inputTree);
   t.Loop();
-  //  t.getMeanGraphsDigi();
+
 
   return 0;
 
