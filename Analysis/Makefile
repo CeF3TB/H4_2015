@@ -16,12 +16,16 @@ EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore 
 
 
 
-all: alignTracking analyzeCherenkov fastPlotter drawLinearity drawWaveform 
+all: drawAlignmentCorrVsRun  makeAnalysisTree alignTracking analyzeCherenkov fastPlotter drawLinearity drawWaveform 
+
+makeAnalysisTree: RunHelper.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o
+	$(CC) -Wall $(INCLUDES) -o ./bin/makeAnalysisTree $(EXE_DIR)/makeAnalysisTree.cpp $(LIB_DIR)/RunHelper.o $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/EnergyCalibration.o $(LIB_DIR)/AlignmentOfficer.o $(ROOTFLAG) $(EXTRALIBS)
 
 alignTracking:  HodoCluster.o AlignmentOfficer.o TagHelper.o DrawTools.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/alignTracking $(EXE_DIR)/alignTracking.cpp $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/AlignmentOfficer.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
 
-
+drawAlignmentCorrVsRun:	DrawTools.o
+	$(CC) -Wall $(INCLUDES) -o ./bin/drawAlignmentCorrVsRun $(EXE_DIR)/drawAlignmentCorrVsRun.cpp $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
 analyzeCherenkov: Event.o CherenkovAnalyzer.o DrawTools.o
 	 $(CC) -Wall $(INCLUDES) -o ./bin/analyzeCherenkov $(EXE_DIR)/analyzeCherenkov.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/CherenkovAnalyzer.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
 
@@ -61,6 +65,12 @@ AlignmentOfficer.o: ./src/AlignmentOfficer.cc
 
 TagHelper.o: ./src/TagHelper.cc
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/TagHelper.o -c src/TagHelper.cc $(ROOTFLAG) $(EXTRALIBS)
+
+EnergyCalibration.o: ./src/EnergyCalibration.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/EnergyCalibration.o -c src/EnergyCalibration.cc $(ROOTFLAG) $(EXTRALIBS)
+
+RunHelper.o: ../CommonTools/src/RunHelper.cc
+	$(CC) $(CFLAGS) -o  $(LIB_DIR)/RunHelper.o -c ../CommonTools/src/RunHelper.cc $(ROOTFLAG) $(EXTRALIBS)
 
 
 clean:
