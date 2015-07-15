@@ -31,7 +31,7 @@ void AlignmentOfficer::setOffsetsFile( const std::string& fileName ) {
 
   }
 
-  std::cout << "-> Loaded alignment offsets from file: " << fileName << std::endl;
+  //  std::cout << "-> Loaded alignment offsets from file: " << fileName << std::endl;
 
 }
 
