@@ -35,7 +35,7 @@ void WaveformUtil::Loop(){
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //    nentries=7000;
+  //  nentries=5000;
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
 
@@ -59,28 +59,40 @@ void WaveformUtil::Loop(){
       digiFreq=digi_frequency;
     }
     if(jentry%1000 == 0)std::cout<<"Processing entry:"<<jentry<<std::endl;
-    if(passesHodoSelection()==false)continue;
+    //    if(passesHodoSelection()==false)continue;
+    float timeOfTheEvent=digi_time_at_max_bare_noise_sub->at(2);
+    float shiftTime=68.37-timeOfTheEvent;
+    int shiftSample=shiftTime/(10e9*timeSampleUnit(digiFreq));
+
 
     for (int i=0;i<1024*4;++i){
       //	std::cout<<"channel:"<<digi_value_ch->at(i)<<digi_value->at(i)<<" "<<digi_value_time->at(i)<<std::endl;
       if(digi_value_ch->at(i) > 3)continue;
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
-      mean[digi_value_ch->at(i)][i-1024*digi_value_ch->at(i)]+=(float)(digi_value->at(i)/nentries);
+      int iSample=i;
+      if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
+	//	if(digi_value_ch->at(iSample) ==1)std::cout<<iSample<<" "<<i+shiftSample<<std::endl;
+	iSample=i+shiftSample;
+      }
+      //      if(digi_value_ch->at(i)==1 )      std::cout<<"i:"<<i<<" isample:"<<iSample<<"digivalue:"<<digi_value_bare_noise_sub->at(i)<<" digivalue new:"<<digi_value_bare_noise_sub->at(iSample)<<" channel:"<<digi_value_ch->at(iSample)<<std::endl;
+      mean[digi_value_ch->at(i)][i-1024*digi_value_ch->at(i)]+=(float)(digi_value_bare_noise_sub->at(iSample)/nentries);
       if(i<1024)time[i]=digi_value_time->at(i);
     }
   }
+
+  //  exit(0);
 
   TFile* outFile = TFile::Open("outWaveFormUtil_"+runNumberString+".root","recreate");
   int lowRange[4],highRange[4];
   TVectorD integrals(4);
 
-  lowRange[0]=130;
+  lowRange[0]=180;
   lowRange[1]=170;
-  lowRange[2]=145;
+  lowRange[2]=130;
   lowRange[3]=170;
-  highRange[0]=900;
+  highRange[0]=500;
   highRange[1]=720;
-  highRange[2]=500;
+  highRange[2]=600;
   highRange[3]=720;
 
   for (int i=0;i<NFIBERS;++i){
@@ -91,10 +103,12 @@ void WaveformUtil::Loop(){
 
     meanWaveHistos[i]=new TH1F("waveform_histo_"+fiber,"",1024,0,time[1023]);
     for (int j=0;j<NDIGISAMPLES;++j){  
+
       for(int k=0;k<mean[i][j];k++){
 	meanWaveHistos[i]->Fill(time[j]);
       }
     }
+
     meanWaveHistos[i]->Scale(nentries);
     meanWaveHistos[i]->Sumw2();
     meanWaveHistos[i]->Scale(1./nentries);//this trick is just to get correct errors
@@ -151,6 +165,17 @@ void WaveformUtil::Loop(){
 
 }
 
+
+float WaveformUtil::timeSampleUnit(int drs4Freq)
+{
+  if (drs4Freq == 0)
+    return 0.2E-9;
+  else if (drs4Freq == 1)
+    return 0.4E-9;
+  else if (drs4Freq == 2)
+    return 1.E-9;
+  return -999.;
+}
 
 
 bool WaveformUtil::passesHodoSelection(){

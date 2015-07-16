@@ -25,6 +25,7 @@ class WaveformUtil: public Event{
   void     Loop();
   ~WaveformUtil();
   bool passesHodoSelection();
+  float timeSampleUnit(int drs4Freq);
 };
 
 #endif
