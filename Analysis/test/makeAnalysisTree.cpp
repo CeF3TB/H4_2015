@@ -86,7 +86,11 @@ int main( int argc, char* argv[] ) {
    std::vector<float>   *SCINTvalues;
    std::vector<float>   *TDCreco;
    std::vector<float>   *digi_charge_integrated;
+   std::vector<float>   *digi_charge_integrated_bare_noise_sub;
    std::vector<float>   *digi_max_amplitude;
+   std::vector<float>   *digi_max_amplitude_bare_noise_sub;
+   std::vector<float>   *digi_charge_integrated_bare_noise_sub_fast;
+   std::vector<float>   *digi_charge_integrated_bare_noise_sub_slow;
    std::vector<float>   *digi_pedestal;
    std::vector<float>   *digi_pedestal_rms;
    std::vector<float>   *digi_time_at_frac30;
@@ -129,7 +133,9 @@ int main( int argc, char* argv[] ) {
    TBranch        *b_SCINTvalues;   //!
    TBranch        *b_TDCreco;   //!
    TBranch        *b_digi_charge_integrated;   //!
+   TBranch        *b_digi_charge_integrated_bare_noise_sub;   //!
    TBranch        *b_digi_max_amplitude;   //!
+   TBranch        *b_digi_max_amplitude_bare_noise_sub;   //!
    TBranch        *b_digi_pedestal;   //!
    TBranch        *b_digi_pedestal_rms;   //!
    TBranch        *b_digi_time_at_frac30;   //!
@@ -150,6 +156,10 @@ int main( int argc, char* argv[] ) {
    TBranch        *b_nTdcHits;   //!
    TBranch        *b_digi_charge_integrated_sub;   //!
    TBranch        *b_digi_max_amplitude_sub;   //!
+   TBranch        *b_digi_charge_integrated_bare_noise_sub;   //!
+   TBranch        *b_digi_max_amplitude_bare_noise_sub;   //!
+   TBranch        *b_digi_max_amplitude_bare_noise_sub_fast;   //!
+   TBranch        *b_digi_max_amplitude_bare_noise_sub_slow;   //!
    TBranch        *b_digi_pedestal_sub;   //!
    TBranch        *b_digi_pedestal_rms_sub;   //!
    TBranch        *b_digi_charge_integrated_corr1;   //!
@@ -181,7 +191,11 @@ int main( int argc, char* argv[] ) {
    HODOSMALLvalues = 0;
    nTdcHits = 0;
    digi_charge_integrated_sub = 0;
+   digi_charge_integrated_bare_noise_sub = 0;
+   digi_charge_integrated_bare_noise_sub_fast = 0;
+   digi_charge_integrated_bare_noise_sub_slow = 0;
    digi_max_amplitude_sub = 0;
+   digi_max_amplitude_bare_noise_sub = 0;
    digi_pedestal_sub = 0;
    digi_pedestal_rms_sub = 0;
    digi_charge_integrated_corr1 = 0;
@@ -537,7 +551,6 @@ int main( int argc, char* argv[] ) {
 
      assignValues( cef3_corr, *digi_charge_integrated_bare, CEF3_START_CHANNEL );  
      cef3Calib.applyCalibration(cef3_corr);
-     //
 
      assignValues( cef3_maxAmpl, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
@@ -547,57 +560,14 @@ int main( int argc, char* argv[] ) {
 
 
 
-     //   assignValues( cef3_maxAmpl_corr2, *digi_max_amplitude_corr2, CEF3_START_CHANNEL);
-     //   assignValues( cef3_chaInt_corr2, *digi_charge_integrated_corr2, CEF3_START_CHANNEL);
-
-
      assignValues( cef3_maxAmpl_bare, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt_bare, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
-
-     //     assignValues( cef3_chaInt_frac10, *digi_charge_integrated_frac10, CEF3_START_CHANNEL);
-     //     assignValues( cef3_chaInt_frac30, *digi_charge_integrated_frac30, CEF3_START_CHANNEL);
-     //     assignValues( cef3_chaInt_frac50, *digi_charge_integrated_frac50, CEF3_START_CHANNEL);
-
 
      assignValues( cef3_maxAmpl_bare_corr, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt_bare_corr, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
 
      cef3Calib.applyCalibration(cef3_maxAmpl_bare_corr);
      cef3Calib.applyCalibration(cef3_chaInt_bare_corr);
-
-//     assignValues( cef3_chaInt_frac10_corr, *digi_charge_integrated_frac10, CEF3_START_CHANNEL);
-//     cef3Calib.applyCalibration(cef3_chaInt_frac10_corr);
-//     assignValues( cef3_chaInt_frac30_corr, *digi_charge_integrated_frac30, CEF3_START_CHANNEL);
-//    cef3Calib.applyCalibration(cef3_chaInt_frac30_corr);
-//     assignValues( cef3_chaInt_frac50_corr, *digi_charge_integrated_frac50, CEF3_START_CHANNEL);   
-// cef3Calib.applyCalibration(cef3_chaInt_frac50_corr);
-//
-// 
-// 
-//
-//     assignValues( bgo, *BGOvalues, 0);
-
-
-
-  
-     //"Intercalibrated" values
-//     assignValues( cef3_maxAmpl_corr, *digi_max_amplitude_sub, CEF3_START_CHANNEL );  
-//     cef3Calib.applyCalibration(cef3_maxAmpl_corr);
-//
-//     assignValues( cef3_chaInt_corr, *digi_charge_integrated_sub, CEF3_START_CHANNEL );  
-//     cef3Calib.applyCalibration(cef3_chaInt_corr);
-
-     //     assignValues( cef3_maxAmpl_corr1_corr, *digi_max_amplitude_corr1, CEF3_START_CHANNEL );  
-     //     cef3Calib.applyCalibration(cef3_maxAmpl_corr1_corr);
-
-     //     assignValues( cef3_chaInt_corr1_corr, *digi_charge_integrated_corr1, CEF3_START_CHANNEL );  
-     //     cef3Calib.applyCalibration(cef3_chaInt_corr1_corr);
-
-     //     assignValues( cef3_maxAmpl_corr2_corr, *digi_max_amplitude_corr2, CEF3_START_CHANNEL );  
-     //     cef3Calib.applyCalibration(cef3_maxAmpl_corr2_corr);
-
-     //    assignValues( cef3_chaInt_corr2_corr, *digi_charge_integrated_corr2, CEF3_START_CHANNEL );  
-     //    cef3Calib.applyCalibration(cef3_chaInt_corr2_corr);
 
      assignValues( bgo_corr, *BGOvalues, 0 );
      bgoCalib.applyCalibration(bgo_corr);
@@ -668,10 +638,6 @@ int main( int argc, char* argv[] ) {
      alignOfficer.fix("hodoX2", nClusters_hodoX2, pos_corr_hodoX2);
      alignOfficer.fix("hodoY2", nClusters_hodoY2, pos_corr_hodoY2);
 
-//     s1 = SCINTvalues->at(0);
-//     s3 = SCINTvalues->at(1);
-//     s4 = SCINTvalues->at(2);
-//     s6 = SCINTvalues->at(3);
 
      xTable = TableX;
      yTable = TableY;

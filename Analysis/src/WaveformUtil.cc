@@ -60,18 +60,16 @@ void WaveformUtil::Loop(){
     }
     if(jentry%1000 == 0)std::cout<<"Processing entry:"<<jentry<<std::endl;
     //    if(passesHodoSelection()==false)continue;
-    float timeOfTheEvent=digi_time_at_max_bare_noise_sub->at(2);
-    float shiftTime=68.37-timeOfTheEvent;
+    float timeOfTheEvent=digi_time_at_max_bare_noise_sub->at(2);//synchronizing time of events with time of kuraray
+    float shiftTime=68.37-timeOfTheEvent;//mean fitted on run 2778
     int shiftSample=shiftTime/(10e9*timeSampleUnit(digiFreq));
 
 
     for (int i=0;i<1024*4;++i){
-      //	std::cout<<"channel:"<<digi_value_ch->at(i)<<digi_value->at(i)<<" "<<digi_value_time->at(i)<<std::endl;
       if(digi_value_ch->at(i) > 3)continue;
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
       int iSample=i;
       if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
-	//	if(digi_value_ch->at(iSample) ==1)std::cout<<iSample<<" "<<i+shiftSample<<std::endl;
 	iSample=i+shiftSample;
       }
       //      if(digi_value_ch->at(i)==1 )      std::cout<<"i:"<<i<<" isample:"<<iSample<<"digivalue:"<<digi_value_bare_noise_sub->at(i)<<" digivalue new:"<<digi_value_bare_noise_sub->at(iSample)<<" channel:"<<digi_value_ch->at(iSample)<<std::endl;

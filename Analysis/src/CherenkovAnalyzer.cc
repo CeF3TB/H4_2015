@@ -55,10 +55,14 @@ void CherenkovAnalyzer::Loop(){
   TGaxis::SetMaxDigits(3);
 
   TVectorD integrals(4);
-  integrals[0]=0.0707221;
-  integrals[1]=0.0578497;
-  integrals[2]=0.346977;
-  integrals[3]=0.0622282;
+//  integrals[0]=0.0707221;
+//  integrals[1]=0.0578497;
+//  integrals[2]=0.346977;
+//  integrals[3]=0.0622282;
+  integrals[0]=0.0872292;
+  integrals[1]=0.0586668;
+  integrals[2]=0.333334;
+  integrals[3]=0.062636;
 
   float gainR1450=1.5e+6;
   float gainR5380=7e+4;
@@ -76,10 +80,10 @@ void CherenkovAnalyzer::Loop(){
     if(jentry%1000 == 0)std::cout<<"Processing entry:"<<jentry<<std::endl;
       for (int i=0;i<NFIBERS;++i){
 	if(digi_max_amplitude->at(i)>10000 || digi_max_amplitude->at(i)<0)continue;
-	float chargeWlsUnderCher=(digi_charge_integrated_bare_slow->at(i)*integrals[i])/(1-integrals[i]);//amount of wls charge under cherenkov peak. estimated by fit
-	digi_charge_integrated_cher[i]=digi_charge_integrated_bare_fast->at(i) - chargeWlsUnderCher;
-	digi_charge_integrated_wls[i]=digi_charge_integrated_bare_slow->at(i) + chargeWlsUnderCher;
-	digi_charge_integrated_total[i]=digi_charge_integrated_bare->at(i);
+	float chargeWlsUnderCher=(digi_charge_integrated_bare_noise_sub_slow->at(i)*integrals[i])/(1-integrals[i]);//amount of wls charge under cherenkov peak. estimated by fit
+	digi_charge_integrated_cher[i]=digi_charge_integrated_bare_noise_sub_fast->at(i) - chargeWlsUnderCher;
+	digi_charge_integrated_wls[i]=digi_charge_integrated_bare_noise_sub_slow->at(i);
+	digi_charge_integrated_total[i]=digi_charge_integrated_bare_noise_sub->at(i);
 	totalHistos[i]->Fill(digi_charge_integrated_total[i]);
 	if(i==2)	totalHistosGainCorr[i]->Fill(digi_charge_integrated_total[i]/gainR5380);
 	else totalHistosGainCorr[i]->Fill(digi_charge_integrated_total[i]/gainR1450);
