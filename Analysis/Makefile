@@ -16,7 +16,7 @@ EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore 
 
 
 
-all: drawAlignmentCorrVsRun  makeAnalysisTree alignTracking analyzeCherenkov fastPlotter drawLinearity drawWaveform 
+all: drawCherenkov drawAlignmentCorrVsRun  makeAnalysisTree alignTracking analyzeCherenkov fastPlotter drawLinearity drawWaveform 
 
 
 drawCherenkov:  DrawTools.o RecoTree.o

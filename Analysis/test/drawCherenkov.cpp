@@ -67,6 +67,11 @@ int main( int argc, char* argv[] ) {
   TH1F* cherHistos[4];
   TH1F* wlsHistos[4];
 
+  TH1F* totalHistos_tight[4];
+  TH1F* totalHistosGainCorr_tight[4];
+  TH1F* cherHistos_tight[4];
+  TH1F* wlsHistos_tight[4];
+
   for(int i=0;i<CEF3_CHANNELS;++i){
     TString fibre;
     fibre.Form("%d",i); 
@@ -74,6 +79,12 @@ int main( int argc, char* argv[] ) {
     totalHistos[i] = new TH1F ("totalHisto_"+fibre,"",200,0,300000);
     cherHistos[i] = new TH1F ("cherHisto_"+fibre,"",200,0,55e3);
     wlsHistos[i] = new TH1F ("wlsHisto_"+fibre,"",200,0,500000);
+
+    totalHistosGainCorr_tight[i] = new TH1F ("totalHistoGainCorr_tight_"+fibre,"",200,0,0.5);
+    totalHistos_tight[i] = new TH1F ("totalHisto_tight_"+fibre,"",200,0,300000);
+    cherHistos_tight[i] = new TH1F ("cherHisto_tight_"+fibre,"",200,0,55e3);
+    wlsHistos_tight[i] = new TH1F ("wlsHisto_tight_"+fibre,"",200,0,500000);
+
   }
 
   TTree* recoTree=(TTree*)file->Get("recoTree");
@@ -99,6 +110,15 @@ int main( int argc, char* argv[] ) {
 	else totalHistosGainCorr[i]->Fill(t.cef3_chaInt->at(i)/gainR1450);
 	cherHistos[i]->Fill(t.cef3_chaInt_cher->at(i));
 	wlsHistos[i]->Fill(t.cef3_chaInt_wls->at(i));
+
+	if((t.nClusters_hodoX1==1||t.pos_2FibClust_hodoX1>-999) && (t.nClusters_hodoX2==1||t.pos_2FibClust_hodoX2>-999) && (t.nClusters_hodoY1==1||t.pos_2FibClust_hodoY1>-999) && (t.nClusters_hodoY1==1||t.pos_2FibClust_hodoY1>-999)){//exactly one cluster, or, if there are multiple clusters, exactly one 2-fiber cluster
+	  totalHistos_tight[i]->Fill(t.cef3_chaInt->at(i)); 
+	  if(i==2)	totalHistosGainCorr_tight[i]->Fill(t.cef3_chaInt->at(i)/gainR5380);
+	  else totalHistosGainCorr_tight[i]->Fill(t.cef3_chaInt->at(i)/gainR1450);
+	  cherHistos_tight[i]->Fill(t.cef3_chaInt_cher->at(i));
+	  wlsHistos_tight[i]->Fill(t.cef3_chaInt_wls->at(i));
+
+	}
       }
    }
 
@@ -170,7 +190,7 @@ int main( int argc, char* argv[] ) {
   pave->Draw("same");
   c1.SaveAs("plots_drawCherenkov/chargeIntTotalGainCorr_"+runNumberString+".png");
   c1.SaveAs("plots_drawCherenkov/chargeIntTotalGainCorr_"+runNumberString+".pdf");
-  c1.Write("chargeIntTotal");
+  c1.Write("chargeIntTotalGainCorr");
 
 
   c1.Clear();
@@ -228,6 +248,118 @@ int main( int argc, char* argv[] ) {
     cherHistos[i] ->Write();
     wlsHistos[i] ->Write();
   }
+
+
+  //tight sel
+  c1.Clear();
+  c1.SetLogy();
+  totalHistos_tight[1]->SetLineColor(kBlue);
+  totalHistos_tight[2]->SetLineColor(kRed);
+  totalHistos_tight[3]->SetLineColor(kViolet);
+
+  max=-1;
+  for(int i=0;i<4;++i){
+      if(max<totalHistos_tight[i]->GetMaximum()){
+      max=totalHistos_tight[i]->GetMaximum();
+    }
+  }
+
+
+  for(int i=0;i<4;++i){
+    totalHistos_tight[i]->GetYaxis()->SetRangeUser(1,max*1.1);
+    totalHistos_tight[i]->GetXaxis()->SetTitle("Charge Integrated");
+    totalHistos_tight[i]->GetYaxis()->SetTitle("Events");
+    if (i==0)    totalHistos_tight[i]->Draw();
+    else totalHistos_tight[i]->Draw("same");
+    TString fibre;
+  }
+  pave->Draw("same");
+  c1.SaveAs("plots_drawCherenkov/chargeIntTotal_tight_"+runNumberString+".png");
+  c1.SaveAs("plots_drawCherenkov/chargeIntTotal_tight_"+runNumberString+".pdf");
+  c1.Write("chargeIntTotal_tight");
+
+
+  c1.Clear();
+  totalHistosGainCorr_tight[1]->SetLineColor(kBlue);
+  totalHistosGainCorr_tight[2]->SetLineColor(kRed);
+  totalHistosGainCorr_tight[3]->SetLineColor(kViolet);
+  max=-1;
+  for(int i=0;i<4;++i){
+    if(max<totalHistosGainCorr_tight[i]->GetMaximum()){
+      max=totalHistosGainCorr_tight[i]->GetMaximum();
+    }
+  }
+  
+  for(int i=0;i<4;++i){
+    totalHistosGainCorr_tight[i]->GetYaxis()->SetRangeUser(1,max*1.1);
+    totalHistosGainCorr_tight[i]->GetXaxis()->SetTitle("Charge Integrated");
+    totalHistosGainCorr_tight[i]->GetYaxis()->SetTitle("Events");
+    if (i==0)    totalHistosGainCorr_tight[i]->Draw();
+    else totalHistosGainCorr_tight[i]->Draw("same");
+  }
+  pave->Draw("same");
+  c1.SaveAs("plots_drawCherenkov/chargeIntTotalGainCorr_tight_"+runNumberString+".png");
+  c1.SaveAs("plots_drawCherenkov/chargeIntTotalGainCorr_tight_"+runNumberString+".pdf");
+  c1.Write("chargeIntTotal_tight");
+
+
+  c1.Clear();
+  cherHistos_tight[1]->SetLineColor(kBlue);
+  cherHistos_tight[2]->SetLineColor(kRed);
+  cherHistos_tight[3]->SetLineColor(kViolet);
+
+  max=-1;
+  for(int i=0;i<4;++i){
+    if(max<cherHistos_tight[i]->GetMaximum()){
+      max=cherHistos_tight[i]->GetMaximum();
+    }
+  }
+
+
+  for(int i=0;i<4;++i){
+    cherHistos_tight[i]->GetYaxis()->SetRangeUser(1,max*1.1);
+    cherHistos_tight[i]->GetXaxis()->SetTitle("Charge Integrated");
+    cherHistos_tight[i]->GetYaxis()->SetTitle("Events");
+    if (i==0)    cherHistos_tight[i]->Draw();
+    else cherHistos_tight[i]->Draw("same");
+  }
+  pave->Draw("same");
+  c1.SaveAs("plots_drawCherenkov/chargeIntCher_tight_"+runNumberString+".png");
+  c1.SaveAs("plots_drawCherenkov/chargeIntCher_tight_"+runNumberString+".pdf");
+  c1.Write("chargeIntCher_tight");
+
+  c1.Clear();
+  wlsHistos[1]->SetLineColor(kBlue);
+  wlsHistos[2]->SetLineColor(kRed);
+  wlsHistos[3]->SetLineColor(kViolet);
+  max=-1;
+  for(int i=0;i<4;++i){
+    if(max<wlsHistos[i]->GetMaximum()){
+      max=wlsHistos[i]->GetMaximum();
+    }
+  }
+
+  for(int i=0;i<4;++i){
+    wlsHistos[i]->GetYaxis()->SetRangeUser(1,max*1.1);
+    wlsHistos[i]->GetXaxis()->SetTitle("Charge Integrated");
+    wlsHistos[i]->GetYaxis()->SetTitle("Events");
+    if (i==0)    wlsHistos[i]->Draw();
+    else wlsHistos[i]->Draw("same");
+  }
+  pave->Draw("same");
+  c1.SaveAs("plots_drawCherenkov/chargeIntWls_"+runNumberString+".png");
+  c1.SaveAs("plots_drawCherenkov/chargeIntWls_"+runNumberString+".pdf");
+  c1.Write("chargeIntWls_tight");
+
+
+  for(int i=0;i<4;++i){
+    totalHistos_tight[i]->Write();
+    totalHistosGainCorr_tight[i]->Write();
+    cherHistos_tight[i] ->Write();
+    wlsHistos_tight[i] ->Write();
+  }
+
+
 
   outFile->Write();
   outFile->Close();
