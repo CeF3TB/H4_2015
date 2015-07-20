@@ -8,6 +8,15 @@
 #include "RecoTree.h"
 #include "channelInfo.h"
 
+#include "RooDataHist.h"
+#include "RooRealVar.h"
+#include "RooDataSet.h"
+#include "RooGaussian.h"
+#include "RooLandau.h"
+#include "RooFFTConvPdf.h"
+#include "RooPlot.h"
+#include "RooCBShape.h"
+
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -15,6 +24,12 @@
 #include "TH2F.h"
 #include "TLegend.h"
 #include "TGaxis.h"
+
+float getRatioError( float num, float denom, float numErr, float denomErr ) {
+
+  return sqrt( numErr*numErr/(denom*denom) + denomErr*denomErr*num*num/(denom*denom*denom*denom) );
+
+}
 
 int main( int argc, char* argv[] ) {
 
@@ -81,7 +96,7 @@ int main( int argc, char* argv[] ) {
     wlsHistos[i] = new TH1F ("wlsHisto_"+fibre,"",200,0,500000);
 
     totalHistosGainCorr_tight[i] = new TH1F ("totalHistoGainCorr_tight_"+fibre,"",200,0,0.5);
-    totalHistos_tight[i] = new TH1F ("totalHisto_tight_"+fibre,"",200,0,300000);
+    totalHistos_tight[i] = new TH1F ("totalHisto_tight_"+fibre,"",400,0,300000);
     cherHistos_tight[i] = new TH1F ("cherHisto_tight_"+fibre,"",200,0,55e3);
     wlsHistos_tight[i] = new TH1F ("wlsHisto_tight_"+fibre,"",200,0,500000);
 
@@ -359,7 +374,69 @@ int main( int argc, char* argv[] ) {
     wlsHistos_tight[i] ->Write();
   }
 
+  //get the resolution of chInt
+  for(int i=0;i<4;++i){
+    TH1F* histo;
+    if(i!=2) histo=wlsHistos_tight[i];
+    else histo=totalHistos_tight[i];
 
+    double peakpos = histo->GetMean();
+    double sigma = histo->GetRMS();
+    
+    double fitmin;
+    double fitmax;
+    
+    
+    fitmin = peakpos-5*sigma;
+    fitmax = peakpos+5*sigma;
+        
+    RooRealVar x("x","ChInt", fitmin, fitmax);
+    RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
+    
+
+    RooPlot* frame;
+    frame = x.frame("Title");
+    data.plotOn(frame);  //this will show histogram data points on canvas                                                                                                         
+    //  data.statOn(frame);  //this will display hist stat on canvas                                                                                                                  
+    RooRealVar meanr("meanr","Mean",peakpos+sigma,peakpos-2*sigma, peakpos+2*sigma);
+    RooRealVar width("width","#sigma",sigma , 150.0, 5.*sigma);
+    RooRealVar A("A","Dist",2., 0.0, 7.0);
+    RooRealVar N("N","Deg",5, 0.0, 10);
+    
+    //  meanr.setRange( 30000. , 1000000.);
+    //  width.setRange(500, 22000);
+    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
+    fit_fct.fitTo(data);
+    fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
+    // fit_fct.paramOn(frame); //this will display the fit parameters on canvas               
+    
+    double mean = meanr.getVal();
+    double meanErr = meanr.getError();
+    double rms = width.getVal();
+    double rmsErr = width.getError();
+    double reso = 100.* rms/mean; //in percent                          
+    double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
+    
+    
+    TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
+    cans->cd();
+    frame->Draw();
+    TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
+    lego->SetTextSize(0.038);
+    lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", width.getVal(), width.getError() ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
+    lego->SetFillColor(0);
+    lego->Draw("same");
+
+    TString fibre;
+    fibre.Form("%d",i); 
+
+    cans->SaveAs("plots_drawCherenkov/CBFit_"+runNumberString+"_fibre_"+fibre+".png");
+    cans->SaveAs("plots_drawCherenkov/CBFit_"+runNumberString+"_fibre_"+fibre+".pdf");
+    cans->Write();
+  }
 
   outFile->Write();
   outFile->Close();
