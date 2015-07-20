@@ -134,6 +134,8 @@ int main( int argc, char* argv[] ) {
    TBranch        *b_TDCreco;   //!
    TBranch        *b_digi_charge_integrated;   //!
    TBranch        *b_digi_charge_integrated_bare_noise_sub;   //!
+   TBranch        *b_digi_charge_integrated_bare_noise_sub_fast;   //!
+   TBranch        *b_digi_charge_integrated_bare_noise_sub_slow;   //!
    TBranch        *b_digi_max_amplitude;   //!
    TBranch        *b_digi_max_amplitude_bare_noise_sub;   //!
    TBranch        *b_digi_pedestal;   //!
@@ -156,10 +158,6 @@ int main( int argc, char* argv[] ) {
    TBranch        *b_nTdcHits;   //!
    TBranch        *b_digi_charge_integrated_sub;   //!
    TBranch        *b_digi_max_amplitude_sub;   //!
-   TBranch        *b_digi_charge_integrated_bare_noise_sub;   //!
-   TBranch        *b_digi_max_amplitude_bare_noise_sub;   //!
-   TBranch        *b_digi_max_amplitude_bare_noise_sub_fast;   //!
-   TBranch        *b_digi_max_amplitude_bare_noise_sub_slow;   //!
    TBranch        *b_digi_pedestal_sub;   //!
    TBranch        *b_digi_pedestal_rms_sub;   //!
    TBranch        *b_digi_charge_integrated_corr1;   //!
@@ -225,8 +223,8 @@ int main( int argc, char* argv[] ) {
    fChain->SetBranchAddress("digi_max_amplitude", &digi_max_amplitude, &b_digi_max_amplitude);
    fChain->SetBranchAddress("digi_pedestal", &digi_pedestal, &b_digi_pedestal);
    fChain->SetBranchAddress("digi_pedestal_rms", &digi_pedestal_rms, &b_digi_pedestal_rms);
-   fChain->SetBranchAddress("digi_time_at_frac30", &digi_time_at_frac30, &b_digi_time_at_frac30);
-   fChain->SetBranchAddress("digi_time_at_frac50", &digi_time_at_frac50, &b_digi_time_at_frac50);
+   //   fChain->SetBranchAddress("digi_time_at_frac30", &digi_time_at_frac30, &b_digi_time_at_frac30);
+   //   fChain->SetBranchAddress("digi_time_at_frac50", &digi_time_at_frac50, &b_digi_time_at_frac50);
    fChain->SetBranchAddress("digi_time_at_max", &digi_time_at_max, &b_digi_time_at_max);
    fChain->SetBranchAddress("HODOX1", &HODOX1, &b_HODOX1);
    fChain->SetBranchAddress("HODOX2", &HODOX2, &b_HODOX2);
@@ -241,20 +239,24 @@ int main( int argc, char* argv[] ) {
    fChain->SetBranchAddress("BeamTilt", &BeamTilt, &b_BeamTilt);
    fChain->SetBranchAddress("IsPhysics", &IsPhysics, &b_IsPhysics);
    fChain->SetBranchAddress("nTdcHits", &nTdcHits, &b_nTdcHits);
-   fChain->SetBranchAddress("digi_charge_integrated_sub", &digi_charge_integrated_sub, &b_digi_charge_integrated_sub);
-   fChain->SetBranchAddress("digi_max_amplitude_sub", &digi_max_amplitude_sub, &b_digi_max_amplitude_sub);
+//   fChain->SetBranchAddress("digi_charge_integrated_sub", &digi_charge_integrated_sub, &b_digi_charge_integrated_sub);
+//   fChain->SetBranchAddress("digi_max_amplitude_sub", &digi_max_amplitude_sub, &b_digi_max_amplitude_sub);
    fChain->SetBranchAddress("digi_pedestal_sub", &digi_pedestal_sub, &b_digi_pedestal_sub);
    fChain->SetBranchAddress("digi_pedestal_rms_sub", &digi_pedestal_rms_sub, &b_digi_pedestal_rms_sub);
-   fChain->SetBranchAddress("digi_charge_integrated_corr1", &digi_charge_integrated_corr1, &b_digi_charge_integrated_corr1);
-   fChain->SetBranchAddress("digi_max_amplitude_corr1", &digi_max_amplitude_corr1, &b_digi_max_amplitude_corr1);
-   fChain->SetBranchAddress("digi_charge_integrated_corr2", &digi_charge_integrated_corr2, &b_digi_charge_integrated_corr2);
-   fChain->SetBranchAddress("digi_max_amplitude_corr2", &digi_max_amplitude_corr2, &b_digi_max_amplitude_corr2);
+//   fChain->SetBranchAddress("digi_charge_integrated_corr1", &digi_charge_integrated_corr1, &b_digi_charge_integrated_corr1);
+//   fChain->SetBranchAddress("digi_max_amplitude_corr1", &digi_max_amplitude_corr1, &b_digi_max_amplitude_corr1);
+//   fChain->SetBranchAddress("digi_charge_integrated_corr2", &digi_charge_integrated_corr2, &b_digi_charge_integrated_corr2);
+//   fChain->SetBranchAddress("digi_max_amplitude_corr2", &digi_max_amplitude_corr2, &b_digi_max_amplitude_corr2);
 
    fChain->SetBranchAddress("digi_max_amplitude_bare", &digi_max_amplitude_bare, &b_digi_max_amplitude_bare);
    fChain->SetBranchAddress("digi_charge_integrated_bare", &digi_charge_integrated_bare, &b_digi_charge_integrated_bare);
-   fChain->SetBranchAddress("digi_charge_integrated_frac10", &digi_charge_integrated_frac10, &b_digi_charge_integrated_frac10);
-   fChain->SetBranchAddress("digi_charge_integrated_frac30", &digi_charge_integrated_frac30, &b_digi_charge_integrated_frac30);
-   fChain->SetBranchAddress("digi_charge_integrated_frac50", &digi_charge_integrated_frac50, &b_digi_charge_integrated_frac50);
+   fChain->SetBranchAddress("digi_charge_integrated_bare_noise_sub", &digi_charge_integrated_bare_noise_sub, &b_digi_charge_integrated_bare_noise_sub);
+   fChain->SetBranchAddress("digi_max_amplitude_bare_noise_sub", &digi_max_amplitude_bare_noise_sub, &b_digi_max_amplitude_bare_noise_sub);
+   fChain->SetBranchAddress("digi_charge_integrated_bare_noise_sub_fast", &digi_charge_integrated_bare_noise_sub_fast, &b_digi_charge_integrated_bare_noise_sub_fast);
+   fChain->SetBranchAddress("digi_charge_integrated_bare_noise_sub_slow", &digi_charge_integrated_bare_noise_sub_slow, &b_digi_charge_integrated_bare_noise_sub_slow);
+//   fChain->SetBranchAddress("digi_charge_integrated_frac10", &digi_charge_integrated_frac10, &b_digi_charge_integrated_frac10);
+//   fChain->SetBranchAddress("digi_charge_integrated_frac30", &digi_charge_integrated_frac30, &b_digi_charge_integrated_frac30);
+//   fChain->SetBranchAddress("digi_charge_integrated_frac50", &digi_charge_integrated_frac50, &b_digi_charge_integrated_frac50);
 
 
 
@@ -295,13 +297,13 @@ int main( int argc, char* argv[] ) {
    outTree->Branch( "event", &evtNumber, "event/i" );
 
    float s1;
-   outTree->Branch( "s1", &s1, "s1/F" );
+   //   outTree->Branch( "s1", &s1, "s1/F" );
    float s3;
-   outTree->Branch( "s3", &s3, "s3/F" );
+   //   outTree->Branch( "s3", &s3, "s3/F" );
    float s4;
-   outTree->Branch( "s4", &s4, "s4/F" );
+   //   outTree->Branch( "s4", &s4, "s4/F" );
    float s6;
-   outTree->Branch( "s6", &s6, "s6/F" );
+   //   outTree->Branch( "s6", &s6, "s6/F" );
 
    //Original
    std::vector<float> cef3( CEF3_CHANNELS, -1. );
@@ -314,6 +316,11 @@ int main( int argc, char* argv[] ) {
    outTree->Branch( "cef3_maxAmpl", &cef3_maxAmpl );
    std::vector<float> cef3_chaInt( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_chaInt", &cef3_chaInt );
+   std::vector<float> cef3_chaInt_cher( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_chaInt_cher", &cef3_chaInt_cher );
+   std::vector<float> cef3_chaInt_wls( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_chaInt_wls", &cef3_chaInt_wls );
+
 
    std::vector<float> bgo( BGO_CHANNELS, -1. );
    outTree->Branch( "bgo", &bgo );
@@ -337,41 +344,41 @@ int main( int argc, char* argv[] ) {
    */
 
    //With Corr1
-   std::vector<float> cef3_maxAmpl_corr1( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_maxAmpl_corr1", &cef3_maxAmpl_corr1 );
-   std::vector<float> cef3_chaInt_corr1( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_chaInt_corr1", &cef3_chaInt_corr1 );
-
-  //With Corr1 Intercalibrated
-   std::vector<float> cef3_maxAmpl_corr1_corr( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_maxAmpl_corr1_corr", &cef3_maxAmpl_corr1_corr );
-   std::vector<float> cef3_chaInt_corr1_corr( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_chaInt_corr1_corr", &cef3_chaInt_corr1_corr );
-
-
-   std::vector<float> cef3_maxAmpl_bare( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_maxAmpl_bare", &cef3_maxAmpl_bare );
-   std::vector<float> cef3_chaInt_bare( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_chaInt_bare", &cef3_chaInt_bare );
-   std::vector<float> cef3_maxAmpl_bare_corr( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_maxAmpl_bare_corr", &cef3_maxAmpl_bare_corr );
-   std::vector<float> cef3_chaInt_bare_corr( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_chaInt_bare_corr", &cef3_chaInt_bare_corr );
+//   std::vector<float> cef3_maxAmpl_corr1( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_maxAmpl_corr1", &cef3_maxAmpl_corr1 );
+//   std::vector<float> cef3_chaInt_corr1( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_chaInt_corr1", &cef3_chaInt_corr1 );
+//
+//  //With Corr1 Intercalibrated
+//   std::vector<float> cef3_maxAmpl_corr1_corr( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_maxAmpl_corr1_corr", &cef3_maxAmpl_corr1_corr );
+//   std::vector<float> cef3_chaInt_corr1_corr( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_chaInt_corr1_corr", &cef3_chaInt_corr1_corr );
 
 
-   std::vector<float> cef3_chaInt_frac10( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_chaInt_frac10", &cef3_chaInt_frac10 );
-   std::vector<float> cef3_chaInt_frac30( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_chaInt_frac30", &cef3_chaInt_frac30 );
-   std::vector<float> cef3_chaInt_frac50( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_chaInt_frac50", &cef3_chaInt_frac50 );
-
-   std::vector<float> cef3_chaInt_frac10_corr( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_chaInt_frac10_corr", &cef3_chaInt_frac10_corr );
-   std::vector<float> cef3_chaInt_frac30_corr( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_chaInt_frac30_corr", &cef3_chaInt_frac30_corr );
-   std::vector<float> cef3_chaInt_frac50_corr( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_chaInt_frac50_corr", &cef3_chaInt_frac50_corr );
+//   std::vector<float> cef3_maxAmpl_bare( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_maxAmpl_bare", &cef3_maxAmpl_bare );
+//   std::vector<float> cef3_chaInt_bare( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_chaInt_bare", &cef3_chaInt_bare );
+//   std::vector<float> cef3_maxAmpl_bare_corr( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_maxAmpl_bare_corr", &cef3_maxAmpl_bare_corr );
+//   std::vector<float> cef3_chaInt_bare_corr( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_chaInt_bare_corr", &cef3_chaInt_bare_corr );
+//
+//
+//   std::vector<float> cef3_chaInt_frac10( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_chaInt_frac10", &cef3_chaInt_frac10 );
+//   std::vector<float> cef3_chaInt_frac30( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_chaInt_frac30", &cef3_chaInt_frac30 );
+//   std::vector<float> cef3_chaInt_frac50( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_chaInt_frac50", &cef3_chaInt_frac50 );
+//
+//   std::vector<float> cef3_chaInt_frac10_corr( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_chaInt_frac10_corr", &cef3_chaInt_frac10_corr );
+//   std::vector<float> cef3_chaInt_frac30_corr( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_chaInt_frac30_corr", &cef3_chaInt_frac30_corr );
+//   std::vector<float> cef3_chaInt_frac50_corr( CEF3_CHANNELS, -1. );
+//   outTree->Branch( "cef3_chaInt_frac50_corr", &cef3_chaInt_frac50_corr );
 
 
 
@@ -521,7 +528,7 @@ int main( int argc, char* argv[] ) {
    for(int  iEntry=0; iEntry<nentries; ++iEntry ) {
 
      tree->GetEntry( iEntry );     
-     if( iEntry %  10000 == 0 ) std::cout << "Entry: " << iEntry << " / " << nentries << std::endl;
+     if( iEntry %  1000 == 0 ) std::cout << "Entry: " << iEntry << " / " << nentries << std::endl;
 
 
    
@@ -547,27 +554,29 @@ int main( int argc, char* argv[] ) {
 
 
      //BACKWARDS COMPATIBILITY///
-     assignValues( cef3, *digi_charge_integrated_bare, CEF3_START_CHANNEL);      
+     assignValues( cef3, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL);      
 
-     assignValues( cef3_corr, *digi_charge_integrated_bare, CEF3_START_CHANNEL );  
+     assignValues( cef3_corr, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL );  
      cef3Calib.applyCalibration(cef3_corr);
 
-     assignValues( cef3_maxAmpl, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
-     assignValues( cef3_chaInt, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
+     assignValues( cef3_maxAmpl, *digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL);
+     assignValues( cef3_chaInt, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL);
+     assignValues( cef3_chaInt_cher, *digi_charge_integrated_bare_noise_sub_fast, CEF3_START_CHANNEL);
+     assignValues( cef3_chaInt_wls, *digi_charge_integrated_bare_noise_sub_slow, CEF3_START_CHANNEL);
 
-     assignValues( cef3_maxAmpl_corr1, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
-     assignValues( cef3_chaInt_corr1, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
+//     assignValues( cef3_maxAmpl_corr1, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
+//     assignValues( cef3_chaInt_corr1, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
 
 
 
-     assignValues( cef3_maxAmpl_bare, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
-     assignValues( cef3_chaInt_bare, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
-
-     assignValues( cef3_maxAmpl_bare_corr, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
-     assignValues( cef3_chaInt_bare_corr, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
-
-     cef3Calib.applyCalibration(cef3_maxAmpl_bare_corr);
-     cef3Calib.applyCalibration(cef3_chaInt_bare_corr);
+//     assignValues( cef3_maxAmpl_bare, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
+//     assignValues( cef3_chaInt_bare, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
+//
+//     assignValues( cef3_maxAmpl_bare_corr, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
+//     assignValues( cef3_chaInt_bare_corr, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
+//
+//     cef3Calib.applyCalibration(cef3_maxAmpl_bare_corr);
+//     cef3Calib.applyCalibration(cef3_chaInt_bare_corr);
 
      assignValues( bgo_corr, *BGOvalues, 0 );
      bgoCalib.applyCalibration(bgo_corr);
