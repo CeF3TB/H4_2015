@@ -58,7 +58,7 @@ int main( int argc, char* argv[] ) {
    } else {
 
      std::cout << "Usage:" << std::endl;
-     std::cout << "./makeAnalysisTree [runName]" << std::endl;
+     std::cout << "./makeAnalysisTree [runName] ([tag])" << std::endl;
      exit(12345);
 
    }
