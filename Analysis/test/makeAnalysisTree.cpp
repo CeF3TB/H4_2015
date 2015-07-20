@@ -7,7 +7,7 @@
 #include "TFile.h"
 #include "TBranch.h"
 #include "TChain.h"
-
+#include "TVectorD.h"
 
 #include "channelInfo.h"
 #include "interface/HodoCluster.h"
@@ -20,6 +20,7 @@
 
 void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos );
 void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos );
+void computeCherenkov(std::vector<float> &cher,std::vector<float> wls);
 void doHodoReconstructionBool( std::vector<bool> values, int &nClusters, int *nFibres, float *pos, float fibreWidth, int clusterMaxFibres, float Cut );
 std::vector<HodoCluster*> getHodoClustersBool( std::vector<bool> hodo, float fibreWidth, int nClusterMax, float Cut );
 
@@ -223,8 +224,6 @@ int main( int argc, char* argv[] ) {
    fChain->SetBranchAddress("digi_max_amplitude", &digi_max_amplitude, &b_digi_max_amplitude);
    fChain->SetBranchAddress("digi_pedestal", &digi_pedestal, &b_digi_pedestal);
    fChain->SetBranchAddress("digi_pedestal_rms", &digi_pedestal_rms, &b_digi_pedestal_rms);
-   //   fChain->SetBranchAddress("digi_time_at_frac30", &digi_time_at_frac30, &b_digi_time_at_frac30);
-   //   fChain->SetBranchAddress("digi_time_at_frac50", &digi_time_at_frac50, &b_digi_time_at_frac50);
    fChain->SetBranchAddress("digi_time_at_max", &digi_time_at_max, &b_digi_time_at_max);
    fChain->SetBranchAddress("HODOX1", &HODOX1, &b_HODOX1);
    fChain->SetBranchAddress("HODOX2", &HODOX2, &b_HODOX2);
@@ -239,14 +238,9 @@ int main( int argc, char* argv[] ) {
    fChain->SetBranchAddress("BeamTilt", &BeamTilt, &b_BeamTilt);
    fChain->SetBranchAddress("IsPhysics", &IsPhysics, &b_IsPhysics);
    fChain->SetBranchAddress("nTdcHits", &nTdcHits, &b_nTdcHits);
-//   fChain->SetBranchAddress("digi_charge_integrated_sub", &digi_charge_integrated_sub, &b_digi_charge_integrated_sub);
-//   fChain->SetBranchAddress("digi_max_amplitude_sub", &digi_max_amplitude_sub, &b_digi_max_amplitude_sub);
    fChain->SetBranchAddress("digi_pedestal_sub", &digi_pedestal_sub, &b_digi_pedestal_sub);
    fChain->SetBranchAddress("digi_pedestal_rms_sub", &digi_pedestal_rms_sub, &b_digi_pedestal_rms_sub);
-//   fChain->SetBranchAddress("digi_charge_integrated_corr1", &digi_charge_integrated_corr1, &b_digi_charge_integrated_corr1);
-//   fChain->SetBranchAddress("digi_max_amplitude_corr1", &digi_max_amplitude_corr1, &b_digi_max_amplitude_corr1);
-//   fChain->SetBranchAddress("digi_charge_integrated_corr2", &digi_charge_integrated_corr2, &b_digi_charge_integrated_corr2);
-//   fChain->SetBranchAddress("digi_max_amplitude_corr2", &digi_max_amplitude_corr2, &b_digi_max_amplitude_corr2);
+
 
    fChain->SetBranchAddress("digi_max_amplitude_bare", &digi_max_amplitude_bare, &b_digi_max_amplitude_bare);
    fChain->SetBranchAddress("digi_charge_integrated_bare", &digi_charge_integrated_bare, &b_digi_charge_integrated_bare);
@@ -254,29 +248,6 @@ int main( int argc, char* argv[] ) {
    fChain->SetBranchAddress("digi_max_amplitude_bare_noise_sub", &digi_max_amplitude_bare_noise_sub, &b_digi_max_amplitude_bare_noise_sub);
    fChain->SetBranchAddress("digi_charge_integrated_bare_noise_sub_fast", &digi_charge_integrated_bare_noise_sub_fast, &b_digi_charge_integrated_bare_noise_sub_fast);
    fChain->SetBranchAddress("digi_charge_integrated_bare_noise_sub_slow", &digi_charge_integrated_bare_noise_sub_slow, &b_digi_charge_integrated_bare_noise_sub_slow);
-//   fChain->SetBranchAddress("digi_charge_integrated_frac10", &digi_charge_integrated_frac10, &b_digi_charge_integrated_frac10);
-//   fChain->SetBranchAddress("digi_charge_integrated_frac30", &digi_charge_integrated_frac30, &b_digi_charge_integrated_frac30);
-//   fChain->SetBranchAddress("digi_charge_integrated_frac50", &digi_charge_integrated_frac50, &b_digi_charge_integrated_frac50);
-
-
-
-   /*
-   tree->GetEntry( 42 );
-   
-   std::string theBeamEnergy = Form("%.0f",BeamEnergy);
-   if( runNumber > 272 && runNumber < 298){
-     theBeamEnergy = "273"; //For the long position scan prior to tdc adjustment
-   }
-   std::cout << "The used constant file has label = "<< theBeamEnergy  << std::endl;
-   
-
-   //set the tag for calibration
-   TagHelper tagHelper(tag,theBeamEnergy);
-   EnergyCalibration cef3Calib(tagHelper.getCeF3FileName());
-   EnergyCalibration bgoCalib(tagHelper.getBGOFileName());
-   AlignmentOfficer alignOfficer(tagHelper.getAlignmentFileName());
-   */
-
 
 
 
@@ -296,14 +267,6 @@ int main( int argc, char* argv[] ) {
    outTree->Branch( "spill", &spillNumber, "spill/i" );
    outTree->Branch( "event", &evtNumber, "event/i" );
 
-   float s1;
-   //   outTree->Branch( "s1", &s1, "s1/F" );
-   float s3;
-   //   outTree->Branch( "s3", &s3, "s3/F" );
-   float s4;
-   //   outTree->Branch( "s4", &s4, "s4/F" );
-   float s6;
-   //   outTree->Branch( "s6", &s6, "s6/F" );
 
    //Original
    std::vector<float> cef3( CEF3_CHANNELS, -1. );
@@ -333,53 +296,6 @@ int main( int argc, char* argv[] ) {
 
    std::vector<float> bgo_corr( BGO_CHANNELS, -1. );
    outTree->Branch( "bgo_corr", &bgo_corr );
-
-   /*
-   //Pedestal Subtracted
-   std::vector<float> cef3_sub( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_sub", &cef3_sub );
-   //Pedestal Subtracted Intercalibrated
-   std::vector<float> cef3_sub_corr( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_sub_corr", &cef3_sub_corr );
-   */
-
-   //With Corr1
-//   std::vector<float> cef3_maxAmpl_corr1( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_maxAmpl_corr1", &cef3_maxAmpl_corr1 );
-//   std::vector<float> cef3_chaInt_corr1( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_chaInt_corr1", &cef3_chaInt_corr1 );
-//
-//  //With Corr1 Intercalibrated
-//   std::vector<float> cef3_maxAmpl_corr1_corr( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_maxAmpl_corr1_corr", &cef3_maxAmpl_corr1_corr );
-//   std::vector<float> cef3_chaInt_corr1_corr( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_chaInt_corr1_corr", &cef3_chaInt_corr1_corr );
-
-
-//   std::vector<float> cef3_maxAmpl_bare( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_maxAmpl_bare", &cef3_maxAmpl_bare );
-//   std::vector<float> cef3_chaInt_bare( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_chaInt_bare", &cef3_chaInt_bare );
-//   std::vector<float> cef3_maxAmpl_bare_corr( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_maxAmpl_bare_corr", &cef3_maxAmpl_bare_corr );
-//   std::vector<float> cef3_chaInt_bare_corr( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_chaInt_bare_corr", &cef3_chaInt_bare_corr );
-//
-//
-//   std::vector<float> cef3_chaInt_frac10( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_chaInt_frac10", &cef3_chaInt_frac10 );
-//   std::vector<float> cef3_chaInt_frac30( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_chaInt_frac30", &cef3_chaInt_frac30 );
-//   std::vector<float> cef3_chaInt_frac50( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_chaInt_frac50", &cef3_chaInt_frac50 );
-//
-//   std::vector<float> cef3_chaInt_frac10_corr( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_chaInt_frac10_corr", &cef3_chaInt_frac10_corr );
-//   std::vector<float> cef3_chaInt_frac30_corr( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_chaInt_frac30_corr", &cef3_chaInt_frac30_corr );
-//   std::vector<float> cef3_chaInt_frac50_corr( CEF3_CHANNELS, -1. );
-//   outTree->Branch( "cef3_chaInt_frac50_corr", &cef3_chaInt_frac50_corr );
-
 
 
    float xTable;
@@ -561,22 +477,9 @@ int main( int argc, char* argv[] ) {
 
      assignValues( cef3_maxAmpl, *digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL);
-     assignValues( cef3_chaInt_cher, *digi_charge_integrated_bare_noise_sub_fast, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt_wls, *digi_charge_integrated_bare_noise_sub_slow, CEF3_START_CHANNEL);
-
-//     assignValues( cef3_maxAmpl_corr1, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
-//     assignValues( cef3_chaInt_corr1, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
-
-
-
-//     assignValues( cef3_maxAmpl_bare, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
-//     assignValues( cef3_chaInt_bare, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
-//
-//     assignValues( cef3_maxAmpl_bare_corr, *digi_max_amplitude_bare, CEF3_START_CHANNEL);
-//     assignValues( cef3_chaInt_bare_corr, *digi_charge_integrated_bare, CEF3_START_CHANNEL);
-//
-//     cef3Calib.applyCalibration(cef3_maxAmpl_bare_corr);
-//     cef3Calib.applyCalibration(cef3_chaInt_bare_corr);
+     assignValues( cef3_chaInt_cher, *digi_charge_integrated_bare_noise_sub_fast, CEF3_START_CHANNEL);
+     computeCherenkov(cef3_chaInt_cher,cef3_chaInt_wls);
 
      assignValues( bgo_corr, *BGOvalues, 0 );
      bgoCalib.applyCalibration(bgo_corr);
@@ -794,6 +697,19 @@ void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsi
 
 }
 
+void computeCherenkov(std::vector<float> &cher,std::vector<float> wls){
+  TVectorD integrals(4);//values obtained from run2778
+  integrals[0]=0.0872292;
+  integrals[1]=0.0586668;
+  integrals[2]=0.333334;
+  integrals[3]=0.062636;
+  
+  for (int i=0;i<cher.size();++i){
+    float chargeWlsUnderCher=(wls[i]*integrals[i])/(1-integrals[i]);//amount of wls charge under cherenkov peak. estimated by fit
+    cher[i]=cher[i]-chargeWlsUnderCher;
+  }
+  
+}
 
 
 
