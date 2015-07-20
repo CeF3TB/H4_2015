@@ -18,6 +18,11 @@ EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore 
 
 all: drawAlignmentCorrVsRun  makeAnalysisTree alignTracking analyzeCherenkov fastPlotter drawLinearity drawWaveform 
 
+
+drawCherenkov:  DrawTools.o RecoTree.o
+	$(CC) -Wall $(INCLUDES) -o ./bin/drawCherenkov $(EXE_DIR)/drawCherenkov.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
+
+
 makeAnalysisTree: RunHelper.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/makeAnalysisTree $(EXE_DIR)/makeAnalysisTree.cpp $(LIB_DIR)/RunHelper.o $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/EnergyCalibration.o $(LIB_DIR)/AlignmentOfficer.o $(ROOTFLAG) $(EXTRALIBS)
 
@@ -47,6 +52,10 @@ fastPlotter.o: ./src/fastPlotter.cc
 
 Event.o: ./src/Event.cc
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/Event.o -c ./src/Event.cc $(ROOTFLAG) $(EXTRALIBS)
+
+RecoTree.o: ./src/RecoTree.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/RecoTree.o -c ./src/RecoTree.cc $(ROOTFLAG) $(EXTRALIBS)
+
 
 LinearityLooper.o: ./src/LinearityLooper.cc Event.o
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/LinearityLooper.o -c ./src/LinearityLooper.cc $(ROOTFLAG) $(EXTRALIBS)
