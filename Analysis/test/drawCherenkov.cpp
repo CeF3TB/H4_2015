@@ -344,26 +344,26 @@ int main( int argc, char* argv[] ) {
   c1.Write("chargeIntCher_tight");
 
   c1.Clear();
-  wlsHistos[1]->SetLineColor(kBlue);
-  wlsHistos[2]->SetLineColor(kRed);
-  wlsHistos[3]->SetLineColor(kViolet);
+  wlsHistos_tight[1]->SetLineColor(kBlue);
+  wlsHistos_tight[2]->SetLineColor(kRed);
+  wlsHistos_tight[3]->SetLineColor(kViolet);
   max=-1;
   for(int i=0;i<4;++i){
-    if(max<wlsHistos[i]->GetMaximum()){
-      max=wlsHistos[i]->GetMaximum();
+    if(max<wlsHistos_tight[i]->GetMaximum()){
+      max=wlsHistos_tight[i]->GetMaximum();
     }
   }
 
   for(int i=0;i<4;++i){
-    wlsHistos[i]->GetYaxis()->SetRangeUser(1,max*1.1);
-    wlsHistos[i]->GetXaxis()->SetTitle("Charge Integrated");
-    wlsHistos[i]->GetYaxis()->SetTitle("Events");
-    if (i==0)    wlsHistos[i]->Draw();
-    else wlsHistos[i]->Draw("same");
+    wlsHistos_tight[i]->GetYaxis()->SetRangeUser(1,max*1.1);
+    wlsHistos_tight[i]->GetXaxis()->SetTitle("Charge Integrated");
+    wlsHistos_tight[i]->GetYaxis()->SetTitle("Events");
+    if (i==0)    wlsHistos_tight[i]->Draw();
+    else wlsHistos_tight[i]->Draw("same");
   }
   pave->Draw("same");
-  c1.SaveAs("plots_drawCherenkov/chargeIntWls_"+runNumberString+".png");
-  c1.SaveAs("plots_drawCherenkov/chargeIntWls_"+runNumberString+".pdf");
+  c1.SaveAs("plots_drawCherenkov/chargeIntWls_tight_"+runNumberString+".png");
+  c1.SaveAs("plots_drawCherenkov/chargeIntWls_tight_"+runNumberString+".pdf");
   c1.Write("chargeIntWls_tight");
 
 
@@ -408,7 +408,8 @@ int main( int argc, char* argv[] ) {
     RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
     fit_fct.fitTo(data);
     fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
-    // fit_fct.paramOn(frame); //this will display the fit parameters on canvas               
+    
+        // fit_fct.paramOn(frame); //this will display the fit parameters on canvas               
     
     double mean = meanr.getVal();
     double meanErr = meanr.getError();

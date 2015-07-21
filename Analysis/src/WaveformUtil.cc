@@ -91,7 +91,7 @@ void WaveformUtil::Loop(){
   highRange[0]=500;
   highRange[1]=720;
   highRange[2]=600;
-  highRange[3]=720;
+  highRange[3]=680;
 
   for (int i=0;i<NFIBERS;++i){
     meanWaveGraphs[i]=new TGraph(1024, time, mean[i]);
