@@ -13,6 +13,8 @@
 #include "RooFFTConvPdf.h"
 #include "RooPlot.h"
 #include "TVectorD.h"
+#include "TGaxis.h"
+#include "DrawTools.h"
 
 #include "interface/channelInfo.h"
 #include "interface/HodoCluster.h"
@@ -31,19 +33,25 @@ void copyArray( int n, float *source, float *target );
 
 void WaveformUtil::Loop(){
 
+  DrawTools::setStyle();
+
   if (fChain == 0) return;
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //  nentries=5000;
+  //   nentries=1000;
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
-
+  float meanTimeAtMax[NFIBERS];
+  
   for (int i=0;i<NFIBERS;++i){
+    meanTimeAtMax[i]=0;
     for (int j=0;j<NDIGISAMPLES;++j){
       mean[i][j]=0;
     }
   }
+  
+
 
 
   TString runNumberString;
@@ -60,11 +68,16 @@ void WaveformUtil::Loop(){
     }
     if(jentry%1000 == 0)std::cout<<"Processing entry:"<<jentry<<std::endl;
     //    if(passesHodoSelection()==false)continue;
-    float timeOfTheEvent=digi_time_at_max_bare_noise_sub->at(2);//synchronizing time of events with time of kuraray
-    float shiftTime=68.37-timeOfTheEvent;//mean fitted on run 2778
-    int shiftSample=shiftTime/(10e9*timeSampleUnit(digiFreq));
 
-
+    float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
+    //    float shiftTime=68.37-timeOfTheEvent;//mean fitted on kuraray run 2778
+         float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
+    //    float shiftTime=138.1-timeOfTheEvent;//mean fitted on trigger run 329 for 2014 data
+    int shiftSample=shiftTime/(1e9*timeSampleUnit(digiFreq));
+   //    std::cout<<shiftSample<<std::endl;
+    for (int i=0;i<4;++i){
+      if(digi_time_at_max_bare_noise_sub->at(i)>0 && digi_time_at_max_bare_noise_sub->at(i))meanTimeAtMax[i]+=digi_time_at_max_bare_noise_sub->at(i); 
+    }
     for (int i=0;i<1024*4;++i){
       if(digi_value_ch->at(i) > 3)continue;
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
@@ -75,7 +88,8 @@ void WaveformUtil::Loop(){
       //      if(digi_value_ch->at(i)==1 )      std::cout<<"i:"<<i<<" isample:"<<iSample<<"digivalue:"<<digi_value_bare_noise_sub->at(i)<<" digivalue new:"<<digi_value_bare_noise_sub->at(iSample)<<" channel:"<<digi_value_ch->at(iSample)<<std::endl;
       mean[digi_value_ch->at(i)][i-1024*digi_value_ch->at(i)]+=(float)(digi_value_bare_noise_sub->at(iSample)/nentries);
       if(i<1024)time[i]=digi_value_time->at(i);
-    }
+      
+   }
   }
 
   //  exit(0);
@@ -100,17 +114,29 @@ void WaveformUtil::Loop(){
     meanWaveGraphs[i]->SetName("waveform_"+fiber);
 
     meanWaveHistos[i]=new TH1F("waveform_histo_"+fiber,"",1024,0,time[1023]);
+    //    meanWaveHistosForPlots[i]=new TH1F("waveform_histo_forplots_"+fiber,"",1024,-300*1e9*time[1],1e9*time[1023-300]);
+    meanTimeAtMax[i]/=nentries;
+    //    std::cout<<meanTimeAtMax[i]<< " unit:"<<timeSampleUnit(digiFreq)<<std::endl;
+    meanWaveHistosForPlots[i]=new TH1F("waveform_histo_forplots_"+fiber,"",1024,-meanTimeAtMax[i],1e9*time[1023-(int)(meanTimeAtMax[i]*1.e-9/timeSampleUnit(digiFreq))]);
+  
     for (int j=0;j<NDIGISAMPLES;++j){  
 
       for(int k=0;k<mean[i][j];k++){
 	meanWaveHistos[i]->Fill(time[j]);
+	meanWaveHistosForPlots[i]->Fill(1e9*(time[j])-meanTimeAtMax[i]);
       }
     }
 
     meanWaveHistos[i]->Scale(nentries);
     meanWaveHistos[i]->Sumw2();
     meanWaveHistos[i]->Scale(1./nentries);//this trick is just to get correct errors
+    meanWaveHistosForPlots[i]->Scale(nentries);
+    meanWaveHistosForPlots[i]->Sumw2();
+    meanWaveHistosForPlots[i]->Scale(1./nentries);//this trick is just to get correct errors
+    meanWaveHistosForPlots[i]->Scale(0.25);//we need millivolts
+
     meanWaveHistos[i]->Write();
+    meanWaveHistosForPlots[i]->Write();
     meanWaveGraphs[i]->Write();
 
 
@@ -143,6 +169,9 @@ void WaveformUtil::Loop(){
 
     lxg.plotOn(frame) ;
 
+    gStyle->SetPadRightMargin(0.05);
+    TGaxis::SetMaxDigits(3);
+
     TCanvas c1("c_"+fiber);
     frame->Draw();
     c1.Write();
@@ -153,6 +182,21 @@ void WaveformUtil::Loop(){
     if(digiFreq==1)finalFastSample=185;
     integrals[i]=histopdf->Integral(4,finalFastSample);//the pdf is already normalized to 1
     histopdf->Write();
+
+    c1.Clear();
+
+    //    meanWaveHistos[i]->Scale(1./meanWaveHistos[i]->Integral());
+    TPaveText* pave = DrawTools::getLabelTop("100 GeV Electron Beam");
+    meanWaveHistosForPlots[i]->GetXaxis()->SetTitle("Time [ns]");
+    meanWaveHistosForPlots[i]->GetYaxis()->SetTitle("Signal Amplitude [mV]");
+    std::cout<<meanTimeAtMax[i]<<std::endl;
+    //      meanWaveHistosForPlots[i]->GetXaxis()->SetRangeUser(-meanTimeAtMax[i],1e9*time[1023]-meanTimeAtMax[i]));
+    
+    meanWaveHistosForPlots[i]->Draw("histl");
+    pave->Draw("same");
+    c1.Write("pulseShape"+fiber);
+    c1.SaveAs("plots/pulseShape"+fiber+".png");
+    c1.SaveAs("plots/pulseShape"+fiber+".pdf");
   }
 
   integrals.Write("integrals_fast");

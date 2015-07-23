@@ -20,6 +20,7 @@ class WaveformUtil: public Event{
  public:
   TGraph* meanWaveGraphs[4];
   TH1F* meanWaveHistos[4];
+  TH1F* meanWaveHistosForPlots[4];
 
   WaveformUtil(TTree *tree=0);
   void     Loop();
