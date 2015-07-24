@@ -84,8 +84,8 @@ void WaveformUtil::Loop(){
       }
       //      if(digi_value_ch->at(i)==1 )      std::cout<<"i:"<<i<<" isample:"<<iSample<<"digivalue:"<<digi_value_bare_noise_sub->at(i)<<" digivalue new:"<<digi_value_bare_noise_sub->at(iSample)<<" channel:"<<digi_value_ch->at(iSample)<<std::endl;
       mean[digi_value_ch->at(i)][i-1024*digi_value_ch->at(i)]+=(float)(digi_value_bare_noise_sub->at(iSample)/nentries);
-      //MOVE TO makeAnalysisTree      if(i<1024)time[i]=digi_value_time->at(i);
-      //      waveform.at(digi_value_ch->at(i))->addTimeAndSample(i*timeSampleUnit(digiFreq),digi_value_bare_noise_sub->at(iSample));
+      if(i<1024)time[i]=digi_value_time->at(i);
+    
       
    }
   }

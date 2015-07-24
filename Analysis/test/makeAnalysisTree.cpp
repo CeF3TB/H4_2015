@@ -16,7 +16,7 @@
 #include "interface/AlignmentOfficer.h"
 
 #include "CommonTools/interface/RunHelper.h"
-
+#include "interface/Waveform.h"
 
 void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos );
 void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos );
@@ -29,7 +29,7 @@ std::vector<HodoCluster*> getHodoClusters( std::vector<float> hodo, float fibreW
 std::vector<HodoCluster*> getHodoClustersMultipleCuts( std::vector<float> hodo, float fibreWidth, int nClusterMax, std::vector<float> Cut );
 void copyArray( int n, float *source, float *target );
 void doHodoReconstructionMultipleCuts( std::vector<float> values, int &nClusters, int *nFibres, float *pos, float fibreWidth, int clusterMaxFibres, std::vector<float> Cut );
-
+float timeSampleUnit(int drs4Freq);
 
 
 
@@ -479,6 +479,7 @@ int main( int argc, char* argv[] ) {
       int iSample=i;
       if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
 	iSample=i+shiftSample;
+        waveform.at(digi_value_ch->at(i))->addTimeAndSample(i*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
       }
     }
     
@@ -940,4 +941,15 @@ void doHodoReconstructionBool( std::vector<bool> values, int &nClusters, int *nF
     pos[i] = clusters[i]->getPosition();
   }
 
+}
+
+float timeSampleUnit(int drs4Freq)
+{
+  if (drs4Freq == 0)
+    return 0.2E-9;
+  else if (drs4Freq == 1)
+    return 0.4E-9;
+  else if (drs4Freq == 2)
+    return 1.E-9;
+  return -999.;
 }
