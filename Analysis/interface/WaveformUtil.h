@@ -23,7 +23,7 @@ class WaveformUtil: public Event{
   TH1F* meanWaveHistos[4];
   TH1F* meanWaveHistosForPlots[4];
 
-  //MOVE TO make makeAnalysisTree  std::vector<Waveform*> waveform;
+
 
   WaveformUtil(TTree *tree=0);
   void     Loop();
