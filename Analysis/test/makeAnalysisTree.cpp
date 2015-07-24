@@ -83,6 +83,9 @@ int main( int argc, char* argv[] ) {
    UInt_t          runNumber;
    UInt_t          spillNumber;
    UInt_t          evtNumber;
+   std::vector<int>     *digi_value_ch;
+   std::vector<float>   *digi_value_time;
+   std::vector<float>   *digi_value_bare_noise_sub;
    std::vector<float>   *BGOvalues;
    std::vector<float>   *SCINTvalues;
    std::vector<float>   *TDCreco;
@@ -127,6 +130,9 @@ int main( int argc, char* argv[] ) {
 
 
    // List of branches
+   TBranch        *b_digi_value_ch;   //!
+   TBranch        *b_digi_value_time;   //!
+   TBranch        *b_digi_value_bare_noise_sub;   //!
    TBranch        *b_runNumber;   //!
    TBranch        *b_spillNumber;   //!
    TBranch        *b_evtNumber;   //!
@@ -173,6 +179,10 @@ int main( int argc, char* argv[] ) {
    TBranch *b_digi_charge_integrated_frac50;
 
    // Set object pointer
+   digi_value_ch = 0;
+   digi_value_time = 0;
+   digi_value_bare_noise_sub = 0;
+
    BGOvalues = 0;
    SCINTvalues = 0;
    TDCreco = 0;
@@ -217,6 +227,9 @@ int main( int argc, char* argv[] ) {
    fChain->SetBranchAddress("runNumber", &runNumber, &b_runNumber);
    fChain->SetBranchAddress("spillNumber", &spillNumber, &b_spillNumber);
    fChain->SetBranchAddress("evtNumber", &evtNumber, &b_evtNumber);
+   fChain->SetBranchAddress("digi_value_ch", &digi_value_ch, &b_digi_value_ch);
+   fChain->SetBranchAddress("digi_value_time", &digi_value_time, &b_digi_value_time);
+   fChain->SetBranchAddress("digi_value_bare_noise_sub", &digi_value_bare_noise_sub, &b_digi_value_bare_noise_sub);
    fChain->SetBranchAddress("BGOvalues", &BGOvalues, &b_BGOvalues);
    fChain->SetBranchAddress("SCINTvalues", &SCINTvalues, &b_SCINTvalues);
    fChain->SetBranchAddress("TDCreco", &TDCreco, &b_TDCreco);

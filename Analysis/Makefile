@@ -35,7 +35,7 @@ drawAlignmentCorrVsRun:	DrawTools.o
 #	 $(CC) -Wall $(INCLUDES) -o ./bin/analyzeCherenkov $(EXE_DIR)/analyzeCherenkov.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/CherenkovAnalyzer.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
 
 
-drawWaveform: Event.o WaveformUtil.o DrawTools.o HodoCluster.o
+drawWaveform: Event.o WaveformUtil.o DrawTools.o HodoCluster.o 
 	 $(CC) -Wall $(INCLUDES) -o ./bin/drawWaveform $(EXE_DIR)/drawWaveform.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/WaveformUtil.o  $(LIB_DIR)/DrawTools.o  $(LIB_DIR)/HodoCluster.o $(ROOTFLAG) $(EXTRALIBS)
 
 drawLinearity: Event.o LinearityLooper.o DrawTools.o
@@ -60,8 +60,8 @@ RecoTree.o: ./src/RecoTree.cc
 LinearityLooper.o: ./src/LinearityLooper.cc Event.o
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/LinearityLooper.o -c ./src/LinearityLooper.cc $(ROOTFLAG) $(EXTRALIBS)
 
-WaveformUtil.o: ./src/WaveformUtil.cc Event.o HodoCluster.o
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/WaveformUtil.o -c ./src/WaveformUtil.cc $(ROOTFLAG) $(EXTRALIBS)
+WaveformUtil.o: ./src/WaveformUtil.cc Event.o HodoCluster.o Waveform.o
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/WaveformUtil.o $(LIB_DIR)/WaveformUtil.o -c ./src/WaveformUtil.cc $(ROOTFLAG) $(EXTRALIBS)
 
 #CherenkovAnalyzer.o: Event.o
 #	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/CherenkovAnalyzer.o -c ./src/CherenkovAnalyzer.cc $(ROOTFLAG) $(EXTRALIBS)
@@ -80,6 +80,9 @@ EnergyCalibration.o: ./src/EnergyCalibration.cc
 
 RunHelper.o: ../CommonTools/src/RunHelper.cc
 	$(CC) $(CFLAGS) -o  $(LIB_DIR)/RunHelper.o -c ../CommonTools/src/RunHelper.cc $(ROOTFLAG) $(EXTRALIBS)
+
+Waveform.o: ./src/Waveform.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/Waveform.o -c ./src/Waveform.cc $(ROOTFLAG) $(EXTRALIBS)
 
 
 clean:
