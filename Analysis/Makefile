@@ -16,10 +16,10 @@ EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore 
 
 
 
-all: drawCherenkov drawAlignmentCorrVsRun  makeAnalysisTree alignTracking analyzeCherenkov fastPlotter drawLinearity drawWaveform 
+all: drawCherenkov drawAlignmentCorrVsRun  makeAnalysisTree alignTracking fastPlotter drawLinearity drawWaveform 
 
 
-drawCherenkov:  DrawTools.o RecoTree.o
+drawCherenkov:  Event.o DrawTools.o RecoTree.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/drawCherenkov $(EXE_DIR)/drawCherenkov.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
 
@@ -31,8 +31,8 @@ alignTracking:  HodoCluster.o AlignmentOfficer.o TagHelper.o DrawTools.o
 
 drawAlignmentCorrVsRun:	DrawTools.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/drawAlignmentCorrVsRun $(EXE_DIR)/drawAlignmentCorrVsRun.cpp $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
-analyzeCherenkov: Event.o CherenkovAnalyzer.o DrawTools.o
-	 $(CC) -Wall $(INCLUDES) -o ./bin/analyzeCherenkov $(EXE_DIR)/analyzeCherenkov.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/CherenkovAnalyzer.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
+#analyzeCherenkov: Event.o CherenkovAnalyzer.o DrawTools.o
+#	 $(CC) -Wall $(INCLUDES) -o ./bin/analyzeCherenkov $(EXE_DIR)/analyzeCherenkov.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/CherenkovAnalyzer.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
 
 
 drawWaveform: Event.o WaveformUtil.o DrawTools.o HodoCluster.o
@@ -63,8 +63,8 @@ LinearityLooper.o: ./src/LinearityLooper.cc Event.o
 WaveformUtil.o: ./src/WaveformUtil.cc Event.o HodoCluster.o
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/WaveformUtil.o -c ./src/WaveformUtil.cc $(ROOTFLAG) $(EXTRALIBS)
 
-CherenkovAnalyzer.o: ./src/CherenkovAnalyzer.cc Event.o
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/CherenkovAnalyzer.o -c ./src/CherenkovAnalyzer.cc $(ROOTFLAG) $(EXTRALIBS)
+#CherenkovAnalyzer.o: Event.o
+#	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/CherenkovAnalyzer.o -c ./src/CherenkovAnalyzer.cc $(ROOTFLAG) $(EXTRALIBS)
 
 HodoCluster.o: ./src/HodoCluster.cc
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/HodoCluster.o -c src/HodoCluster.cc $(ROOTFLAG) $(EXTRALIBS)
