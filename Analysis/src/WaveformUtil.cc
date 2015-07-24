@@ -51,12 +51,6 @@ void WaveformUtil::Loop(){
     }
   }
 
-  //MOVE TO makeAnalysisTree    
-  //waveform creation
-//  waveform.clear();
-//  for (unsigned int i=0; i<4; i++) {
-//    waveform.push_back(new Waveform());
-//  }
 
   TString runNumberString;
   int digiFreq;

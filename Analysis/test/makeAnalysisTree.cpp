@@ -83,6 +83,7 @@ int main( int argc, char* argv[] ) {
    UInt_t          runNumber;
    UInt_t          spillNumber;
    UInt_t          evtNumber;
+   UInt_t          digi_frequency;
    std::vector<int>     *digi_value_ch;
    std::vector<float>   *digi_value_time;
    std::vector<float>   *digi_value_bare_noise_sub;
@@ -98,7 +99,7 @@ int main( int argc, char* argv[] ) {
    std::vector<float>   *digi_pedestal;
    std::vector<float>   *digi_pedestal_rms;
    std::vector<float>   *digi_time_at_frac30;
-   std::vector<float>   *digi_time_at_frac50;
+   std::vector<float>   *digi_time_at_frac50_bare_noise_sub;
    std::vector<float>   *digi_time_at_max;
    std::vector<bool>    *HODOX1;
    std::vector<bool>    *HODOX2;
@@ -134,6 +135,7 @@ int main( int argc, char* argv[] ) {
    TBranch        *b_digi_value_time;   //!
    TBranch        *b_digi_value_bare_noise_sub;   //!
    TBranch        *b_runNumber;   //!
+   TBranch        *b_digi_frequency;   //!
    TBranch        *b_spillNumber;   //!
    TBranch        *b_evtNumber;   //!
    TBranch        *b_BGOvalues;   //!
@@ -148,7 +150,7 @@ int main( int argc, char* argv[] ) {
    TBranch        *b_digi_pedestal;   //!
    TBranch        *b_digi_pedestal_rms;   //!
    TBranch        *b_digi_time_at_frac30;   //!
-   TBranch        *b_digi_time_at_frac50;   //!
+   TBranch        *b_digi_time_at_frac50_bare_noise_sub;   //!
    TBranch        *b_digi_time_at_max;   //!
    TBranch        *b_HODOX1;   //!
    TBranch        *b_HODOX2;   //!
@@ -191,7 +193,7 @@ int main( int argc, char* argv[] ) {
    digi_pedestal = 0;
    digi_pedestal_rms = 0;
    digi_time_at_frac30 = 0;
-   digi_time_at_frac50 = 0;
+   digi_time_at_frac50_bare_noise_sub = 0;
    digi_time_at_max = 0;
    HODOX1 = 0;
    HODOX2 = 0;
@@ -225,6 +227,7 @@ int main( int argc, char* argv[] ) {
    fChain->SetMakeClass(1);
 
    fChain->SetBranchAddress("runNumber", &runNumber, &b_runNumber);
+   fChain->SetBranchAddress("digi_frequency", &digi_frequency, &b_digi_frequency);
    fChain->SetBranchAddress("spillNumber", &spillNumber, &b_spillNumber);
    fChain->SetBranchAddress("evtNumber", &evtNumber, &b_evtNumber);
    fChain->SetBranchAddress("digi_value_ch", &digi_value_ch, &b_digi_value_ch);
@@ -453,29 +456,47 @@ int main( int argc, char* argv[] ) {
 
    std::cout << nentries << std::endl;
  
+  //waveform creation
+ std::vector<Waveform*> waveform;
+  waveform.clear();
+  for (unsigned int i=0; i<CEF3_CHANNELS; i++) {
+   waveform.push_back(new Waveform());
+  }
+
  
-   for(int  iEntry=0; iEntry<nentries; ++iEntry ) {
+  for(int  iEntry=0; iEntry<nentries; ++iEntry ) {
+    
+    tree->GetEntry( iEntry );     
+    if( iEntry %  1000 == 0 ) std::cout << "Entry: " << iEntry << " / " << nentries << std::endl;
+    
+    float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
+    float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
+    int shiftSample=shiftTime/(1e9*timeSampleUnit(digi_frequency));
 
-     tree->GetEntry( iEntry );     
-     if( iEntry %  1000 == 0 ) std::cout << "Entry: " << iEntry << " / " << nentries << std::endl;
-
-
-   
-   std::string theBeamEnergy = Form("%.0f",BeamEnergy);
-   if( runNumber > 272 && runNumber < 298){
-     theBeamEnergy = "273"; //For the long position scan prior to tdc adjustment
-   }else if( runNumber  < 273){
-     theBeamEnergy = "259"; //For the first runs, before adjustments
-   }
-   //   std::cout << "The used constant file has label = "<< theBeamEnergy  << std::endl;
-   
-
-   //set the tag for calibration
-   TagHelper tagHelper(tag,theBeamEnergy);
-   EnergyCalibration cef3Calib(tagHelper.getCeF3FileName());
-   EnergyCalibration bgoCalib(tagHelper.getBGOFileName());
-   AlignmentOfficer alignOfficer(tagHelper.getAlignmentFileName());
-
+    for (int i=0;i<1024*4;++i){
+      if(digi_value_ch->at(i) > 3)continue;
+      if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
+      int iSample=i;
+      if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
+	iSample=i+shiftSample;
+      }
+    }
+    
+    std::string theBeamEnergy = Form("%.0f",BeamEnergy);
+    if( runNumber > 272 && runNumber < 298){
+      theBeamEnergy = "273"; //For the long position scan prior to tdc adjustment
+    }else if( runNumber  < 273){
+      theBeamEnergy = "259"; //For the first runs, before adjustments
+    }
+    //   std::cout << "The used constant file has label = "<< theBeamEnergy  << std::endl;
+    
+    
+    //set the tag for calibration
+    TagHelper tagHelper(tag,theBeamEnergy);
+    EnergyCalibration cef3Calib(tagHelper.getCeF3FileName());
+    EnergyCalibration bgoCalib(tagHelper.getBGOFileName());
+    AlignmentOfficer alignOfficer(tagHelper.getAlignmentFileName());
+    
    
 
 
