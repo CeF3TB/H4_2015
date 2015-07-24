@@ -468,11 +468,11 @@ int main( int argc, char* argv[] ) {
     
     tree->GetEntry( iEntry );     
     if( iEntry %  1000 == 0 ) std::cout << "Entry: " << iEntry << " / " << nentries << std::endl;
-    
+    std::cout<<digi_time_at_frac50_bare_noise_sub->size()<<std::endl;    
     float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
     int shiftSample=shiftTime/(1e9*timeSampleUnit(digi_frequency));
-
+    std::cout<<"daje"<<std::endl;
     for (int i=0;i<1024*4;++i){
       if(digi_value_ch->at(i) > 3)continue;
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
