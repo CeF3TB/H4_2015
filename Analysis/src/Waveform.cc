@@ -1,4 +1,4 @@
-#include "interface/Waveform.hpp"
+#include "interface/Waveform.h"
 
 #include "TGraph.h"
 #include "TF1.h"
