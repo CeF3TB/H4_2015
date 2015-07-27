@@ -241,6 +241,7 @@ int main( int argc, char* argv[] ) {
    fChain->SetBranchAddress("digi_pedestal", &digi_pedestal, &b_digi_pedestal);
    fChain->SetBranchAddress("digi_pedestal_rms", &digi_pedestal_rms, &b_digi_pedestal_rms);
    fChain->SetBranchAddress("digi_time_at_max", &digi_time_at_max, &b_digi_time_at_max);
+   fChain->SetBranchAddress("digi_time_at_frac50_bare_noise_sub", &digi_time_at_frac50_bare_noise_sub, &b_digi_time_at_frac50_bare_noise_sub);
    fChain->SetBranchAddress("HODOX1", &HODOX1, &b_HODOX1);
    fChain->SetBranchAddress("HODOX2", &HODOX2, &b_HODOX2);
    fChain->SetBranchAddress("HODOY1", &HODOY1, &b_HODOY1);
@@ -468,19 +469,18 @@ int main( int argc, char* argv[] ) {
     
     tree->GetEntry( iEntry );     
     if( iEntry %  1000 == 0 ) std::cout << "Entry: " << iEntry << " / " << nentries << std::endl;
-    std::cout<<digi_time_at_frac50_bare_noise_sub->size()<<std::endl;    
     float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
     int shiftSample=shiftTime/(1e9*timeSampleUnit(digi_frequency));
-    std::cout<<"daje"<<std::endl;
     for (int i=0;i<1024*4;++i){
       if(digi_value_ch->at(i) > 3)continue;
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
       int iSample=i;
       if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
 	iSample=i+shiftSample;
-        waveform.at(digi_value_ch->at(i))->addTimeAndSample(i*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
       }
+
+        waveform.at(digi_value_ch->at(i))->addTimeAndSample(i*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
     }
     
     std::string theBeamEnergy = Form("%.0f",BeamEnergy);
@@ -516,8 +516,8 @@ int main( int argc, char* argv[] ) {
      assignValues( cef3_chaInt_cher, *digi_charge_integrated_bare_noise_sub_fast, CEF3_START_CHANNEL);
      computeCherenkov(cef3_chaInt_cher,cef3_chaInt_wls);
 
-     assignValues( bgo_corr, *BGOvalues, 0 );
-     bgoCalib.applyCalibration(bgo_corr);
+     //     assignValues( bgo_corr, *BGOvalues, 0 );
+     //     bgoCalib.applyCalibration(bgo_corr);
 
      std::vector<bool> hodoX1_values(HODOX1_CHANNELS, -1.);
      std::vector<bool> hodoY1_values(HODOY1_CHANNELS, -1.);
@@ -535,6 +535,7 @@ int main( int argc, char* argv[] ) {
      std::vector<float> hodoSmallY_values(HODOSMALLY_CHANNELS, -1.);
      assignValues( hodoSmallY_values, *HODOSMALLvalues, 0 );
      assignValues( hodoSmallX_values, *HODOSMALLvalues, 4 );
+
 
 
      // hodo cluster reconstruction
