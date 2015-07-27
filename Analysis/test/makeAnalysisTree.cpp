@@ -457,18 +457,22 @@ int main( int argc, char* argv[] ) {
 
    std::cout << nentries << std::endl;
  
-  //waveform creation
- std::vector<Waveform*> waveform;
-  waveform.clear();
-  for (unsigned int i=0; i<CEF3_CHANNELS; i++) {
-   waveform.push_back(new Waveform());
-  }
 
  
   for(int  iEntry=0; iEntry<nentries; ++iEntry ) {
     
     tree->GetEntry( iEntry );     
     if( iEntry %  1000 == 0 ) std::cout << "Entry: " << iEntry << " / " << nentries << std::endl;
+
+    //waveform creation
+    std::vector<Waveform*> waveform;
+    waveform.clear();
+    for (unsigned int i=0; i<CEF3_CHANNELS; i++) {
+      waveform.push_back(new Waveform());
+      waveform.at(i)->clear();
+    }
+    
+
     float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
     int shiftSample=shiftTime/(1e9*timeSampleUnit(digi_frequency));
@@ -479,10 +483,24 @@ int main( int argc, char* argv[] ) {
       if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
 	iSample=i+shiftSample;
       }
-
         waveform.at(digi_value_ch->at(i))->addTimeAndSample(i*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
     }
+
+
+
+    float finalFastSample=230;
+    if(digi_frequency==1)finalFastSample=195;//no direct realtion between 5Gs and 2.5Gs since offset is different
     
+    std::vector<float> charge_slow;
+    std::vector<float> charge_fast;
+    for (unsigned int i=0; i<CEF3_CHANNELS; i++) {      
+      //      if(iEntry>100)std::cout<<shiftSample<<std::endl;
+      if(shiftSample<100 && shiftSample>-100)finalFastSample+=shiftSample;
+      else shiftSample = 0;
+      charge_fast.push_back(waveform.at(i)->charge_integrated(4,finalFastSample));
+      charge_slow.push_back(waveform.at(i)->charge_integrated(finalFastSample,900+shiftSample));
+    }
+
     std::string theBeamEnergy = Form("%.0f",BeamEnergy);
     if( runNumber > 272 && runNumber < 298){
       theBeamEnergy = "273"; //For the long position scan prior to tdc adjustment
@@ -512,9 +530,12 @@ int main( int argc, char* argv[] ) {
 
      assignValues( cef3_maxAmpl, *digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL);
-     assignValues( cef3_chaInt_wls, *digi_charge_integrated_bare_noise_sub_slow, CEF3_START_CHANNEL);
-     assignValues( cef3_chaInt_cher, *digi_charge_integrated_bare_noise_sub_fast, CEF3_START_CHANNEL);
+     assignValues( cef3_chaInt_wls, charge_slow, CEF3_START_CHANNEL);
+     assignValues( cef3_chaInt_cher, charge_fast, CEF3_START_CHANNEL);
      computeCherenkov(cef3_chaInt_cher,cef3_chaInt_wls);
+
+     charge_slow.clear();
+     charge_fast.clear();
 
      //     assignValues( bgo_corr, *BGOvalues, 0 );
      //     bgoCalib.applyCalibration(bgo_corr);
