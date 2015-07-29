@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
+#include <cmath>
 
 #include "TTree.h"
 #include "TFile.h"
@@ -64,7 +65,7 @@ int main( int argc, char* argv[] ) {
    }
 
    //   std::string fileName = "data/Corr04_12/run_" + runName + ".root";
-   std::string fileName = "output" + runName + ".root";
+   std::string fileName = "output_run" + runName + ".root";
    TFile* file = TFile::Open(fileName.c_str());
    if( file==0 ) {
      std::cout << "ERROR! Din't find file " << fileName << std::endl;
@@ -475,7 +476,7 @@ int main( int argc, char* argv[] ) {
 
     float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
-    int shiftSample=shiftTime/(1e9*timeSampleUnit(digi_frequency));
+    int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digi_frequency)));
     for (int i=0;i<1024*4;++i){
       if(digi_value_ch->at(i) > 3)continue;
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
@@ -483,22 +484,21 @@ int main( int argc, char* argv[] ) {
       if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
 	iSample=i+shiftSample;
       }
-        waveform.at(digi_value_ch->at(i))->addTimeAndSample(i*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
+      waveform.at(digi_value_ch->at(i))->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
+      //      std::cout<<"i:"<<digi_value_ch->at(i)<<" time:"<<(i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency)<<" value"<<digi_value_bare_noise_sub->at(iSample)<<std::endl;
     }
 
-
-
     float finalFastSample=230;
-    if(digi_frequency==1)finalFastSample=195;//no direct realtion between 5Gs and 2.5Gs since offset is different
+    if(digi_frequency==1)finalFastSample=185;//no direct realtion between 5Gs and 2.5Gs since offset is different
     
     std::vector<float> charge_slow;
     std::vector<float> charge_fast;
     for (unsigned int i=0; i<CEF3_CHANNELS; i++) {      
       //      if(iEntry>100)std::cout<<shiftSample<<std::endl;
-      if(shiftSample<100 && shiftSample>-100)finalFastSample+=shiftSample;
-      else shiftSample = 0;
+//      if(shiftSample<100 && shiftSample>-100)finalFastSample+=shiftSample;
+//      else shiftSample = 0;
       charge_fast.push_back(waveform.at(i)->charge_integrated(4,finalFastSample));
-      charge_slow.push_back(waveform.at(i)->charge_integrated(finalFastSample,900+shiftSample));
+      charge_slow.push_back(waveform.at(i)->charge_integrated(finalFastSample,900));
     }
 
     std::string theBeamEnergy = Form("%.0f",BeamEnergy);
@@ -516,7 +516,6 @@ int main( int argc, char* argv[] ) {
     EnergyCalibration bgoCalib(tagHelper.getBGOFileName());
     AlignmentOfficer alignOfficer(tagHelper.getAlignmentFileName());
     
-   
 
 
 
@@ -756,11 +755,12 @@ void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsi
 
 void computeCherenkov(std::vector<float> &cher,std::vector<float> wls){
   TVectorD integrals(4);//values obtained from run2778
-  integrals[0]=0.0872292;
-  integrals[1]=0.0586668;
-  integrals[2]=0.333334;
-  integrals[3]=0.062636;
-  
+//sample 185
+  integrals[0]=0.0982964;
+  integrals[1]=0.0591634; 
+  integrals[2]=0.333307; 
+  integrals[3]=0.0647194; 
+
   for (int i=0;i<cher.size();++i){
     float chargeWlsUnderCher=(wls[i]*integrals[i])/(1-integrals[i]);//amount of wls charge under cherenkov peak. estimated by fit
     cher[i]=cher[i]-chargeWlsUnderCher;
