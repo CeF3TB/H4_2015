@@ -10,7 +10,7 @@
 #include <TF1.h>
 #include <TGraph.h>
 #include "interface/Waveform.h"
-
+#include <cmath>
 // Header file for the classes stored in the TTree if any.
 #include <vector>
 

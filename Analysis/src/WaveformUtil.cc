@@ -39,7 +39,7 @@ void WaveformUtil::Loop(){
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //   nentries=1000;
+  //  nentries=1000;
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
   float meanTimeAtMax[NFIBERS];
@@ -51,6 +51,7 @@ void WaveformUtil::Loop(){
     }
   }
 
+  TH1F* shiftSampleHisto=new TH1F("shiftSample","shiftSample",30,-15.5,14.5);
 
   TString runNumberString;
   int digiFreq;
@@ -68,10 +69,10 @@ void WaveformUtil::Loop(){
     //    if(passesHodoSelection()==false)continue;
 
     float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
-         float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
+    float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
     //    float shiftTime=138.1-timeOfTheEvent;//mean fitted on trigger run 329 for 2014 data
-    int shiftSample=shiftTime/(1e9*timeSampleUnit(digiFreq));
-   //    std::cout<<shiftSample<<std::endl;
+    int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digiFreq)));
+    shiftSampleHisto->Fill(shiftSample);     
     for (int i=0;i<4;++i){
       if(digi_time_at_max_bare_noise_sub->at(i)>0 && digi_time_at_max_bare_noise_sub->at(i))meanTimeAtMax[i]+=digi_time_at_max_bare_noise_sub->at(i); 
     }
@@ -81,6 +82,7 @@ void WaveformUtil::Loop(){
       int iSample=i;
       if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
 	iSample=i+shiftSample;
+
       }
       //      if(digi_value_ch->at(i)==1 )      std::cout<<"i:"<<i<<" isample:"<<iSample<<"digivalue:"<<digi_value_bare_noise_sub->at(i)<<" digivalue new:"<<digi_value_bare_noise_sub->at(iSample)<<" channel:"<<digi_value_ch->at(iSample)<<std::endl;
       mean[digi_value_ch->at(i)][i-1024*digi_value_ch->at(i)]+=(float)(digi_value_bare_noise_sub->at(iSample)/nentries);
@@ -95,8 +97,8 @@ void WaveformUtil::Loop(){
   TFile* outFile = TFile::Open("outWaveFormUtil_"+runNumberString+".root","recreate");
   int lowRange[4],highRange[4];
   TVectorD integrals(4);
-
-  lowRange[0]=180;
+  shiftSampleHisto->Write();
+  lowRange[0]=190;
   lowRange[1]=170;
   lowRange[2]=130;
   lowRange[3]=170;
@@ -178,7 +180,7 @@ void WaveformUtil::Loop(){
     histopdf->SetName("fitted_histo_"+fiber);
     float finalFastSample=230;
     if(digiFreq==1)finalFastSample=185;
-    integrals[i]=histopdf->Integral(4,finalFastSample);//the pdf is already normalized to 1
+    integrals[i]=histopdf->Integral(4,finalFastSample)/histopdf->Integral(4,900);
     histopdf->Write();
 
     c1.Clear();
