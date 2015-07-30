@@ -84,10 +84,13 @@ int main( int argc, char* argv[] ) {
   TH1F* cherHistos[4];
   TH1F* wlsHistos[4];
 
+
+
   TH1F* totalHistos_tight[4];
   TH1F* totalHistosGainCorr_tight[4];
   TH1F* cherHistos_tight[4];
   TH1F* wlsHistos_tight[4];
+  TH1F* wlsHistos_tight_tot;
 
   for(int i=0;i<CEF3_CHANNELS;++i){
     TString fibre;
@@ -97,12 +100,15 @@ int main( int argc, char* argv[] ) {
     cherHistos[i] = new TH1F ("cherHisto_"+fibre,"",200,0,55e3);
     wlsHistos[i] = new TH1F ("wlsHisto_"+fibre,"",200,0,500000);
 
+
     totalHistosGainCorr_tight[i] = new TH1F ("totalHistoGainCorr_tight_"+fibre,"",200,0,0.5);
     totalHistos_tight[i] = new TH1F ("totalHisto_tight_"+fibre,"",400,0,300000);
     cherHistos_tight[i] = new TH1F ("cherHisto_tight_"+fibre,"",200,0,55e3);
     wlsHistos_tight[i] = new TH1F ("wlsHisto_tight_"+fibre,"",200,0,500000);
     
   }
+
+  wlsHistos_tight_tot= new TH1F ("wlsHisto_tight_total","",200*4,0,500000*4);
 
   TTree* recoTree=(TTree*)file->Get("recoTree");
   RecoTree t(recoTree);
@@ -135,6 +141,7 @@ int main( int argc, char* argv[] ) {
 	  else totalHistosGainCorr_tight[i]->Fill(t.cef3_chaInt->at(i)/gainR1450);
 	  cherHistos_tight[i]->Fill(t.cef3_chaInt_cher->at(i));
 	  wlsHistos_tight[i]->Fill(t.cef3_chaInt_wls->at(i));
+	  if(i==0)wlsHistos_tight_tot->Fill(t.cef3_chaInt_wls->at(0)+t.cef3_chaInt_wls->at(1)+t.cef3_chaInt->at(2)+t.cef3_chaInt_wls->at(3));
 	  }
 	}
       }
@@ -378,10 +385,12 @@ int main( int argc, char* argv[] ) {
   }
 
   //get the resolution of chInt
-  TVectorD meanValue(4);
-  TVectorD meanErrValue(4);
-  TVectorD widthValue(4);
-  TVectorD widthErrValue(4);
+  TVectorD meanValue(5);
+  TVectorD meanErrValue(5);
+  TVectorD widthValue(5);
+  TVectorD widthErrValue(5);
+  TVectorD resValue(5);
+  TVectorD resErrValue(5);
     
   for(int i=0;i<4;++i){
     TH1F* histo;
@@ -450,17 +459,96 @@ int main( int argc, char* argv[] ) {
     widthValue[i]=width.getVal();
     widthErrValue[i]=width.getError();
 
+    resValue[i]=reso;
+    resErrValue[i]=resoErr;
 
     cans->SaveAs("plots_drawCherenkov/CBFit_"+runNumberString+"_fibre_"+fibre+".png");
     cans->SaveAs("plots_drawCherenkov/CBFit_"+runNumberString+"_fibre_"+fibre+".pdf");
     cans->Write();
   }
 
+  
+
+  //total res
+  TH1F* histo;
+  histo=wlsHistos_tight_tot;
+   
+
+  double peakpos = histo->GetMean();
+  double sigma = histo->GetRMS();
+    
+  double fitmin;
+  double fitmax;
+  
+  
+  fitmin = peakpos-5*sigma;
+  fitmax = peakpos+5*sigma;
+        
+  RooRealVar x("x","ChInt", fitmin, fitmax);
+  RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
+  
+  RooPlot* frame;
+  frame = x.frame("Title");
+  data.plotOn(frame);  //this will show histogram data points on canvas                                                                                                         
+  //  data.statOn(frame);  //this will display hist stat on canvas                                                                                                                  
+  RooRealVar meanr("meanr","Mean",peakpos,peakpos-2*sigma, peakpos+2*sigma);
+  RooRealVar width("width","#sigma",sigma , 150.0, 5.*sigma);
+  RooRealVar A("A","Dist",2., 0.0, 7.0);
+  RooRealVar N("N","Deg",5, 0.0, 10);
+  
+  //  meanr.setRange( 30000. , 1000000.);
+  //  width.setRange(500, 22000);
+  RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
+  fit_fct.fitTo(data);
+  fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
+
+  
+  TH1F* fittedHisto=(TH1F*)data.createHistogram("histo_fit_total",x);
+  fittedHisto->Write();
+  // fit_fct.paramOn(frame); //this will display the fit parameters on canvas               
+  
+  double mean = meanr.getVal();
+  double meanErr = meanr.getError();
+  double rms = width.getVal();
+  double rmsErr = width.getError();
+  double reso = 100.* rms/mean; //in percent                          
+  double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
+  
+  
+  TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
+  cans->cd();
+  frame->Draw();
+  TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
+  lego->SetTextSize(0.038);
+  lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
+  lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", width.getVal(), width.getError() ), "");
+  lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
+  lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
+  lego->SetFillColor(0);
+  lego->Draw("same");
+  
+  meanValue[4]=meanr.getVal();
+  meanErrValue[4]=meanr.getError();
+  
+  widthValue[4]=width.getVal();
+  widthErrValue[4]=width.getError();
+  
+  resValue[4]=reso;
+  resErrValue[4]=resoErr;
+    
+  
+  cans->SaveAs("plots_drawCherenkov/CBFit_"+runNumberString+"_total.png");
+  cans->SaveAs("plots_drawCherenkov/CBFit_"+runNumberString+"_total.pdf");
+  cans->Write();
+  
   meanValue.Write("meanValue");
   meanErrValue.Write("meanErrValue");
   
   widthValue.Write("widthValue");
   widthErrValue.Write("widthErrValue");
+
+  resValue.Write("resValue");
+  resErrValue.Write("resErrValue");
   
 
   outFile->Write();
