@@ -73,7 +73,7 @@ int main( int argc, char* argv[] ) {
   //  TFile* file = TFile::Open("data/run_457.root"); //15 GeV
   //TFile* file = TFile::Open("data/run_431.root"); //10 GeV
   //  TFile* file = TFile::Open("data/run_273.root");
-  TFile* file = TFile::Open("output_run2894.root");
+  TFile* file = TFile::Open("rawData/output_run2894.root");
   TTree* tree = (TTree*)file->Get("outputTree");
 
 
