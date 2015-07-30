@@ -16,7 +16,10 @@ EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore 
 
 
 
-all: drawCherenkov drawAlignmentCorrVsRun  makeAnalysisTree alignTracking fastPlotter drawLinearity drawWaveform 
+all: drawCherenkov drawAlignmentCorrVsRun  makeAnalysisTree alignTracking fastPlotter drawLinearity drawWaveform drawRespVsXnY drawResolution
+
+drawResolution: DrawTools.o
+	$(CC) -Wall $(INCLUDES) -o ./bin/drawResolution $(EXE_DIR)/drawResolution.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
 
 drawRespVsXnY: DrawTools.o
