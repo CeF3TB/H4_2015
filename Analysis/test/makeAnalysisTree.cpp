@@ -65,7 +65,7 @@ int main( int argc, char* argv[] ) {
    }
 
    //   std::string fileName = "data/Corr04_12/run_" + runName + ".root";
-   std::string fileName = "rawData/output_run" + runName + ".root";
+   std::string fileName = "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/micheli/rawData/output_run" + runName + ".root";
    TFile* file = TFile::Open(fileName.c_str());
    if( file==0 ) {
      std::cout << "ERROR! Din't find file " << fileName << std::endl;
