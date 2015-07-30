@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -24,6 +25,7 @@
 #include "TH2F.h"
 #include "TLegend.h"
 #include "TGaxis.h"
+#include "TVectorD.h"
 
 float getRatioError( float num, float denom, float numErr, float denomErr ) {
 
@@ -99,7 +101,7 @@ int main( int argc, char* argv[] ) {
     totalHistos_tight[i] = new TH1F ("totalHisto_tight_"+fibre,"",400,0,300000);
     cherHistos_tight[i] = new TH1F ("cherHisto_tight_"+fibre,"",200,0,55e3);
     wlsHistos_tight[i] = new TH1F ("wlsHisto_tight_"+fibre,"",200,0,500000);
-
+    
   }
 
   TTree* recoTree=(TTree*)file->Get("recoTree");
@@ -376,10 +378,16 @@ int main( int argc, char* argv[] ) {
   }
 
   //get the resolution of chInt
+  TVectorD meanValue(4);
+  TVectorD meanErrValue(4);
+  TVectorD widthValue(4);
+  TVectorD widthErrValue(4);
+    
   for(int i=0;i<4;++i){
     TH1F* histo;
     if(i!=2) histo=wlsHistos_tight[i];
     else histo=totalHistos_tight[i];
+    //else histo=wlsHistos_tight[i];
 
     double peakpos = histo->GetMean();
     double sigma = histo->GetRMS();
@@ -393,7 +401,6 @@ int main( int argc, char* argv[] ) {
         
     RooRealVar x("x","ChInt", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
-    
 
     RooPlot* frame;
     frame = x.frame("Title");
@@ -409,7 +416,12 @@ int main( int argc, char* argv[] ) {
     RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
     fit_fct.fitTo(data);
     fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
-    
+
+    TString fibre;
+    fibre.Form("%d",i); 
+
+    TH1F* fittedHisto=(TH1F*)data.createHistogram("histo_fit_"+fibre,x);
+    fittedHisto->Write();
         // fit_fct.paramOn(frame); //this will display the fit parameters on canvas               
     
     double mean = meanr.getVal();
@@ -432,13 +444,24 @@ int main( int argc, char* argv[] ) {
     lego->SetFillColor(0);
     lego->Draw("same");
 
-    TString fibre;
-    fibre.Form("%d",i); 
+    meanValue[i]=meanr.getVal();
+    meanErrValue[i]=meanr.getError();
+
+    widthValue[i]=width.getVal();
+    widthErrValue[i]=width.getError();
+
 
     cans->SaveAs("plots_drawCherenkov/CBFit_"+runNumberString+"_fibre_"+fibre+".png");
     cans->SaveAs("plots_drawCherenkov/CBFit_"+runNumberString+"_fibre_"+fibre+".pdf");
     cans->Write();
   }
+
+  meanValue.Write("meanValue");
+  meanErrValue.Write("meanErrValue");
+  
+  widthValue.Write("widthValue");
+  widthErrValue.Write("widthErrValue");
+  
 
   outFile->Write();
   outFile->Close();
