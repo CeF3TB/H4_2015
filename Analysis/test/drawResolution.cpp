@@ -25,18 +25,28 @@ int main( int argc, char* argv[] ) {
   std::vector<int> runs;
 
   energies.push_back(20);
-  runs.push_back(2851);
   energies.push_back(50);
-  runs.push_back(2801);
   energies.push_back(100);
-  runs.push_back(2778);
   energies.push_back(150);
-  runs.push_back(2822);
   energies.push_back(200);
-  runs.push_back(2872);
   energies.push_back(250);
+
+  //HV 1450
+  runs.push_back(2851);
+  runs.push_back(2801);
+  runs.push_back(2778);
+  runs.push_back(2822);
+  runs.push_back(2872);
   runs.push_back(2894);
 
+
+//HV 1050
+//  runs.push_back(2864);
+//  runs.push_back(2814);
+//  runs.push_back(2795);
+//  runs.push_back(2849);
+//  runs.push_back(2885);
+//  runs.push_back(2907);
 
 
   TGraphErrors* gr_reso_vs_energy[5];
@@ -58,7 +68,6 @@ int main( int argc, char* argv[] ) {
     }
   }
 
-  std::cout<<"daje"<<std::endl;
   for(int i=0;i<5;++i){
     TString fibre;
     fibre.Form("%d",i); 
@@ -75,9 +84,9 @@ int main( int argc, char* argv[] ) {
     gr_reso_vs_energy[i]->SetMarkerColor(kBlue);
     gr_reso_vs_energy[i]->Draw("p same");
 
-        TF1 *fun= new TF1("fun","sqrt([0]*[0]/(x*x)+[1]*[1])",1, 250.+15.);
-    //    TF1 *fun= new TF1("fun","sqrt([0]*[0]/x+[1]*[1])",1, 250.+15.);
-    //    TF1 *fun= new TF1("fun",  "sqrt([0]*[0]/x+[1]*[1]+ [2]*[2]/(x*x))",1, 250+5.);
+    //        TF1 *fun= new TF1("fun","sqrt([0]*[0]/(x*x)+[1]*[1])",1, 250.+15.);
+    //TF1 *fun= new TF1("fun","sqrt([0]*[0]/x+[1]*[1])",1, 250.+15.);
+         TF1 *fun= new TF1("fun",  "sqrt([0]*[0]/x+[1]*[1]+ [2]*[2]/(x*x))",1, 250+5.);
     fun->SetParameter(1, 4.);
     fun->SetParameter(0, 20.);
     gr_reso_vs_energy[i]->Fit(fun,"RN");
@@ -87,16 +96,17 @@ int main( int argc, char* argv[] ) {
 
     TLegend* leg_neat = new TLegend(0.42, 0.92-0.06*5 , 0.9, 0.92);
     leg_neat->SetTextSize(0.038);
-    string ene="Data ";
-    ene+=Form("%.0f",energies[i]);
-    ene+=" GeV";
+    string ene="Data fibre ";
+    //  ene+=Form("%.0f",energies[i]);
+    //    ene+=" GeV";
+    ene+=fibre;
     leg_neat->AddEntry(gr_reso_vs_energy[i],ene.c_str(),"p");
     leg_neat->AddEntry((TObject*)0 ,Form("S =  %.2f\n%s / #sqrt{E [GeV]}",fun->GetParameter(0),"%" ),"");
     leg_neat->AddEntry( (TObject*)0 ,Form("C =  %.2f\n%s",(fun->GetParameter(1)) ,"%" ),"");
     leg_neat->SetFillColor(0);
     leg_neat->Draw("same");
 
-    c1->SaveAs("plots_reso/reso_"+fibre+".png");
+    c1->SaveAs("plots_reso/reso_HV1450_"+fibre+".png");
   }
   return 0;
 }
