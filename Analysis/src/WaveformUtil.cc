@@ -72,6 +72,7 @@ void WaveformUtil::Loop(){
     float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
     //    float shiftTime=138.1-timeOfTheEvent;//mean fitted on trigger run 329 for 2014 data
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digiFreq)));
+    shiftSample=-shiftSample;
     shiftSampleHisto->Fill(shiftSample);     
     for (int i=0;i<4;++i){
       if(digi_time_at_max_bare_noise_sub->at(i)>0 && digi_time_at_max_bare_noise_sub->at(i))meanTimeAtMax[i]+=digi_time_at_max_bare_noise_sub->at(i); 
