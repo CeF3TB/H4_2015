@@ -477,6 +477,7 @@ int main( int argc, char* argv[] ) {
     float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digi_frequency)));
+    shiftSample=-shiftSample;
     for (int i=0;i<1024*4;++i){
       if(digi_value_ch->at(i) > 3)continue;
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
@@ -489,7 +490,7 @@ int main( int argc, char* argv[] ) {
     }
 
     float finalFastSample=230;
-    if(digi_frequency==1)finalFastSample=185;//no direct realtion between 5Gs and 2.5Gs since offset is different
+    if(digi_frequency==1)finalFastSample=172;//no direct realtion between 5Gs and 2.5Gs since offset is different
     
     std::vector<float> charge_slow;
     std::vector<float> charge_fast;
@@ -755,11 +756,11 @@ void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsi
 
 void computeCherenkov(std::vector<float> &cher,std::vector<float> wls){
   TVectorD integrals(4);//values obtained from run2778
-//sample 185
-  integrals[0]=0.0982964;
-  integrals[1]=0.0591634; 
-  integrals[2]=0.333307; 
-  integrals[3]=0.0647194; 
+//sample 172
+  integrals[0]=0.0787133;
+  integrals[1]=0.0388933;
+  integrals[2]=0.210458;
+  integrals[3]=0.042154;
 
   for (int i=0;i<cher.size();++i){
     float chargeWlsUnderCher=(wls[i]*integrals[i])/(1-integrals[i]);//amount of wls charge under cherenkov peak. estimated by fit

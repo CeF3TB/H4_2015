@@ -39,7 +39,7 @@ void WaveformUtil::Loop(){
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //  nentries=1000;
+  //   nentries=1000;
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
   float meanTimeAtMax[NFIBERS];
@@ -180,7 +180,7 @@ void WaveformUtil::Loop(){
     TH1* histopdf=lxg.createHistogram("t",1024);
     histopdf->SetName("fitted_histo_"+fiber);
     float finalFastSample=230;
-    if(digiFreq==1)finalFastSample=185;
+    if(digiFreq==1)finalFastSample=172;
     integrals[i]=histopdf->Integral(4,finalFastSample)/histopdf->Integral(4,900);
     histopdf->Write();
 

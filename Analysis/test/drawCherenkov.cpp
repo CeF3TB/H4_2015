@@ -415,7 +415,9 @@ int main( int argc, char* argv[] ) {
     frame = x.frame("Title");
     data.plotOn(frame);  //this will show histogram data points on canvas                                                                                                         
     //  data.statOn(frame);  //this will display hist stat on canvas                                                                                                                  
-    RooRealVar meanr("meanr","Mean",peakpos,peakpos-2*sigma, peakpos+2*sigma);
+    //    RooRealVar meanr("meanr","Mean",peakpos-1.5*sigma,peakpos-3*sigma, peakpos+2*sigma);
+    RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-3*sigma, peakpos+2*sigma);
+    //    if(i==0)meanr.setConstant(kTRUE);
     RooRealVar width("width","#sigma",sigma , 150.0, 5.*sigma);
     RooRealVar A("A","Dist",2., 0.0, 7.0);
     RooRealVar N("N","Deg",5, 0.0, 10);
