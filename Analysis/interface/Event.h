@@ -68,6 +68,7 @@ public :
    vector<float>   *digi_max_amplitude_bare_noise_sub;
    vector<float>   *digi_time_at_max_bare_noise_sub;
    vector<float>   *digi_time_at_frac50_bare_noise_sub;
+   vector<float>   *digi_time_at_1000_bare_noise_sub;
    vector<float>   *digi_charge_integrated_bare_noise_sub;
    vector<float>   *digi_max_amplitude_noise_sub;
    vector<float>   *digi_time_at_max_noise_sub;
@@ -119,6 +120,7 @@ public :
    TBranch        *b_digi_max_amplitude_bare_noise_sub;   //!
    TBranch        *b_digi_time_at_max_bare_noise_sub;   //!
    TBranch        *b_digi_time_at_frac50_bare_noise_sub;   //!
+   TBranch        *b_digi_time_at_1000_bare_noise_sub;   //!
    TBranch        *b_digi_charge_integrated_bare_noise_sub;   //!
    TBranch        *b_digi_max_amplitude_noise_sub;   //!
    TBranch        *b_digi_time_at_max_noise_sub;   //!
@@ -223,6 +225,7 @@ void Event::Init(TTree *tree)
    digi_max_amplitude_bare_noise_sub = 0;
    digi_time_at_max_bare_noise_sub = 0;
    digi_time_at_frac50_bare_noise_sub = 0;
+   digi_time_at_1000_bare_noise_sub = 0;
    digi_charge_integrated_bare_noise_sub = 0;
    digi_max_amplitude_noise_sub = 0;
    digi_time_at_max_noise_sub = 0;
@@ -278,6 +281,7 @@ void Event::Init(TTree *tree)
    fChain->SetBranchAddress("digi_max_amplitude_bare_noise_sub", &digi_max_amplitude_bare_noise_sub, &b_digi_max_amplitude_bare_noise_sub);
    fChain->SetBranchAddress("digi_time_at_max_bare_noise_sub", &digi_time_at_max_bare_noise_sub, &b_digi_time_at_max_bare_noise_sub);
    fChain->SetBranchAddress("digi_time_at_frac50_bare_noise_sub", &digi_time_at_frac50_bare_noise_sub, &b_digi_time_at_frac50_bare_noise_sub);
+   fChain->SetBranchAddress("digi_time_at_1000_bare_noise_sub", &digi_time_at_1000_bare_noise_sub, &b_digi_time_at_1000_bare_noise_sub);
    fChain->SetBranchAddress("digi_charge_integrated_bare_noise_sub", &digi_charge_integrated_bare_noise_sub, &b_digi_charge_integrated_bare_noise_sub);
    fChain->SetBranchAddress("digi_max_amplitude_noise_sub", &digi_max_amplitude_noise_sub, &b_digi_max_amplitude_noise_sub);
    fChain->SetBranchAddress("digi_time_at_max_noise_sub", &digi_time_at_max_noise_sub, &b_digi_time_at_max_noise_sub);

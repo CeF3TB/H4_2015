@@ -39,7 +39,7 @@ void WaveformUtil::Loop(){
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //   nentries=1000;
+  //  nentries=1;
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
   float meanTimeAtMax[NFIBERS];
@@ -68,8 +68,10 @@ void WaveformUtil::Loop(){
     if(jentry%1000 == 0)std::cout<<"Processing entry:"<<jentry<<std::endl;
     //    if(passesHodoSelection()==false)continue;
 
-    float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
-    float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
+    //    float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
+    float timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
+    //    float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
+    float shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
     //    float shiftTime=138.1-timeOfTheEvent;//mean fitted on trigger run 329 for 2014 data
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digiFreq)));
     shiftSample=-shiftSample;
