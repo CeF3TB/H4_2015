@@ -18,6 +18,8 @@
 
 #include "CommonTools/interface/RunHelper.h"
 #include "interface/Waveform.h"
+#include "interface/WaveformFit.h"
+#include "TCanvas.h"
 
 void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos );
 void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos );
@@ -101,6 +103,7 @@ int main( int argc, char* argv[] ) {
    std::vector<float>   *digi_pedestal_rms;
    std::vector<float>   *digi_time_at_frac30;
    std::vector<float>   *digi_time_at_frac50_bare_noise_sub;
+   std::vector<float>   *digi_time_at_1000_bare_noise_sub;
    std::vector<float>   *digi_time_at_max;
    std::vector<bool>    *HODOX1;
    std::vector<bool>    *HODOX2;
@@ -152,6 +155,7 @@ int main( int argc, char* argv[] ) {
    TBranch        *b_digi_pedestal_rms;   //!
    TBranch        *b_digi_time_at_frac30;   //!
    TBranch        *b_digi_time_at_frac50_bare_noise_sub;   //!
+   TBranch        *b_digi_time_at_1000_bare_noise_sub;   //!
    TBranch        *b_digi_time_at_max;   //!
    TBranch        *b_HODOX1;   //!
    TBranch        *b_HODOX2;   //!
@@ -195,6 +199,7 @@ int main( int argc, char* argv[] ) {
    digi_pedestal_rms = 0;
    digi_time_at_frac30 = 0;
    digi_time_at_frac50_bare_noise_sub = 0;
+   digi_time_at_1000_bare_noise_sub = 0;
    digi_time_at_max = 0;
    HODOX1 = 0;
    HODOX2 = 0;
@@ -243,6 +248,7 @@ int main( int argc, char* argv[] ) {
    fChain->SetBranchAddress("digi_pedestal_rms", &digi_pedestal_rms, &b_digi_pedestal_rms);
    fChain->SetBranchAddress("digi_time_at_max", &digi_time_at_max, &b_digi_time_at_max);
    fChain->SetBranchAddress("digi_time_at_frac50_bare_noise_sub", &digi_time_at_frac50_bare_noise_sub, &b_digi_time_at_frac50_bare_noise_sub);
+   fChain->SetBranchAddress("digi_time_at_1000_bare_noise_sub", &digi_time_at_1000_bare_noise_sub, &b_digi_time_at_1000_bare_noise_sub);
    fChain->SetBranchAddress("HODOX1", &HODOX1, &b_HODOX1);
    fChain->SetBranchAddress("HODOX2", &HODOX2, &b_HODOX2);
    fChain->SetBranchAddress("HODOY1", &HODOY1, &b_HODOY1);
@@ -277,7 +283,10 @@ int main( int argc, char* argv[] ) {
 
    std::string outfileName = outdir + "/Reco_" + runName + ".root";
    TFile* outfile = TFile::Open( outfileName.c_str(), "RECREATE" );
+
    TTree* outTree = new TTree("recoTree", "recoTree");
+
+   TFile* waveformFile = TFile::Open("outWaveFormUtil_2778.root");
 
 
    //and now naming the stuff for the recoTree//
@@ -452,14 +461,34 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-
+   nentries=1;
 
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    std::cout << nentries << std::endl;
  
+   //get reference waveform for fits
+   std::vector<TProfile*>  waveProfile;
 
+   for (unsigned int iCh=0; iCh<CEF3_CHANNELS; iCh++) {
+     TString name="prof";
+     name+=iCh;
+     TString istring;
+     istring+=iCh;
+
+     waveProfile.push_back(new TProfile(name,name,1024,0,0.4e-6));
+     TH1F* histo = (TH1F*)waveformFile->Get("waveform_histo_"+istring);
+     for(int i=0;i<=histo->GetNbinsX();++i) waveProfile.at(iCh)->Fill(histo->GetBinCenter(i), histo->GetBinContent(i));
+     waveProfile.at(iCh)->Scale(1./waveProfile.at(iCh)->GetMaximum());
+     waveProfile.at(iCh)->Print();
+   }
  
+
+
+   TCanvas dummycanvas;
+   waveProfile.at(0)->Draw();
+   dummycanvas.SaveAs("stocazzo.png");
+
   for(int  iEntry=0; iEntry<nentries; ++iEntry ) {
     
     tree->GetEntry( iEntry );     
@@ -471,10 +500,11 @@ int main( int argc, char* argv[] ) {
     for (unsigned int i=0; i<CEF3_CHANNELS; i++) {
       waveform.push_back(new Waveform());
       waveform.at(i)->clear();
+    
     }
     
 
-    float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
+    float timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digi_frequency)));
     shiftSample=-shiftSample;
@@ -500,7 +530,17 @@ int main( int argc, char* argv[] ) {
 //      else shiftSample = 0;
       charge_fast.push_back(waveform.at(i)->charge_integrated(4,finalFastSample));
       charge_slow.push_back(waveform.at(i)->charge_integrated(finalFastSample,900));
+      
+      //WaveformFit using mean Waveform
+      ROOT::Math::Minimizer* minimizer;
+      Waveform::max_amplitude_informations wave_max = waveform.at(i)->max_amplitude(50,900,5);
+      Waveform::baseline_informations wave_pedestal = waveform.at(i)->baseline(5,34);
+      WaveformFit::fitWaveform(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
+      exit(9);
     }
+
+
+
 
     std::string theBeamEnergy = Form("%.0f",BeamEnergy);
     if( runNumber > 272 && runNumber < 298){

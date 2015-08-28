@@ -10,8 +10,12 @@
 #include "RooDataSet.h"
 #include "RooGaussian.h"
 #include "RooLandau.h"
+#include "RooGenericPdf.h"
 #include "RooFFTConvPdf.h"
 #include "RooPlot.h"
+#include "RooTFnBinding.h"
+#include "RooTFnPdfBinding.h"
+#include  "RooNumConvPdf.h"
 #include "TVectorD.h"
 #include "TGaxis.h"
 #include "DrawTools.h"
@@ -28,7 +32,7 @@ std::vector<HodoCluster*> getHodoClustersBool( std::vector<bool> hodo, float fib
 void doHodoReconstruction( std::vector<float> values, int &nClusters, int *nFibres, float *pos, float fibreWidth, int clusterMaxFibres, float Cut );
 std::vector<HodoCluster*> getHodoClusters( std::vector<float> hodo, float fibreWidth, int nClusterMax, float Cut );
 void copyArray( int n, float *source, float *target );
-
+double funcCRRC(double *x, double *par);
 
 
 void WaveformUtil::Loop(){
@@ -39,7 +43,7 @@ void WaveformUtil::Loop(){
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //  nentries=1;
+  //   nentries=1000;
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
   float meanTimeAtMax[NFIBERS];
@@ -142,8 +146,19 @@ void WaveformUtil::Loop(){
     meanWaveHistosForPlots[i]->Write();
     meanWaveGraphs[i]->Write();
 
+//    TCanvas fitcanvas;
+//    TF1* f1 = new TF1( "func", funcCRRC, lowRange[i]*timeSampleUnit(digiFreq), highRange[i]*timeSampleUnit(digiFreq)*3, 4 );
+//    //    f1->SetParameter( 0, 1.25475e+07);
+//    //    f1->SetParameter( 1, 6.71014e+08);
+//    meanWaveHistos[i]->Fit(f1,"RN+");
+//    meanWaveHistos[i]->Draw();
+//    std::cout<<lowRange[i]*timeSampleUnit(digiFreq)<<" "<< highRange[i]*timeSampleUnit(digiFreq)<<std::endl;
+//    f1->SetLineColor(kRed);
+//    f1->Draw("same");
+//    fitcanvas.SaveAs("plots/fitCRRC_"+fiber+".png");
+    //    exit(0);
 
-    RooRealVar t("t","time", time[0], time[1023]);
+    RooRealVar t("t","t", time[0], time[1023]);
     RooDataHist data("data","dataset with t",t,RooFit::Import(*meanWaveHistos[i]) );
     //    RooDataSet data("data","dataset with t",t);
 
@@ -172,12 +187,61 @@ void WaveformUtil::Loop(){
 
     lxg.plotOn(frame) ;
 
+
+
     gStyle->SetPadRightMargin(0.05);
     TGaxis::SetMaxDigits(3);
 
     TCanvas c1("c_"+fiber);
     frame->Draw();
     c1.Write();
+
+    //try crrc function convoluted with decay of cef3 and wls
+    /*
+    //    TF1 *fcefAndWls = new TF1("f1","1.e10*(exp(-1.e9*x/33-exp(-1.e9*x/7)))",time[0],time[1023]);
+    TF1 *fcefAndWls = new TF1("f1","1.e10*(exp(-1.e9*x/33-exp(-1.e9*x/7)))",time[0],time[1023]);
+
+
+    // Create pdf from tf1
+    //RooAbsReal* rfa1 = RooFit::bindFunction(fcefAndWls,t) ;
+    RooAbsPdf* rfa1 = RooFit::bindPdf(fcefAndWls,t) ;
+
+    RooRealVar tau("tau","tau",1.22451e+7,1.e+5,pow(10,30)) ;
+    RooRealVar timeshift("timeshift","timeshift",0.03e-6,0,0.05e-6) ;
+
+      RooGenericPdf crrc("crrc","(@0-0.05e-6)*@1*exp(-(@0-0.05e-6)*@1)",RooArgSet(t,tau)) ;
+    //    RooGenericPdf crrc("crrc","(@0-@2)*@1*exp(-(@0-@2)*@1)",RooArgSet(t,tau,timeshift)) ;
+
+
+    // Construct landau(t,ml,sl) ;
+    //    RooRealVar ml2("ml","mean landau",0.,0,0.12e-6) ;
+    //    RooRealVar sl2("sl","sigma landau",33e-9,0.,0.12e-6) ;
+    //    RooLandau landau2("lx","lx",t,ml2,sl2) ;
+    //    ml2.setConstant(kTRUE);
+    //    sl2.setConstant(kTRUE);
+
+    RooNumConvPdf excrrc("excrrc","exp (X) crrc",t,*rfa1,crrc) ;
+    RooRealVar center("center","center",time[600],0,0.4e-6);
+    RooRealVar width("width","width",time[599],0,0.4e-6);
+    std::cout<<"####################center:"<<time[600]<<" width:"<<time[599]<<std::endl; 
+    excrrc.setConvolutionWindow(center,width,1);
+
+    excrrc.fitTo(data,RooFit::Range(0,time[highRange[i]]*2)) ;
+    //    crrc.fitTo(data,RooFit::Range(time[0]+0.05e-6,time[1023])) ;
+    //    exit(9);
+    RooPlot* frame2 = t.frame(RooFit::Title("fiber_"+fiber)) ;
+    data.plotOn(frame2,RooFit::DataError(RooAbsData::SumW2)) ;
+
+    excrrc.plotOn(frame2) ;
+    crrc.plotOn(frame2,RooFit::LineColor(kRed)) ;
+    rfa1->plotOn(frame2,RooFit::LineColor(kViolet)) ;
+
+    TCanvas c2("c_crrc_"+fiber);
+    frame2->Draw();
+    c2.Write();
+
+    //END OF CRRC FUNCTION
+    */
 
     TH1* histopdf=lxg.createHistogram("t",1024);
     histopdf->SetName("fitted_histo_"+fiber);
@@ -279,6 +343,17 @@ void assignValues( std::vector<float> &target, std::vector<float> source, unsign
 
 }
 
+double funcCRRC(double *x, double *par)
+{
+//  double ctime = (x[0] - par[0]) / par[1];
+//  double f = 0.;
+//  if(ctime > 0.)
+//    f = ctime * exp( 1. - ctime );
+
+  double  f=  par[1]*x[0]*exp(-x[0]*par[0]);
+
+  return f;
+} 
 
 void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos ) {
 

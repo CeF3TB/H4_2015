@@ -34,8 +34,8 @@ drawCherenkov:  Event.o DrawTools.o RecoTree.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/drawCherenkov $(EXE_DIR)/drawCherenkov.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
 
-makeAnalysisTree: RunHelper.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o Waveform.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/makeAnalysisTree $(EXE_DIR)/makeAnalysisTree.cpp $(LIB_DIR)/Waveform.o $(LIB_DIR)/RunHelper.o $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/EnergyCalibration.o $(LIB_DIR)/AlignmentOfficer.o $(ROOTFLAG) $(EXTRALIBS)
+makeAnalysisTree: RunHelper.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o Waveform.o WaveformFit.o
+	$(CC) -Wall $(INCLUDES) -o ./bin/makeAnalysisTree $(EXE_DIR)/makeAnalysisTree.cpp $(LIB_DIR)/Waveform.o  $(LIB_DIR)/WaveformFit.o $(LIB_DIR)/RunHelper.o $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/EnergyCalibration.o $(LIB_DIR)/AlignmentOfficer.o $(ROOTFLAG) $(EXTRALIBS)
 
 alignTracking:  HodoCluster.o AlignmentOfficer.o TagHelper.o DrawTools.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/alignTracking $(EXE_DIR)/alignTracking.cpp $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/AlignmentOfficer.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
@@ -94,6 +94,9 @@ RunHelper.o: ../CommonTools/src/RunHelper.cc
 
 Waveform.o: ./src/Waveform.cc
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/Waveform.o -c ./src/Waveform.cc $(ROOTFLAG) $(EXTRALIBS)
+
+WaveformFit.o: ./src/WaveformFit.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/WaveformFit.o -c ./src/WaveformFit.cc $(ROOTFLAG) $(EXTRALIBS)
 
 
 clean:

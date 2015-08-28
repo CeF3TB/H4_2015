@@ -86,7 +86,7 @@ int main( int argc, char* argv[] ) {
 
     //        TF1 *fun= new TF1("fun","sqrt([0]*[0]/(x*x)+[1]*[1])",1, 250.+15.);
     //TF1 *fun= new TF1("fun","sqrt([0]*[0]/x+[1]*[1])",1, 250.+15.);
-         TF1 *fun= new TF1("fun",  "sqrt([0]*[0]/x+[1]*[1]+ [2]*[2]/(x*x))",1, 250+5.);
+    TF1 *fun= new TF1("fun",  "sqrt([0]*[0]/x+[1]*[1]+ [2]*[2]/(x*x))",1, 250+5.);
     fun->SetParameter(1, 4.);
     fun->SetParameter(0, 20.);
     gr_reso_vs_energy[i]->Fit(fun,"RN");
@@ -105,7 +105,7 @@ int main( int argc, char* argv[] ) {
     leg_neat->AddEntry( (TObject*)0 ,Form("C =  %.2f\n%s",(fun->GetParameter(1)) ,"%" ),"");
     leg_neat->SetFillColor(0);
     leg_neat->Draw("same");
-
+    std::cout<<"parameters: S="<<fun->GetParameter(0)<<" C="<<fun->GetParameter(1)<<" N="<<fun->GetParameter(2)<<std::endl;
     c1->SaveAs("plots_reso/reso_HV1450_"+fibre+".png");
   }
   return 0;
