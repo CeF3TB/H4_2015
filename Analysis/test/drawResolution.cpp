@@ -100,9 +100,11 @@ int main( int argc, char* argv[] ) {
     //  ene+=Form("%.0f",energies[i]);
     //    ene+=" GeV";
     ene+=fibre;
-    leg_neat->AddEntry(gr_reso_vs_energy[i],ene.c_str(),"p");
+    if(i!=4)    leg_neat->AddEntry(gr_reso_vs_energy[i],ene.c_str(),"p");
+    else leg_neat->AddEntry(gr_reso_vs_energy[i],"Data CeF_{3}");
     leg_neat->AddEntry((TObject*)0 ,Form("S =  %.2f\n%s / #sqrt{E [GeV]}",fun->GetParameter(0),"%" ),"");
     leg_neat->AddEntry( (TObject*)0 ,Form("C =  %.2f\n%s",(fun->GetParameter(1)) ,"%" ),"");
+    leg_neat->AddEntry( (TObject*)0 ,Form("N =  %.2f\n%s",(fun->GetParameter(2))/100 ," GeV" ),"");
     leg_neat->SetFillColor(0);
     leg_neat->Draw("same");
     std::cout<<"parameters: S="<<fun->GetParameter(0)<<" C="<<fun->GetParameter(1)<<" N="<<fun->GetParameter(2)<<std::endl;

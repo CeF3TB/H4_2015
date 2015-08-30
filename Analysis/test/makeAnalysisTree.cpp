@@ -461,7 +461,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   nentries=1;
+      nentries=1000;
 
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
@@ -480,7 +480,7 @@ int main( int argc, char* argv[] ) {
      TH1F* histo = (TH1F*)waveformFile->Get("waveform_histo_"+istring);
      for(int i=0;i<=histo->GetNbinsX();++i) waveProfile.at(iCh)->Fill(histo->GetBinCenter(i), histo->GetBinContent(i));
      waveProfile.at(iCh)->Scale(1./waveProfile.at(iCh)->GetMaximum());
-     waveProfile.at(iCh)->Print();
+     //     waveProfile.at(iCh)->Print();
    }
  
 
@@ -535,8 +535,8 @@ int main( int argc, char* argv[] ) {
       ROOT::Math::Minimizer* minimizer;
       Waveform::max_amplitude_informations wave_max = waveform.at(i)->max_amplitude(50,900,5);
       Waveform::baseline_informations wave_pedestal = waveform.at(i)->baseline(5,34);
-      WaveformFit::fitWaveform(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
-      exit(9);
+      // WaveformFit::fitWaveform(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
+      if(wave_max.max_amplitude>0) WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
     }
 
 
