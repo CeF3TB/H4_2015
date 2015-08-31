@@ -31,7 +31,7 @@ drawRespVsXnY: DrawTools.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/drawRespVsXnY $(EXE_DIR)/drawRespVsXnY.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
 drawCherenkov:  Event.o DrawTools.o RecoTree.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/drawCherenkov $(EXE_DIR)/drawCherenkov.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
+	$(CC) -Wall $(INCLUDES) -o ./bin/drawCherenkov $(EXE_DIR)/drawCherenkov.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
 
 makeAnalysisTree: RunHelper.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o Waveform.o WaveformFit.o
@@ -97,6 +97,10 @@ Waveform.o: ./src/Waveform.cc
 
 WaveformFit.o: ./src/WaveformFit.cc
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/WaveformFit.o -c ./src/WaveformFit.cc $(ROOTFLAG) $(EXTRALIBS)
+
+RooCruijff.o: ./src/RooCruijff.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/RooCruijff.o -c ./src/RooCruijff.cc $(ROOTFLAG) $(EXTRALIBS)
+
 
 
 clean:

@@ -17,6 +17,7 @@
 #include "RooFFTConvPdf.h"
 #include "RooPlot.h"
 #include "RooCBShape.h"
+#include "RooCruijff.h"
 
 #include "TCanvas.h"
 #include "TFile.h"
@@ -34,7 +35,6 @@ float getRatioError( float num, float denom, float numErr, float denomErr ) {
 }
 
 int main( int argc, char* argv[] ) {
-
 
   DrawTools::setStyle();
 
@@ -588,9 +588,18 @@ int main( int argc, char* argv[] ) {
     RooRealVar A("A","Dist",AValue, ALowerValue, AUpperValue);
     RooRealVar N("N","Deg",1, 0., 10);
     
-    //  meanr.setRange( 30000. , 1000000.);
-    //  width.setRange(500, 22000);
-    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
+      // meanr.setRange( 30000. , 1000000.);
+      // width.setRange(500, 22000);
+    //    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
+    
+
+    RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
+    RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
+    RooRealVar alphaL("alphaL","#alpha",1.08615e-02 , 0., 1.);
+    RooRealVar alphaR("alphaR","#alpha",1.08615e-02 , 0., 1.);
+
+
+    RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); int ndf = 5;
     fit_fct.fitTo(data);
     fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
 
@@ -603,8 +612,8 @@ int main( int argc, char* argv[] ) {
     
     double mean = meanr.getVal();
     double meanErr = meanr.getError();
-    double rms = width.getVal();
-    double rmsErr = width.getError();
+    double rms = (widthL.getVal()+widthR.getVal())/2;
+    double rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
     double reso = 100.* rms/mean; //in percent                          
     double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
     
@@ -615,7 +624,8 @@ int main( int argc, char* argv[] ) {
     TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
-    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", width.getVal(), width.getError() ), "");
+    //    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", width.getVal(), width.getError() ), "");
+
     lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
     lego->SetFillColor(0);
@@ -633,7 +643,7 @@ int main( int argc, char* argv[] ) {
     cans->SaveAs("plots_drawCherenkov/CBFit_maxAmpl_"+runNumberString+"_fibre_"+fibre+".png");
     cans->SaveAs("plots_drawCherenkov/CBFit_maxAmpl_"+runNumberString+"_fibre_"+fibre+".pdf");
     cans->Write();
-    //    if (i>0)exit(9);
+    //        if (i>1)exit(9);
   }
   //end max ampl
 
