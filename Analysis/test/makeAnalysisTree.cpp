@@ -304,6 +304,8 @@ int main( int argc, char* argv[] ) {
 
    std::vector<float> cef3_maxAmpl( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_maxAmpl", &cef3_maxAmpl );
+   std::vector<float> cef3_maxAmpl_fit( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_maxAmpl_fit", &cef3_maxAmpl_fit );
    std::vector<float> cef3_chaInt( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_chaInt", &cef3_chaInt );
    std::vector<float> cef3_chaInt_cher( CEF3_CHANNELS, -1. );
@@ -461,7 +463,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-      nentries=1000;
+   //      nentries=1000;
 
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
@@ -483,11 +485,6 @@ int main( int argc, char* argv[] ) {
      //     waveProfile.at(iCh)->Print();
    }
  
-
-
-   TCanvas dummycanvas;
-   waveProfile.at(0)->Draw();
-   dummycanvas.SaveAs("stocazzo.png");
 
   for(int  iEntry=0; iEntry<nentries; ++iEntry ) {
     
@@ -537,9 +534,10 @@ int main( int argc, char* argv[] ) {
       Waveform::baseline_informations wave_pedestal = waveform.at(i)->baseline(5,34);
       // WaveformFit::fitWaveform(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
       if(wave_max.max_amplitude>0) WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
+      const double* par=minimizer->X();
+      cef3_maxAmpl_fit[i]=par[0];
+
     }
-
-
 
 
     std::string theBeamEnergy = Form("%.0f",BeamEnergy);
