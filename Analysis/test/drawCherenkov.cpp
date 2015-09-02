@@ -110,8 +110,8 @@ int main( int argc, char* argv[] ) {
     cherHistos_tight[i] = new TH1F ("cherHisto_tight_"+fibre,"",200,0,55e3);
     wlsHistos_tight[i] = new TH1F ("wlsHisto_tight_"+fibre,"",200,0,500000);
 
-    totalHistos_tight_maxAmpl[i] = new TH1F ("totalHisto_tight_maxAmpl"+fibre,"",400,0,4000);
-    totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",400,0,4000);
+    totalHistos_tight_maxAmpl[i] = new TH1F ("totalHisto_tight_maxAmpl"+fibre,"",700,0,4000);
+    totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",700,0,4000);
     
   }
 
@@ -153,10 +153,11 @@ int main( int argc, char* argv[] ) {
 	  if(i==0){
 	    wlsHistos_tight_tot->Fill(t.cef3_chaInt_wls->at(0)+t.cef3_chaInt_wls->at(1)+t.cef3_chaInt->at(2)+t.cef3_chaInt_wls->at(3));
 	    totalHistos_tight_maxAmpl_tot->Fill(t.cef3_maxAmpl->at(0)+t.cef3_maxAmpl->at(1)+t.cef3_maxAmpl->at(2)+t.cef3_maxAmpl->at(3));
-	    totalHistos_tight_maxAmpl_fit_tot->Fill(t.cef3_maxAmpl_fit->at(0)+t.cef3_maxAmpl_fit->at(1)+t.cef3_maxAmpl_fit->at(2)+t.cef3_maxAmpl_fit->at(3));
+	    //	    totalHistos_tight_maxAmpl_fit_tot->Fill(t.cef3_maxAmpl_fit->at(0)+t.cef3_maxAmpl_fit->at(1)+t.cef3_maxAmpl_fit->at(2)+t.cef3_maxAmpl_fit->at(3));
+	    totalHistos_tight_maxAmpl_fit_tot->Fill(t.cef3_maxAmpl_fit_corr->at(0)+t.cef3_maxAmpl_fit_corr->at(1)+t.cef3_maxAmpl_fit_corr->at(2)+t.cef3_maxAmpl_fit_corr->at(3));
 	  }
 	  totalHistos_tight_maxAmpl[i]->Fill(t.cef3_maxAmpl->at(i)); 
-	  totalHistos_tight_maxAmpl_fit[i]->Fill(t.cef3_maxAmpl_fit->at(i)); 
+	  totalHistos_tight_maxAmpl_fit[i]->Fill(t.cef3_maxAmpl_fit_corr->at(i)); 
 	  }
 	}
       }
@@ -169,7 +170,7 @@ int main( int argc, char* argv[] ) {
 
 
 
-  TFile* outFile = TFile::Open("CherenkovPlots_"+runNumberString+".root","recreate");
+  TFile* outFile = TFile::Open("CherenkovPlots_"+runNumberString+"_"+tag+".root","recreate");
 
   //plots of ch int
   TPaveText * pave= new TPaveText(0.75,0.65,0.85,0.85,"NDC");
@@ -336,6 +337,7 @@ int main( int argc, char* argv[] ) {
 
   //maxAmpl
   for(int i=0;i<4;++i){
+    totalHistos_tight_maxAmpl[i]->GetXaxis()->SetRangeUser(0,2000);
     totalHistos_tight_maxAmpl[i]->GetYaxis()->SetRangeUser(1,max*1.1);
     totalHistos_tight_maxAmpl[i]->GetXaxis()->SetTitle("Max Amplitude");
     totalHistos_tight_maxAmpl[i]->GetYaxis()->SetTitle("Events");
@@ -352,6 +354,7 @@ int main( int argc, char* argv[] ) {
 
   //maxAmpl_fit
   for(int i=0;i<4;++i){
+    totalHistos_tight_maxAmpl_fit[i]->GetXaxis()->SetRangeUser(0,2000);
     totalHistos_tight_maxAmpl_fit[i]->GetYaxis()->SetRangeUser(1,max*1.1);
     totalHistos_tight_maxAmpl_fit[i]->GetXaxis()->SetTitle("Max Amplitude");
     totalHistos_tight_maxAmpl_fit[i]->GetYaxis()->SetTitle("Events");
@@ -488,12 +491,25 @@ int main( int argc, char* argv[] ) {
     RooRealVar A("A","Dist",2., 0.0, 7.0);
     RooRealVar N("N","Deg",5, 0.0, 10);
     
+    RooRealVar widthL("widthL","#sigmaL",sigma , 2, 5*sigma);
+    RooRealVar widthR("widthR","#sigmaR",sigma , 2, 5*sigma);
+    RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
+    RooRealVar alphaR("alphaR","#alpha",0, 0., 1.);
+    int ndf;
+
     //  meanr.setRange( 30000. , 1000000.);
     //  width.setRange(500, 22000);
-    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
-    fit_fct.fitTo(data);
-    fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
-
+    bool fitWithCB=false;
+    if(!fitWithCB){
+      RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); ndf = 5;
+      fit_fct.fitTo(data);
+      fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas
+    }else{
+      RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); ndf = 4;
+      fit_fct.fitTo(data);
+      fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas
+    }    
+      
     TString fibre;
     fibre.Form("%d",i); 
 
@@ -503,8 +519,14 @@ int main( int argc, char* argv[] ) {
     
     double mean = meanr.getVal();
     double meanErr = meanr.getError();
-    double rms = width.getVal();
-    double rmsErr = width.getError();
+    double rms,rmsErr;
+    if(!fitWithCB){
+      rms = (widthL.getVal()+widthR.getVal())/2;
+      rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
+    }else{
+      rms = width.getVal();
+      rmsErr = width.getError();
+    }
     double reso = 100.* rms/mean; //in percent                          
     double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
     
@@ -515,7 +537,7 @@ int main( int argc, char* argv[] ) {
     TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
-    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", width.getVal(), width.getError() ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms, rmsErr), "");
     lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
     lego->SetFillColor(0);
@@ -529,7 +551,6 @@ int main( int argc, char* argv[] ) {
 
     resValue[i]=reso;
     resErrValue[i]=resoErr;
-
     cans->SaveAs("plots_drawCherenkov/CBFit_"+runNumberString+"_fibre_"+fibre+".png");
     cans->SaveAs("plots_drawCherenkov/CBFit_"+runNumberString+"_fibre_"+fibre+".pdf");
     cans->Write();
@@ -562,8 +583,8 @@ int main( int argc, char* argv[] ) {
     double fitmax;
     
     
-    fitmin = peakpos-4*sigma;
-    fitmax = peakpos+4*sigma;
+    fitmin = peakpos-5*sigma;
+    fitmax = peakpos+5*sigma;
         
     RooRealVar x("x","MaxAmpl", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
@@ -571,22 +592,9 @@ int main( int argc, char* argv[] ) {
     RooPlot* frame;
     frame = x.frame("Title");
     data.plotOn(frame);  //this will show histogram data points on canvas                                                                                                     
-    std::cout<<"#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
+    //    std::cout<<"#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
     RooRealVar meanr("meanr","Mean",peakpos,peakpos-2*sigma, peakpos+2*sigma);
     //    if(i==0)meanr.setConstant(kTRUE);
-    RooRealVar width("width","#sigma",sigma , 0, 5*sigma);
-    float AValue, ALowerValue,AUpperValue;
-    if(i!=2){
-      AValue = -2.;
-      ALowerValue = -7.;
-      AUpperValue = 0.;
-    }else{
-      AValue = 2.;
-      ALowerValue = 0.;
-      AUpperValue = 7.;
-    }
-    RooRealVar A("A","Dist",AValue, ALowerValue, AUpperValue);
-    RooRealVar N("N","Deg",1, 0., 10);
     
       // meanr.setRange( 30000. , 1000000.);
       // width.setRange(500, 22000);
@@ -624,8 +632,7 @@ int main( int argc, char* argv[] ) {
     TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
-    //    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", width.getVal(), width.getError() ), "");
-
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
     lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
     lego->SetFillColor(0);
@@ -634,8 +641,8 @@ int main( int argc, char* argv[] ) {
     meanValuemaxAmpl[i]=meanr.getVal();
     meanErrValuemaxAmpl[i]=meanr.getError();
 
-    widthValuemaxAmpl[i]=width.getVal();
-    widthErrValuemaxAmpl[i]=width.getError();
+    widthValuemaxAmpl[i]=rms;
+    widthErrValuemaxAmpl[i]=rmsErr;
 
     resValuemaxAmpl[i]=reso;
     resErrValuemaxAmpl[i]=resoErr;
@@ -659,8 +666,8 @@ int main( int argc, char* argv[] ) {
     double fitmax;
     
     
-    fitmin = peakpos-4*sigma;
-    fitmax = peakpos+4*sigma;
+    fitmin = peakpos-5*sigma;
+    fitmax = peakpos+5*sigma;
         
     RooRealVar x("x","MaxAmpl", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
@@ -668,29 +675,27 @@ int main( int argc, char* argv[] ) {
     RooPlot* frame;
     frame = x.frame("Title");
     data.plotOn(frame);  //this will show histogram data points on canvas                                                                                                     
+    RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-3*sigma, peakpos+3*sigma);
+    RooRealVar widthL("widthL","#sigmaL",sigma , 2, 5*sigma);
+    RooRealVar widthR("widthR","#sigmaR",sigma , 2, 5*sigma);
+    RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
+    RooRealVar alphaR("alphaR","#alpha",0, 0., 1.);
+    int ndf;
 
-    RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-2*sigma, peakpos+2*sigma);
-    //    if(i==0)meanr.setConstant(kTRUE);
-    RooRealVar width("width","#sigma",sigma , 0., 5.*sigma);
-    float AValue, ALowerValue,AUpperValue;
-    if(i!=2){
-      AValue = -2.;
-      ALowerValue = -7.;
-      AUpperValue = 0.;
+    RooRealVar width("width","#sigma",sigma, 0, 5.*sigma);
+    RooRealVar A("A","Dist",2., 0.0, 7.0);
+    RooRealVar N("N","Deg",5, 0.0, 10);
+
+    bool fitWithCB=false;
+    if(!fitWithCB){
+      RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); ndf = 5;
+      fit_fct.fitTo(data);
+      fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas  
     }else{
-      AValue = 2.;
-      ALowerValue = 0.;
-      AUpperValue = 7.;
-    }
-    RooRealVar A("A","Dist",AValue, ALowerValue, AUpperValue);
-    RooRealVar N("N","Deg",1, 0., 10);
-    
-    //  meanr.setRange( 30000. , 1000000.);
-    //  width.setRange(500, 22000);
-    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
-    fit_fct.fitTo(data);
-    fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
-
+      RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); ndf = 4;
+      fit_fct.fitTo(data);
+      fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas  
+    }    
     TString fibre;
     fibre.Form("%d",i); 
 
@@ -700,8 +705,14 @@ int main( int argc, char* argv[] ) {
     
     double mean = meanr.getVal();
     double meanErr = meanr.getError();
-    double rms = width.getVal();
-    double rmsErr = width.getError();
+    double rms,rmsErr;
+    if(!fitWithCB){
+      rms = (widthL.getVal()+widthR.getVal())/2;
+      rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
+    }else{
+      rms = width.getVal();
+      rmsErr = width.getError();
+    }
     double reso = 100.* rms/mean; //in percent                          
     double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
     
@@ -712,7 +723,7 @@ int main( int argc, char* argv[] ) {
     TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
-    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", width.getVal(), width.getError() ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
     lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
     lego->SetFillColor(0);
@@ -721,8 +732,8 @@ int main( int argc, char* argv[] ) {
     meanValuemaxAmpl_fit[i]=meanr.getVal();
     meanErrValuemaxAmpl_fit[i]=meanr.getError();
 
-    widthValuemaxAmpl_fit[i]=width.getVal();
-    widthErrValuemaxAmpl_fit[i]=width.getError();
+    widthValuemaxAmpl_fit[i]=rms;
+    widthErrValuemaxAmpl_fit[i]=rmsErr;
 
     resValuemaxAmpl_fit[i]=reso;
     resErrValuemaxAmpl_fit[i]=resoErr;
@@ -758,13 +769,13 @@ int main( int argc, char* argv[] ) {
     data.plotOn(frame);  //this will show histogram data points on canvas                                                                                                         
     //  data.statOn(frame);  //this will display hist stat on canvas                                                                                                                  
     RooRealVar meanr("meanr","Mean",peakpos,peakpos-2*sigma, peakpos+2*sigma);
-    RooRealVar width("width","#sigma",sigma , 150.0, 5.*sigma);
-    RooRealVar A("A","Dist",2., 0.0, 7.0);
-    RooRealVar N("N","Deg",5, 0.0, 10);
-  
-    //  meanr.setRange( 30000. , 1000000.);
-    //  width.setRange(500, 22000);
-    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
+    RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
+    RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
+    RooRealVar alphaL("alphaL","#alpha",1.08615e-02 , 0., 1.);
+    RooRealVar alphaR("alphaR","#alpha",1.08615e-02 , 0., 1.);
+
+
+    RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); int ndf = 5;
     fit_fct.fitTo(data);
     fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
 
@@ -772,14 +783,12 @@ int main( int argc, char* argv[] ) {
     TH1F* fittedHisto=(TH1F*)data.createHistogram("histo_fit_total",x);
     fittedHisto->Write();
     // fit_fct.paramOn(frame); //this will display the fit parameters on canvas               
-  
     double mean = meanr.getVal();
     double meanErr = meanr.getError();
-    double rms = width.getVal();
-    double rmsErr = width.getError();
+    double rms = (widthL.getVal()+widthR.getVal())/2;
+    double rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
     double reso = 100.* rms/mean; //in percent                          
     double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
-  
   
     TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
     cans->cd();
@@ -787,7 +796,7 @@ int main( int argc, char* argv[] ) {
     TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
-    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", width.getVal(), width.getError() ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
     lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
     lego->SetFillColor(0);
@@ -796,8 +805,8 @@ int main( int argc, char* argv[] ) {
     meanValue[4]=meanr.getVal();
     meanErrValue[4]=meanr.getError();
   
-    widthValue[4]=width.getVal();
-    widthErrValue[4]=width.getError();
+    widthValue[4]=rms;
+    widthErrValue[4]=rmsErr;
   
     resValue[4]=reso;
     resErrValue[4]=resoErr;
@@ -820,8 +829,8 @@ int main( int argc, char* argv[] ) {
     double fitmax;
   
   
-    fitmin = peakpos-4*sigma;
-    fitmax = peakpos+4*sigma;
+    fitmin = peakpos-5*sigma;
+    fitmax = peakpos+5*sigma;
         
     RooRealVar x("x","MaxAmpl", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
@@ -830,20 +839,22 @@ int main( int argc, char* argv[] ) {
     frame = x.frame("Title");
     data.plotOn(frame);  //this will show histogram data points on canvas                                                                                                     
     std::cout<<"#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
-    RooRealVar meanr("meanr","Mean",2536,peakpos-2*sigma, peakpos+2*sigma);
-    meanr.setConstant(kTRUE);
-    RooRealVar width("width","#sigma",0.25*sigma , 0, 0.3*sigma);
-    //    width.setConstant(kTRUE);
-    float AValue, ALowerValue,AUpperValue;
-    AValue = -3.;
-    ALowerValue = -7.;
-    AUpperValue = 0.;
-    RooRealVar A("A","Dist",AValue, ALowerValue, AUpperValue);
-    RooRealVar N("N","Deg",1, 0., 10);
-  
-    //  meanr.setRange( 30000. , 1000000.);
-    //  width.setRange(500, 22000);
-    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
+
+    RooRealVar meanr("meanr","Mean",peakpos,peakpos-2*sigma, peakpos+2*sigma);
+    //    if(i==0)meanr.setConstant(kTRUE);
+    
+      // meanr.setRange( 30000. , 1000000.);
+      // width.setRange(500, 22000);
+    //    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
+    
+
+    RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
+    RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
+    RooRealVar alphaL("alphaL","#alpha",1.08615e-02 , 0., 1.);
+    RooRealVar alphaR("alphaR","#alpha",1.08615e-02 , 0., 1.);
+
+
+    RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); int ndf = 5;
     fit_fct.fitTo(data);
     fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
   
@@ -854,8 +865,8 @@ int main( int argc, char* argv[] ) {
     
     double mean = meanr.getVal();
     double meanErr = meanr.getError();
-    double rms = width.getVal();
-    double rmsErr = width.getError();
+    double rms = (widthL.getVal()+widthR.getVal())/2;
+    double rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
     double reso = 100.* rms/mean; //in percent                          
     double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
     
@@ -866,7 +877,7 @@ int main( int argc, char* argv[] ) {
     TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
-    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", width.getVal(), width.getError() ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
     lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
     lego->SetFillColor(0);
@@ -875,8 +886,8 @@ int main( int argc, char* argv[] ) {
     meanValuemaxAmpl[4]=meanr.getVal();
     meanErrValuemaxAmpl[4]=meanr.getError();
   
-    widthValuemaxAmpl[4]=width.getVal();
-    widthErrValuemaxAmpl[4]=width.getError();
+    widthValuemaxAmpl[4]=rms;
+    widthErrValuemaxAmpl[4]=rmsErr;
   
     resValuemaxAmpl[4]=reso;
     resErrValuemaxAmpl[4]=resoErr;
@@ -886,7 +897,87 @@ int main( int argc, char* argv[] ) {
     cans->Write();
   }
   //end total res max Ampl  
+  //total res maxAmpl_fit
+  //total res max ampl
+  if(totalHistos_tight_maxAmpl_fit_tot){
+    TH1F* histo;
+    histo=totalHistos_tight_maxAmpl_fit_tot;
+  
+    double peakpos = histo->GetMean();
+    double sigma = histo->GetRMS();
+  
+    double fitmin;
+    double fitmax;
+  
+  
+    fitmin = peakpos-5*sigma;
+    fitmax = peakpos+5*sigma;
+        
+    RooRealVar x("x","MaxAmpl", fitmin, fitmax);
+    RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
 
+    RooPlot* frame;
+    frame = x.frame("Title");
+    data.plotOn(frame);  //this will show histogram data points on canvas                                                                                                     
+    std::cout<<"#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
+
+    RooRealVar meanr("meanr","Mean",peakpos,peakpos-2*sigma, peakpos+2*sigma);
+    //    if(i==0)meanr.setConstant(kTRUE);
+    
+      // meanr.setRange( 30000. , 1000000.);
+      // width.setRange(500, 22000);
+    //    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
+    
+
+    RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
+    RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
+    RooRealVar alphaL("alphaL","#alpha",1.08615e-02 , 0., 1.);
+    RooRealVar alphaR("alphaR","#alpha",1.08615e-02 , 0., 1.);
+
+
+    RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); int ndf = 5;
+    fit_fct.fitTo(data);
+    fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
+  
+  
+    TH1F* fittedHisto=(TH1F*)data.createHistogram("histo_fit_maxAmpl_fit_tot",x);
+    fittedHisto->Write();
+    // fit_fct.paramOn(frame); //this will display the fit parameters on canvas               
+    
+    double mean = meanr.getVal();
+    double meanErr = meanr.getError();
+    double rms = (widthL.getVal()+widthR.getVal())/2;
+    double rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
+    double reso = 100.* rms/mean; //in percent                          
+    double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
+    
+    
+    TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
+    cans->cd();
+    frame->Draw();
+    TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
+    lego->SetTextSize(0.038);
+    lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
+    lego->SetFillColor(0);
+    lego->Draw("same");
+
+    meanValuemaxAmpl_fit[4]=meanr.getVal();
+    meanErrValuemaxAmpl_fit[4]=meanr.getError();
+  
+    widthValuemaxAmpl_fit[4]=rms;
+    widthErrValuemaxAmpl_fit[4]=rmsErr;
+  
+    resValuemaxAmpl_fit[4]=reso;
+    resErrValuemaxAmpl_fit[4]=resoErr;
+
+    cans->SaveAs("plots_drawCherenkov/CBFit_maxAmpl_fit_"+runNumberString+"_total.png");
+    cans->SaveAs("plots_drawCherenkov/CBFit_maxAmpl_fit_"+runNumberString+"_total.pdf");
+    cans->Write();
+  }
+  //end total res maxAmpl_fit
 
 
   meanValue.Write("meanValue");

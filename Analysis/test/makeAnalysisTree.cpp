@@ -306,6 +306,8 @@ int main( int argc, char* argv[] ) {
    outTree->Branch( "cef3_maxAmpl", &cef3_maxAmpl );
    std::vector<float> cef3_maxAmpl_fit( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_maxAmpl_fit", &cef3_maxAmpl_fit );
+   std::vector<float> cef3_maxAmpl_fit_corr( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_maxAmpl_fit_corr", &cef3_maxAmpl_fit_corr );
    std::vector<float> cef3_chaInt( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_chaInt", &cef3_chaInt );
    std::vector<float> cef3_chaInt_cher( CEF3_CHANNELS, -1. );
@@ -463,7 +465,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //      nentries=1000;
+   //        nentries=100;
 
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
@@ -530,7 +532,9 @@ int main( int argc, char* argv[] ) {
       
       //WaveformFit using mean Waveform
       ROOT::Math::Minimizer* minimizer;
-      Waveform::max_amplitude_informations wave_max = waveform.at(i)->max_amplitude(50,900,5);
+      int sampleIntegral=190;
+      if(i==2)sampleIntegral=50;
+      Waveform::max_amplitude_informations wave_max = waveform.at(i)->max_amplitude(sampleIntegral,900,5);
       Waveform::baseline_informations wave_pedestal = waveform.at(i)->baseline(5,34);
       // WaveformFit::fitWaveform(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
       if(wave_max.max_amplitude>0) WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
@@ -564,12 +568,32 @@ int main( int argc, char* argv[] ) {
      assignValues( cef3, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL);      
 
      assignValues( cef3_corr, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL );  
-     cef3Calib.applyCalibration(cef3_corr);
+     //FIX ME this is just a temporary fix
+     cef3_corr[0]*=1.59;
+     cef3_corr[1]*=0.66;
+     cef3_corr[2]*=6.67;
+     cef3_corr[3]*=0.59;
+     //     cef3Calib.applyCalibration(cef3_corr);
+
+     assignValues( cef3_maxAmpl_fit_corr, cef3_maxAmpl_fit, CEF3_START_CHANNEL );  
+     cef3Calib.applyCalibration(cef3_maxAmpl_fit_corr);
 
      assignValues( cef3_maxAmpl, *digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt_wls, charge_slow, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt_cher, charge_fast, CEF3_START_CHANNEL);
+
+     //FIX ME this is just a temporary fix
+     cef3_chaInt_wls[0]*=1.59;
+     cef3_chaInt_wls[1]*=0.66;
+     cef3_chaInt_wls[2]*=6.67;
+     cef3_chaInt_wls[3]*=0.59;
+
+     cef3_chaInt_cher[0]*=1.59;
+     cef3_chaInt_cher[1]*=0.66;
+     cef3_chaInt_cher[2]*=6.67;
+     cef3_chaInt_cher[3]*=0.59;
+
      computeCherenkov(cef3_chaInt_cher,cef3_chaInt_wls);
 
      charge_slow.clear();

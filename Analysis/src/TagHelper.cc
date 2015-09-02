@@ -35,7 +35,7 @@ void TagHelper::setTag( const std::string& tag, const std::string& Energy ) {
 
     tag_cef3_ ="V1";
     tag_bgo_ ="V0";
-    tag_align_ = Energy+"_V1";
+    tag_align_ = Energy+"_V0";
 
   }else if( tag=="V02" ) {
 
