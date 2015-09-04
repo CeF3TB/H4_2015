@@ -39,9 +39,15 @@ void TagHelper::setTag( const std::string& tag, const std::string& Energy ) {
 
   }else if( tag=="V02" ) {
 
-    tag_cef3_ ="V1";
+    tag_cef3_ ="V2";
     tag_bgo_ ="V0";
-    tag_align_ = Energy+"_V2";
+    tag_align_ = Energy+"_V0";
+
+  }else if( tag=="V03" ) {
+
+    tag_cef3_ ="V3";
+    tag_bgo_ ="V0";
+    tag_align_ = Energy+"_V0";
 
   }else if( tag=="dev" ) {
 

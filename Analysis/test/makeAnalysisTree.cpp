@@ -3,6 +3,8 @@
 #include <string>
 #include <cstdlib>
 #include <cmath>
+#include <iostream>
+#include <sstream> 
 
 #include "TTree.h"
 #include "TFile.h"
@@ -48,14 +50,21 @@ int main( int argc, char* argv[] ) {
    std::string runName = "";
    std::string tag = "V00";
 
-   if( argc>1 ) {
+   int startSample=170;
+   int endSample=890;
 
+   if( argc>1 ) {
      std::string runName_str(argv[1]);
      runName = runName_str;
-
      if( argc>2 ) {
        std::string tag_str(argv[2]);
        tag = tag_str;
+       if(argc>3){
+	 startSample = atoi(argv[3]); 
+	 if(argc>4){
+	   endSample = atoi(argv[4]); 
+	 }
+       }
      }
 
    } else {
@@ -281,7 +290,14 @@ int main( int argc, char* argv[] ) {
    std::string outdir = "analysisTrees_" + tag;
    system( Form("mkdir -p %s", outdir.c_str()) );
 
-   std::string outfileName = outdir + "/Reco_" + runName + ".root";
+   std::string outfileName;
+   outfileName= outdir + "/Reco_" + runName + ".root";
+   if(argc>3){
+     std::ostringstream convertStart, convertEnd;
+     convertStart<<startSample;
+     convertEnd<<endSample;
+     outfileName= outdir + "/Reco_" + runName + "_start_"+convertStart.str()+"_end_"+convertEnd.str()+".root";
+   }
    TFile* outfile = TFile::Open( outfileName.c_str(), "RECREATE" );
 
    TTree* outTree = new TTree("recoTree", "recoTree");
@@ -465,7 +481,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //        nentries=100;
+   //      nentries=25000;
 
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
@@ -537,7 +553,14 @@ int main( int argc, char* argv[] ) {
       Waveform::max_amplitude_informations wave_max = waveform.at(i)->max_amplitude(sampleIntegral,900,5);
       Waveform::baseline_informations wave_pedestal = waveform.at(i)->baseline(5,34);
       // WaveformFit::fitWaveform(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
-      if(wave_max.max_amplitude>0) WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
+      //      if(wave_max.max_amplitude>0) WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
+      if(wave_max.max_amplitude>0){
+	if(i!=2) {
+	  WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
+	}else{ 
+	  WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
+	}
+      }
       const double* par=minimizer->X();
       cef3_maxAmpl_fit[i]=par[0];
 
@@ -569,10 +592,10 @@ int main( int argc, char* argv[] ) {
 
      assignValues( cef3_corr, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL );  
      //FIX ME this is just a temporary fix
-     cef3_corr[0]*=1.59;
-     cef3_corr[1]*=0.66;
-     cef3_corr[2]*=6.67;
-     cef3_corr[3]*=0.59;
+//     cef3_corr[0]*=1.59;
+//     cef3_corr[1]*=0.66;
+//     cef3_corr[2]*=6.67;
+//     cef3_corr[3]*=0.59;
      //     cef3Calib.applyCalibration(cef3_corr);
 
      assignValues( cef3_maxAmpl_fit_corr, cef3_maxAmpl_fit, CEF3_START_CHANNEL );  
@@ -584,15 +607,15 @@ int main( int argc, char* argv[] ) {
      assignValues( cef3_chaInt_cher, charge_fast, CEF3_START_CHANNEL);
 
      //FIX ME this is just a temporary fix
-     cef3_chaInt_wls[0]*=1.59;
-     cef3_chaInt_wls[1]*=0.66;
-     cef3_chaInt_wls[2]*=6.67;
-     cef3_chaInt_wls[3]*=0.59;
-
-     cef3_chaInt_cher[0]*=1.59;
-     cef3_chaInt_cher[1]*=0.66;
-     cef3_chaInt_cher[2]*=6.67;
-     cef3_chaInt_cher[3]*=0.59;
+//     cef3_chaInt_wls[0]*=1.59;
+//     cef3_chaInt_wls[1]*=0.66;
+//     cef3_chaInt_wls[2]*=6.67;
+//     cef3_chaInt_wls[3]*=0.59;
+//
+//     cef3_chaInt_cher[0]*=1.59;
+//     cef3_chaInt_cher[1]*=0.66;
+//     cef3_chaInt_cher[2]*=6.67;
+//     cef3_chaInt_cher[3]*=0.59;
 
      computeCherenkov(cef3_chaInt_cher,cef3_chaInt_wls);
 

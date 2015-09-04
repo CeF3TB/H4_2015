@@ -193,11 +193,18 @@ namespace WaveformFit
     y_interpolator=0;
   }
 
-  void fitWaveformSimple(Waveform* wave, TProfile* amplitudeProfile, int nSamplesBeforeMax, int nSamplesAfterMax, const Waveform::max_amplitude_informations& max, const Waveform::baseline_informations& waveRms, ROOT::Math::Minimizer* &minimizer)
+  void fitWaveformSimple(Waveform* wave, TProfile* amplitudeProfile, int nSamplesBeforeMax, int nSamplesAfterMax, const Waveform::max_amplitude_informations& max, const Waveform::baseline_informations& waveRms, ROOT::Math::Minimizer* &minimizer, bool fixedWindow, int startSample, int endSample)
   {
-    xMin=std::max(1,max.sample_at_max-nSamplesBeforeMax);
-    xMax=std::min(max.sample_at_max+nSamplesAfterMax,999);
-    //    std::cout<<xMin<<" "<<xMax<<std::endl;
+    if(!fixedWindow){
+      xMin=std::max(1,max.sample_at_max-nSamplesBeforeMax);
+      xMax=std::min(max.sample_at_max+nSamplesAfterMax,999);
+    }else{
+      //      xMin=170;
+      //      xMax=700;
+      xMin=startSample;
+      xMax=endSample;
+    }
+    //        std::cout<<xMin<<" "<<xMax<<std::endl;
     waveData=wave;
     fitWave=amplitudeProfile;
 

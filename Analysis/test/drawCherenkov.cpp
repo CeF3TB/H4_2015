@@ -3,7 +3,7 @@
 #include <string>
 #include <cmath>
 #include <cstdlib>
-
+#include <sstream> 
 
 #include "DrawTools.h"
 #include "RecoTree.h"
@@ -48,15 +48,25 @@ int main( int argc, char* argv[] ) {
    std::string runName = "";
    std::string tag = "V00";
 
+   int startSample=170;
+   int endSample=700;
+
 
    if( argc>1 ) {
 
      std::string runName_str(argv[1]);
      runName = runName_str;
-
+     
      if( argc>2 ) {
        std::string tag_str(argv[2]);
        tag = tag_str;
+       if(argc>3){
+	 startSample = atoi(argv[3]); 
+	 if(argc>4){
+	   endSample = atoi(argv[4]); 
+	 }
+       }
+
      }
 
    } else {
@@ -69,7 +79,15 @@ int main( int argc, char* argv[] ) {
 
   TString runNumberString(runName);
 
-  std::string fileName = "analysisTrees_"+tag+"/Reco_"+runName+".root";
+  std::string fileName;
+  fileName = "analysisTrees_"+tag+"/Reco_"+runName+".root";
+  if(argc>3){
+    std::ostringstream convertStart, convertEnd;
+    convertStart<<startSample;
+    convertEnd<<endSample;
+    fileName = "analysisTrees_"+tag+"/Reco_"+runName+".root";
+    fileName=  "analysisTrees_"+tag+ "/Reco_" + runName + "_start_"+convertStart.str()+"_end_"+convertEnd.str()+".root";
+  }
   TFile* file = TFile::Open(fileName.c_str());
   if( file==0 ) {
     std::cout << "ERROR! Din't find file " << fileName << std::endl;
@@ -111,8 +129,8 @@ int main( int argc, char* argv[] ) {
     wlsHistos_tight[i] = new TH1F ("wlsHisto_tight_"+fibre,"",200,0,500000);
 
     totalHistos_tight_maxAmpl[i] = new TH1F ("totalHisto_tight_maxAmpl"+fibre,"",700,0,4000);
-    totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",700,0,4000);
-    
+    if (i!=2)    totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",700,0,4000);
+    else   totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",1400,0,8000);
   }
 
   wlsHistos_tight_tot= new TH1F ("wlsHisto_tight_total","",200*4,0,500000*4);
@@ -170,8 +188,15 @@ int main( int argc, char* argv[] ) {
 
 
 
-  TFile* outFile = TFile::Open("CherenkovPlots_"+runNumberString+"_"+tag+".root","recreate");
-
+  TFile* outFile;
+  if(argc>3){
+    std::ostringstream convertStart, convertEnd;
+    convertStart<<startSample;
+    convertEnd<<endSample;
+    outFile = TFile::Open("CherenkovPlots_"+runNumberString+"_"+tag+"_start_"+convertStart.str()+"_end_"+convertEnd.str()+".root","recreate");
+  }else{
+   outFile = TFile::Open("CherenkovPlots_"+runNumberString+"_"+tag+".root","recreate");
+  }
   //plots of ch int
   TPaveText * pave= new TPaveText(0.75,0.65,0.85,0.85,"NDC");
   pave->SetFillColor(kWhite);
@@ -589,9 +614,6 @@ int main( int argc, char* argv[] ) {
     RooRealVar x("x","MaxAmpl", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
 
-    RooPlot* frame;
-    frame = x.frame("Title");
-    data.plotOn(frame);  //this will show histogram data points on canvas                                                                                                     
     //    std::cout<<"#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
     RooRealVar meanr("meanr","Mean",peakpos,peakpos-2*sigma, peakpos+2*sigma);
     //    if(i==0)meanr.setConstant(kTRUE);
@@ -609,6 +631,9 @@ int main( int argc, char* argv[] ) {
 
     RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); int ndf = 5;
     fit_fct.fitTo(data);
+    RooPlot* frame;
+    frame = x.frame("Title");
+    data.plotOn(frame);  //this will show histogram data points on canvas
     fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
 
     TString fibre;
@@ -672,9 +697,8 @@ int main( int argc, char* argv[] ) {
     RooRealVar x("x","MaxAmpl", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
 
-    RooPlot* frame;
-    frame = x.frame("Title");
-    data.plotOn(frame);  //this will show histogram data points on canvas                                                                                                     
+
+
     RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-3*sigma, peakpos+3*sigma);
     RooRealVar widthL("widthL","#sigmaL",sigma , 2, 5*sigma);
     RooRealVar widthR("widthR","#sigmaR",sigma , 2, 5*sigma);
@@ -687,10 +711,20 @@ int main( int argc, char* argv[] ) {
     RooRealVar N("N","Deg",5, 0.0, 10);
 
     bool fitWithCB=false;
+    RooPlot* frame;
+
+
     if(!fitWithCB){
       RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); ndf = 5;
       fit_fct.fitTo(data);
-      fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas  
+
+      //      x.setRange("R1",meanr.getVal()-15*widthR.getVal(),meanr.getVal()+15*widthR.getVal());
+      x.setRange("R2",0.,8000);
+
+      frame = x.frame("Title",RooFit::Range("R1"));
+
+      data.plotOn(frame,RooFit::CutRange("R1"), RooFit::NormRange("R2"),RooFit::AutoBinned(0));  //this will show histogram data points on canvas 
+      fit_fct.plotOn(frame,RooFit::LineColor(4),RooFit::Range("R1"));//this will show fit overlay on canvas  
     }else{
       RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); ndf = 4;
       fit_fct.fitTo(data);
