@@ -204,7 +204,7 @@ namespace WaveformFit
       xMin=startSample;
       xMax=endSample;
     }
-    //        std::cout<<xMin<<" "<<xMax<<std::endl;
+    //           std::cout<<xMin<<" "<<xMax<<std::endl;
     waveData=wave;
     fitWave=amplitudeProfile;
 
@@ -236,7 +236,8 @@ namespace WaveformFit
 
     //    std::cout << "INIITIAL VALUES " << max.max_amplitude << "," << max.time_at_max*1.e9 << "," << max.sample_at_max << " RMS:"<<sampleRMS<<std::endl;
 
-    minimizer->SetLimitedVariable(0,"amplitude",max.max_amplitude,1e-2,std::max(0.,(double)max.max_amplitude-500),std::min(4000.,(double)max.max_amplitude+4000.));
+    //    minimizer->SetLimitedVariable(0,"amplitude",max.max_amplitude,1e-2,std::max(0.,(double)max.max_amplitude-500),std::min(4000.,(double)max.max_amplitude+4000.));
+    minimizer->SetLimitedVariable(0,"amplitude",max.max_amplitude,1e-2,-500,4000);
 
     minimizer->Minimize();
 

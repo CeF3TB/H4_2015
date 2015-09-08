@@ -47,7 +47,12 @@ int main( int argc, char* argv[] ) {
 //  runs.push_back(2849);
 //  runs.push_back(2885);
 //  runs.push_back(2907);
-
+  
+  std::string tag = "V00";
+  if( argc>1 ) {
+    std::string tag_str(argv[1]);
+    tag = tag_str;
+  }
 
   TGraphErrors* gr_reso_vs_energy[5];
   TGraphErrors* gr_resoMaxAmplFit_vs_energy[5];
@@ -56,13 +61,17 @@ int main( int argc, char* argv[] ) {
     gr_resoMaxAmplFit_vs_energy[i]= new TGraphErrors(0);
   }
 
+  std::string outdir = "plots_reso_" + tag;
+  system( Form("mkdir -p %s", outdir.c_str()) );
+
 
   for (int i=0;i<runs.size();++i){
     TString run;
     run.Form("%d",runs[i]); 
     
-    
-    TFile *inputFile=TFile::Open("CherenkovPlots_"+run+"_V01"+".root");
+       
+
+    TFile *inputFile=TFile::Open("CherenkovPlots_"+run+"_"+tag.c_str()+".root");
     TVectorD* res=(TVectorD*)inputFile->Get("resValue");
     TVectorD* resErr=(TVectorD*)inputFile->Get("resErrValue");
 
@@ -97,8 +106,8 @@ int main( int argc, char* argv[] ) {
       gr_reso_vs_energy[i]->Draw("p same");
 
       //              TF1 *fun= new TF1("fun","sqrt([0]*[0]/(x*x)+[1]*[1])",1, 250.+15.);
-            TF1 *fun= new TF1("fun","sqrt([0]*[0]/x+[1]*[1])",1, 250.+15.);
-      //      TF1 *fun= new TF1("fun",  "sqrt([0]*[0]/x+[1]*[1]+ [2]*[2]/(x*x))",1, 250+5.);
+      //            TF1 *fun= new TF1("fun","sqrt([0]*[0]/x+[1]*[1])",1, 250.+15.);
+            TF1 *fun= new TF1("fun",  "sqrt([0]*[0]/x+[1]*[1]+ [2]*[2]/(x*x))",1, 250+5.);
       fun->SetParameter(1, 4.);
       fun->SetParameter(0, 20.);
       fun->SetParameter(2, 20.);
@@ -115,13 +124,17 @@ int main( int argc, char* argv[] ) {
       ene+=fibre;
       if(i!=4)    leg_neat->AddEntry(gr_reso_vs_energy[i],ene.c_str(),"p");
       else leg_neat->AddEntry(gr_reso_vs_energy[i],"Data CeF_{3}","p");
-      leg_neat->AddEntry((TObject*)0 ,Form("S =  %.2f\n%s / #sqrt{E [GeV]}",fun->GetParameter(0),"%" ),"");
-      leg_neat->AddEntry( (TObject*)0 ,Form("C =  %.2f\n%s",(fun->GetParameter(1)) ,"%" ),"");
-      //      leg_neat->AddEntry( (TObject*)0 ,Form("N =  %.2f\n%s",(fun->GetParameter(2))/100 ," GeV" ),"");
+      //      leg_neat->AddEntry((TObject*)0 ,Form("S =  %.2f\n%s #pm %.2f / #sqrt{E [GeV]}",fun->GetParameter(0),"%",fun->GetParError(0) ),"");
+      leg_neat->AddEntry((TObject*)0 ,Form("S =  %.2f\n%s #pm %.2f",fun->GetParameter(0),"%",fun->GetParError(0) ),"");
+      leg_neat->AddEntry( (TObject*)0 ,Form("C =  %.2f\n%s  #pm %.2f",(fun->GetParameter(1)) ,"%",fun->GetParError(1) ),"");
+      leg_neat->AddEntry( (TObject*)0 ,Form("N =  %.2f\n%s #pm %.2f",(fun->GetParameter(2))/100 ," GeV" ,fun->GetParError(2)/100),"");
       leg_neat->SetFillColor(0);
       leg_neat->Draw("same");
       std::cout<<"parameters: S="<<fun->GetParameter(0)<<" C="<<fun->GetParameter(1)<<" N="<<fun->GetParameter(2)<<std::endl;
-      c1->SaveAs("plots_reso/reso_HV1450_"+fibre+".png");
+
+
+      c1->SaveAs(outdir+"/reso_HV1450_"+fibre+".png");
+      c1->SaveAs(outdir+"/reso_HV1450_"+fibre+".pdf");
     }
 
     if(gr_resoMaxAmplFit_vs_energy[i]){
@@ -138,8 +151,8 @@ int main( int argc, char* argv[] ) {
       gr_resoMaxAmplFit_vs_energy[i]->Draw("p same");
 
       //              TF1 *fun= new TF1("fun","sqrt([0]*[0]/(x*x)+[1]*[1])",1, 250.+15.);
-            TF1 *fun= new TF1("fun","sqrt([0]*[0]/x+[1]*[1])",1, 250.+15.);
-      //      TF1 *fun= new TF1("fun",  "sqrt([0]*[0]/x+[1]*[1]+ [2]*[2]/(x*x))",1, 250+5.);
+      //            TF1 *fun= new TF1("fun","sqrt([0]*[0]/x+[1]*[1])",1, 250.+15.);
+      TF1 *fun= new TF1("fun",  "sqrt([0]*[0]/x+[1]*[1]+ [2]*[2]/(x*x))",1, 250+5.);
       fun->SetParameter(1, 4.);
       fun->SetParameter(0, 20.);
       fun->SetParameter(2, 20.);
@@ -156,13 +169,16 @@ int main( int argc, char* argv[] ) {
       ene+=fibre;
       if(i!=4)    leg_neat->AddEntry(gr_resoMaxAmplFit_vs_energy[i],ene.c_str(),"p");
       else leg_neat->AddEntry(gr_resoMaxAmplFit_vs_energy[i],"Data CeF_{3}","p");
-      leg_neat->AddEntry((TObject*)0 ,Form("S =  %.2f\n%s / #sqrt{E [GeV]}",fun->GetParameter(0),"%" ),"");
-      leg_neat->AddEntry( (TObject*)0 ,Form("C =  %.2f\n%s",(fun->GetParameter(1)) ,"%" ),"");
-      //      leg_neat->AddEntry( (TObject*)0 ,Form("N =  %.2f\n%s",(fun->GetParameter(2))/100 ," GeV" ),"");
+      //leg_neat->AddEntry((TObject*)0 ,Form("S =  %.2f\n%s / #sqrt{E [GeV]}",fun->GetParameter(0),"%" ),"");
+      leg_neat->AddEntry((TObject*)0 ,Form("S =  %.2f\n%s #pm %.2f",fun->GetParameter(0),"%",fun->GetParError(0) ),"");
+      leg_neat->AddEntry( (TObject*)0 ,Form("C =  %.2f\n%s  #pm %.2f",(fun->GetParameter(1)) ,"%",fun->GetParError(1) ),"");
+      leg_neat->AddEntry( (TObject*)0 ,Form("N =  %.2f\n%s #pm %.2f",(fun->GetParameter(2))/100 ," GeV" ,fun->GetParError(2)/100),"");
+
       leg_neat->SetFillColor(0);
       leg_neat->Draw("same");
       std::cout<<"parameters: S="<<fun->GetParameter(0)<<" C="<<fun->GetParameter(1)<<" N="<<fun->GetParameter(2)<<std::endl;
-      c1->SaveAs("plots_reso/reso_maxAmplFit_HV1450_"+fibre+".png");
+      c1->SaveAs(outdir+"/reso_maxAmplFit_HV1450_"+fibre+".png");
+      c1->SaveAs(outdir+"/reso_maxAmplFit_HV1450_"+fibre+".pdf");
     }
 
   }

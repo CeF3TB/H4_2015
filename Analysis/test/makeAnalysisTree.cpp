@@ -481,7 +481,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //      nentries=25000;
+   //      nentries=2500;
 
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
@@ -556,7 +556,12 @@ int main( int argc, char* argv[] ) {
       //      if(wave_max.max_amplitude>0) WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
       if(wave_max.max_amplitude>0){
 	if(i!=2) {
-	  WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
+	  if(runNumber!=2539){//pedestal run
+	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
+	  }else{
+	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(2),200,200,wave_max,wave_pedestal,minimizer);
+	  }
+
 	}else{ 
 	  WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
 	}

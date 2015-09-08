@@ -130,7 +130,7 @@ int main( int argc, char* argv[] ) {
 
     totalHistos_tight_maxAmpl[i] = new TH1F ("totalHisto_tight_maxAmpl"+fibre,"",700,0,4000);
     if (i!=2)    totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",700,0,4000);
-    else   totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",1400,0,8000);
+    else 	totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",1400,0,8000*4);
   }
 
   wlsHistos_tight_tot= new TH1F ("wlsHisto_tight_total","",200*4,0,500000*4);
@@ -379,7 +379,7 @@ int main( int argc, char* argv[] ) {
 
   //maxAmpl_fit
   for(int i=0;i<4;++i){
-    totalHistos_tight_maxAmpl_fit[i]->GetXaxis()->SetRangeUser(0,2000);
+    if(i!=2)    totalHistos_tight_maxAmpl_fit[i]->GetXaxis()->SetRangeUser(0,2000);
     totalHistos_tight_maxAmpl_fit[i]->GetYaxis()->SetRangeUser(1,max*1.1);
     totalHistos_tight_maxAmpl_fit[i]->GetXaxis()->SetTitle("Max Amplitude");
     totalHistos_tight_maxAmpl_fit[i]->GetYaxis()->SetTitle("Events");
@@ -687,6 +687,12 @@ int main( int argc, char* argv[] ) {
     double peakpos = histo->GetMean();
     double sigma = histo->GetRMS();
     
+    histo->Print();
+    std::cout<<"#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
+    TCanvas dummy;
+    histo->Draw();
+    dummy.SaveAs("dummy.png");
+
     double fitmin;
     double fitmax;
     
@@ -721,10 +727,13 @@ int main( int argc, char* argv[] ) {
       //      x.setRange("R1",meanr.getVal()-15*widthR.getVal(),meanr.getVal()+15*widthR.getVal());
       x.setRange("R2",0.,8000);
 
-      frame = x.frame("Title",RooFit::Range("R1"));
+      //      frame = x.frame("Title",RooFit::Range("R1"));
+      frame = x.frame("Title");
 
-      data.plotOn(frame,RooFit::CutRange("R1"), RooFit::NormRange("R2"),RooFit::AutoBinned(0));  //this will show histogram data points on canvas 
-      fit_fct.plotOn(frame,RooFit::LineColor(4),RooFit::Range("R1"));//this will show fit overlay on canvas  
+      //      data.plotOn(frame,RooFit::CutRange("R1"), RooFit::NormRange("R2"),RooFit::AutoBinned(0));  //this will show histogram data points on canvas 
+      data.plotOn(frame);  //this will show histogram data points on canvas 
+      //      fit_fct.plotOn(frame,RooFit::LineColor(4),RooFit::Range("R1"));//this will show fit overlay on canvas  
+      fit_fct.plotOn(frame);//this will show fit overlay on canvas  
     }else{
       RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); ndf = 4;
       fit_fct.fitTo(data);
@@ -775,6 +784,7 @@ int main( int argc, char* argv[] ) {
     cans->SaveAs("plots_drawCherenkov/CBFit_maxAmpl_fit_"+runNumberString+"_fibre_"+fibre+".png");
     cans->SaveAs("plots_drawCherenkov/CBFit_maxAmpl_fit_"+runNumberString+"_fibre_"+fibre+".pdf");
     cans->Write();
+    //    if(i==2)exit(9);
   }
   //end max ampl
   
