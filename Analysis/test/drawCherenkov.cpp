@@ -129,8 +129,8 @@ int main( int argc, char* argv[] ) {
     wlsHistos_tight[i] = new TH1F ("wlsHisto_tight_"+fibre,"",200,0,500000);
 
     totalHistos_tight_maxAmpl[i] = new TH1F ("totalHisto_tight_maxAmpl"+fibre,"",700,0,4000);
-    if (i!=2)    totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",700,0,4000);
-    else 	totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",1400,0,8000*4);
+    totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",700,0,4000);
+    //    else 	totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",1400,0,8000*4);
   }
 
   wlsHistos_tight_tot= new TH1F ("wlsHisto_tight_total","",200*4,0,500000*4);
@@ -559,7 +559,7 @@ int main( int argc, char* argv[] ) {
     TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
     cans->cd();
     frame->Draw();
-    TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
+    TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms, rmsErr), "");
@@ -654,7 +654,7 @@ int main( int argc, char* argv[] ) {
     TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
     cans->cd();
     frame->Draw();
-    TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
+    TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
@@ -763,7 +763,7 @@ int main( int argc, char* argv[] ) {
     TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
     cans->cd();
     frame->Draw();
-    TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
+    TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
@@ -837,7 +837,7 @@ int main( int argc, char* argv[] ) {
     TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
     cans->cd();
     frame->Draw();
-    TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
+    TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
@@ -918,7 +918,7 @@ int main( int argc, char* argv[] ) {
     TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
     cans->cd();
     frame->Draw();
-    TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
+    TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
@@ -999,7 +999,7 @@ int main( int argc, char* argv[] ) {
     TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
     cans->cd();
     frame->Draw();
-    TLegend* lego = new TLegend(0.6, 0.7, 0.9, 0.92);
+    TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
     lego->SetTextSize(0.038);
     lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
