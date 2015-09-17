@@ -64,6 +64,17 @@ int main( int argc, char* argv[] ) {
   std::string outdir = "plots_reso_" + tag;
   system( Form("mkdir -p %s", outdir.c_str()) );
 
+  float sigma_noise[5];//sigma of maxAmpl in pedestal events
+//  sigma_noise[0]=2.47;
+//  sigma_noise[1]=2.54;
+//  sigma_noise[2]=2.19;
+//  sigma_noise[3]=2.15;
+  sigma_noise[0]=1.78;
+  sigma_noise[1]=1.24;
+  sigma_noise[2]=1.66;
+  sigma_noise[3]=1.05;
+  sigma_noise[4]=sqrt(2.49*2.49*sigma_noise[0]*sigma_noise[0]+0.81*0.81*sigma_noise[1]*sigma_noise[1]+16.8*16.8*sigma_noise[2]*sigma_noise[2]+0.73*0.73*sigma_noise[3]*sigma_noise[3]);//weighted mean of sigmas with intercalib of V03 //FIXME, don't do it hardcoded
+  bool subtract_noise=true;
 
   for (int i=0;i<runs.size();++i){
     TString run;
@@ -75,6 +86,8 @@ int main( int argc, char* argv[] ) {
     TVectorD* res=(TVectorD*)inputFile->Get("resValue");
     TVectorD* resErr=(TVectorD*)inputFile->Get("resErrValue");
 
+    TVectorD* meanValuemaxAmpl_fit=(TVectorD*)inputFile->Get("meanValuemaxAmpl_fit");
+
     TVectorD* resMaxAmplFit=(TVectorD*)inputFile->Get("resValuemaxAmpl_fit");
     TVectorD* resErrMaxAmplFit=(TVectorD*)inputFile->Get("resErrValuemaxAmpl_fit");
 
@@ -82,8 +95,14 @@ int main( int argc, char* argv[] ) {
       gr_reso_vs_energy[j]->SetPoint( i, energies[i], (*res)[j] );
       gr_reso_vs_energy[j]->SetPointError( i, 0, (*resErr)[j] );
 
-      gr_resoMaxAmplFit_vs_energy[j]->SetPoint( i, energies[i], (*resMaxAmplFit)[j] );
-      gr_resoMaxAmplFit_vs_energy[j]->SetPointError( i, 0, (*resErrMaxAmplFit)[j] );
+      if(!subtract_noise){
+	gr_resoMaxAmplFit_vs_energy[j]->SetPoint( i, energies[i], (*resMaxAmplFit)[j] );
+	gr_resoMaxAmplFit_vs_energy[j]->SetPointError( i, 0, (*resErrMaxAmplFit)[j] );
+      }else{
+	std::cout<<"run:"<<runs[i]<<" res_original:"<<(*resMaxAmplFit)[j]<<" sigma_noise:"<<sigma_noise[j]<<" final:"<<sqrt((*resMaxAmplFit)[j]*(*resMaxAmplFit)[j]-100*sigma_noise[j]/(*meanValuemaxAmpl_fit)[j]*100*sigma_noise[j]/(*meanValuemaxAmpl_fit)[j])<<" mean:"<<(*meanValuemaxAmpl_fit)[j]<<std::endl;
+	gr_resoMaxAmplFit_vs_energy[j]->SetPoint( i, energies[i], sqrt((*resMaxAmplFit)[j]*(*resMaxAmplFit)[j]-100*sigma_noise[j]/(*meanValuemaxAmpl_fit)[j]*100*sigma_noise[j]/(*meanValuemaxAmpl_fit)[j]) );
+	gr_resoMaxAmplFit_vs_energy[j]->SetPointError( i, 0, (*resErrMaxAmplFit)[j] );
+      }
 
     }
   }
@@ -116,7 +135,7 @@ int main( int argc, char* argv[] ) {
       fun->SetLineColor(kBlue+2);
       fun->Draw("L same");
 
-      TLegend* leg_neat = new TLegend(0.42, 0.92-0.06*5 , 0.9, 0.92);
+      TLegend* leg_neat = new TLegend(0.4, 0.92-0.06*5 , 0.8, 0.92);
       leg_neat->SetTextSize(0.038);
       string ene="Data fibre ";
       //  ene+=Form("%.0f",energies[i]);
@@ -151,8 +170,8 @@ int main( int argc, char* argv[] ) {
       gr_resoMaxAmplFit_vs_energy[i]->Draw("p same");
 
       //              TF1 *fun= new TF1("fun","sqrt([0]*[0]/(x*x)+[1]*[1])",1, 250.+15.);
-      //            TF1 *fun= new TF1("fun","sqrt([0]*[0]/x+[1]*[1])",1, 250.+15.);
-      TF1 *fun= new TF1("fun",  "sqrt([0]*[0]/x+[1]*[1]+ [2]*[2]/(x*x))",1, 250+5.);
+                  TF1 *fun= new TF1("fun","sqrt([0]*[0]/x+[1]*[1])",1, 250.+15.);
+      //      TF1 *fun= new TF1("fun",  "sqrt([0]*[0]/x+[1]*[1]+ [2]*[2]/(x*x))",1, 250+5.);
       fun->SetParameter(1, 4.);
       fun->SetParameter(0, 20.);
       fun->SetParameter(2, 20.);
@@ -161,7 +180,8 @@ int main( int argc, char* argv[] ) {
       fun->SetLineColor(kBlue+2);
       fun->Draw("L same");
 
-      TLegend* leg_neat = new TLegend(0.42, 0.92-0.06*5 , 0.9, 0.92);
+
+      TLegend* leg_neat = new TLegend(0.42, 0.92-0.06*5 , 0.85, 0.92);
       leg_neat->SetTextSize(0.038);
       string ene="Data fibre ";
       //  ene+=Form("%.0f",energies[i]);
@@ -172,7 +192,7 @@ int main( int argc, char* argv[] ) {
       //leg_neat->AddEntry((TObject*)0 ,Form("S =  %.2f\n%s / #sqrt{E [GeV]}",fun->GetParameter(0),"%" ),"");
       leg_neat->AddEntry((TObject*)0 ,Form("S =  %.2f\n%s #pm %.2f",fun->GetParameter(0),"%",fun->GetParError(0) ),"");
       leg_neat->AddEntry( (TObject*)0 ,Form("C =  %.2f\n%s  #pm %.2f",(fun->GetParameter(1)) ,"%",fun->GetParError(1) ),"");
-      leg_neat->AddEntry( (TObject*)0 ,Form("N =  %.2f\n%s #pm %.2f",(fun->GetParameter(2))/100 ," GeV" ,fun->GetParError(2)/100),"");
+      //      leg_neat->AddEntry( (TObject*)0 ,Form("N =  %.2f\n%s #pm %.2f",(fun->GetParameter(2))/100 ," GeV" ,fun->GetParError(2)/100),"");
 
       leg_neat->SetFillColor(0);
       leg_neat->Draw("same");
