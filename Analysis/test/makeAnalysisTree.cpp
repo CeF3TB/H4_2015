@@ -11,6 +11,8 @@
 #include "TBranch.h"
 #include "TChain.h"
 #include "TVectorD.h"
+#include "TH2.h"
+#include "TGraph.h"
 
 #include "channelInfo.h"
 #include "interface/HodoCluster.h"
@@ -302,7 +304,11 @@ int main( int argc, char* argv[] ) {
 
    TTree* outTree = new TTree("recoTree", "recoTree");
 
-   TFile* waveformFile = TFile::Open("outWaveFormUtil_2778.root");
+   TFile* waveformFile;
+   waveformFile = TFile::Open("outWaveFormUtil_2778.root");
+
+   TFile* noiseFile;
+   noiseFile = TFile::Open("outWaveFormUtil_2539.root");
 
 
    //and now naming the stuff for the recoTree//
@@ -481,7 +487,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //      nentries=2500;
+   //   nentries=5000;
 
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
@@ -497,12 +503,51 @@ int main( int argc, char* argv[] ) {
      istring+=iCh;
 
      waveProfile.push_back(new TProfile(name,name,1024,0,0.4e-6));
-     TH1F* histo = (TH1F*)waveformFile->Get("waveform_histo_"+istring);
-     for(int i=0;i<=histo->GetNbinsX();++i) waveProfile.at(iCh)->Fill(histo->GetBinCenter(i), histo->GetBinContent(i));
+     TGraph* graph = (TGraph*)waveformFile->Get("waveform_"+istring);
+     double X[graph->GetN()],Y[graph->GetN()];
+     for(int iP=0;iP<graph->GetN();iP++){
+       graph->GetPoint(iP,X[iP],Y[iP]);
+       waveProfile.at(iCh)->Fill(X[iP],Y[iP]);
+      }
+     //     TH1F* histo = (TH1F*)waveformFile->Get("waveform_histo_"+istring);
+     //     for(int i=0;i<=histo->GetNbinsX();++i) waveProfile.at(iCh)->Fill(histo->GetBinCenter(i), histo->GetBinContent(i));
+
      waveProfile.at(iCh)->Scale(1./waveProfile.at(iCh)->GetMaximum());
-     //     waveProfile.at(iCh)->Print();
+     
+
    }
- 
+
+   //noise histo for pedestal runs
+   //   TH1F* noiseHisto[4][1024];
+   TH1F* noiseHisto[4];
+   TH2F* noiseHistoVsTime[4];
+   float noiseValueVsChannel[4][1024];
+
+
+   //noise
+   std::vector<TProfile*>  waveNoiseProfile;
+
+   if(runName=="2539"){//pedestal run
+     for (unsigned int iCh=0; iCh<CEF3_CHANNELS; iCh++) {
+       TString name="noiseProfile_";
+       name+=iCh;
+       TString istring;
+       istring+=iCh;
+       waveNoiseProfile.push_back(new TProfile(name,name,1024,0,1024));
+       TGraph* graph = (TGraph*)noiseFile->Get("waveform_"+istring);
+       double X[graph->GetN()],Y[graph->GetN()];
+       for(int iP=0;iP<graph->GetN();iP++){
+	 graph->GetPoint(iP,X[iP],Y[iP]);
+	 waveNoiseProfile.at(iCh)->Fill(iP,Y[iP]);
+       }
+       noiseHisto[iCh]= new TH1F("histoNoise_"+istring,"histoNoise_"+istring,2000,-10,10);
+       noiseHistoVsTime[iCh]= new TH2F("histoNoiseVsTime_"+istring,"histoNoiseVsTime_"+istring,1024,0,1024,2000,-10,10);
+       for(int jj=0;jj<1024;jj++){
+	 noiseValueVsChannel[iCh][jj]=0.;
+	 //noiseHisto[iCh][j]=new TH1F("histoNoiseVsTime_"+istring+"_"+j,"histoNoiseVsTime_"+istring+"_"+j,);
+       }
+     }
+   }
 
   for(int  iEntry=0; iEntry<nentries; ++iEntry ) {
     
@@ -523,6 +568,8 @@ int main( int argc, char* argv[] ) {
     float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digi_frequency)));
     shiftSample=-shiftSample;
+    if(runName=="2539")shiftSample=0;
+
     for (int i=0;i<1024*4;++i){
       if(digi_value_ch->at(i) > 3)continue;
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
@@ -530,9 +577,19 @@ int main( int argc, char* argv[] ) {
       if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
 	iSample=i+shiftSample;
       }
-      waveform.at(digi_value_ch->at(i))->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
+      if(runName!="2539")      waveform.at(digi_value_ch->at(i))->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
+      else waveform.at(digi_value_ch->at(i))->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
+      //     else waveform.at(digi_value_ch->at(i))->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample)-(waveNoiseProfile.at(digi_value_ch->at(i)))->GetBinContent(iSample-1024*digi_value_ch->at(i)));
       //      std::cout<<"i:"<<digi_value_ch->at(i)<<" time:"<<(i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency)<<" value"<<digi_value_bare_noise_sub->at(iSample)<<std::endl;
+      if(runName=="2539"){
+	//	std::cout<<i<<" "<<digi_value_bare_noise_sub->at(iSample)<<" "<<(waveNoiseProfile.at(digi_value_ch->at(i)))->GetBinContent(iSample-1024*digi_value_ch->at(i))<<std::endl;
+	if(i>startSample+1023*digi_value_ch->at(i) && i<endSample+1023*digi_value_ch->at(i))	noiseHisto[digi_value_ch->at(i)]->Fill(digi_value_bare_noise_sub->at(iSample)-waveNoiseProfile.at(digi_value_ch->at(i))->GetBinContent(i-1024*digi_value_ch->at(iSample)));
+	noiseValueVsChannel[digi_value_ch->at(i)][i-1024*digi_value_ch->at(i)]+=(digi_value_bare_noise_sub->at(iSample)-(waveNoiseProfile.at(digi_value_ch->at(i)))->GetBinContent(i-1024*digi_value_ch->at(iSample)));
+      }
+
     }
+
+
 
     float finalFastSample=230;
     if(digi_frequency==1)finalFastSample=172;//no direct realtion between 5Gs and 2.5Gs since offset is different
@@ -556,19 +613,21 @@ int main( int argc, char* argv[] ) {
       //      if(wave_max.max_amplitude>0) WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
       if(wave_max.max_amplitude>0){
 	if(i!=2) {
-	  if(runNumber!=2539){//pedestal run
+	  if(runName!="2539"){//pedestal run
 	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
 	  }else{
-	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(2),200,200,wave_max,wave_pedestal,minimizer);
+	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
 	  }
-
 	}else{ 
-	  WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
+	  if(runName!="2539"){//pedestal run
+	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
+	  }else{
+	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
+	  }
 	}
       }
       const double* par=minimizer->X();
       cef3_maxAmpl_fit[i]=par[0];
-
     }
 
 
@@ -815,10 +874,23 @@ int main( int argc, char* argv[] ) {
      outTree->Fill();
     
    
-   } // for entries
+   } // for entries, end of loop
+
+   outfile->cd();
+   if(runName=="2539"){//pedestal run
+     for (unsigned int iCh=0; iCh<CEF3_CHANNELS; iCh++) {
+       for(int jj=0;jj<1024;jj++){
+	 noiseHistoVsTime[iCh]->Fill(jj,noiseValueVsChannel[iCh][jj]/nentries);
+       }
+       noiseHistoVsTime[iCh]->Write();
+       noiseHisto[iCh]->Write();
+     }
+   }
+
+  //  for(int j=0;j<1024;j++)  std::cout<<"j"<<j<<" "<<noiseValueVsChannel[1][j]<<std::endl;
 
  
-   outfile->cd();
+
    outTree->Write();
    outfile->Close();
 
