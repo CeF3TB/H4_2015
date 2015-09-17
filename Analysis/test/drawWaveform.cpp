@@ -15,9 +15,14 @@ int main( int argc, char* argv[] ) {
 
   TFile *inputFile;
 
+   std::string runName = "";
+
   if( argc>1 ) {
-    std::string filename_str(argv[1]);
-    inputFile=TFile::Open(filename_str.c_str());
+     std::string runName_str(argv[1]);
+     runName = runName_str;
+     
+     std::string filename_str = "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/micheli/rawData/output_run" + runName + ".root";
+     inputFile=TFile::Open(filename_str.c_str());
     
     if( inputFile==0 ) {
       std::cout << "ERROR! Din't find file " << filename_str << std::endl;
