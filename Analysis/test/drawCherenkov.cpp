@@ -172,10 +172,10 @@ int main( int argc, char* argv[] ) {
 	    wlsHistos_tight_tot->Fill(t.cef3_chaInt_wls->at(0)+t.cef3_chaInt_wls->at(1)+t.cef3_chaInt->at(2)+t.cef3_chaInt_wls->at(3));
 	    totalHistos_tight_maxAmpl_tot->Fill(t.cef3_maxAmpl->at(0)+t.cef3_maxAmpl->at(1)+t.cef3_maxAmpl->at(2)+t.cef3_maxAmpl->at(3));
 	    //	    totalHistos_tight_maxAmpl_fit_tot->Fill(t.cef3_maxAmpl_fit->at(0)+t.cef3_maxAmpl_fit->at(1)+t.cef3_maxAmpl_fit->at(2)+t.cef3_maxAmpl_fit->at(3));
-	    totalHistos_tight_maxAmpl_fit_tot->Fill(t.cef3_maxAmpl_fit_corr->at(0)+t.cef3_maxAmpl_fit_corr->at(1)+t.cef3_maxAmpl_fit_corr->at(2)+t.cef3_maxAmpl_fit_corr->at(3));
+	    totalHistos_tight_maxAmpl_fit_tot->Fill(t.cef3_maxAmpl_fit_corr->at(0)+t.cef3_maxAmpl_fit_corr->at(1)+t.cef3_maxAmpl_fit_corr->at(2)+t.cef3_maxAmpl_fit_corr->at(3));FIXME !!!!!!!!!
 	  }
 	  totalHistos_tight_maxAmpl[i]->Fill(t.cef3_maxAmpl->at(i)); 
-	  totalHistos_tight_maxAmpl_fit[i]->Fill(t.cef3_maxAmpl_fit_corr->at(i)); 
+	  totalHistos_tight_maxAmpl_fit[i]->Fill(t.cef3_maxAmpl_fit_corr->at(i)); //FIXME!!!!!
 	  }
 	}
       }

@@ -81,6 +81,21 @@ namespace WaveformFit
     return chisq;
   }
 
+  double chi2WaveSimplePlusTime(const double *par )
+  {
+    double chisq = 0;
+    double delta = 0;
+    for (int i=xMin;i<=xMax;++i)
+      {
+	//	delta= ((*waveData)._samples[i]-(fitWave->GetBinContent(fitWave->FindBin((*waveData)._times[i])))*par[0])/sampleRMS; //fit par[0]*ref_shape(t) par[0]=amplitude
+	//	if(xMax>998)	std::cout<<i<<"<-i "<<(*waveData)._times[i]<<"<-eval"<<std::endl;
+	delta= ((*waveData)._samples[i]-(y_interpolator->Eval((*waveData)._times[i]-par[1]))*par[0])/sampleRMS; //fit par[0]*ref_shape(t-par[1]) par[0]=amplitude
+	    chisq += delta*delta;
+      }
+    return chisq;
+  }
+
+
 
   void residuals(const double *par )
   {
@@ -204,7 +219,6 @@ namespace WaveformFit
       xMin=startSample;
       xMax=endSample;
     }
-    //           std::cout<<xMin<<" "<<xMax<<std::endl;
     waveData=wave;
     fitWave=amplitudeProfile;
 
@@ -246,6 +260,70 @@ namespace WaveformFit
 	 //	 	const double* par=minimizer->X();
 	 
 	 // 	 std::cout << "+++++ FIT RESULT: " << par[0] << std::endl;
+	 // 	residuals(par);
+       }
+
+     delete y_interpolator;
+     y_interpolator=0;
+    
+
+  }
+
+  void fitWaveformSimplePlusTime(Waveform* wave, TProfile* amplitudeProfile, int nSamplesBeforeMax, int nSamplesAfterMax, const Waveform::max_amplitude_informations& max, const Waveform::baseline_informations& waveRms, ROOT::Math::Minimizer* &minimizer, bool fixedWindow, int startSample, int endSample)
+  {
+    if(!fixedWindow){
+      xMin=std::max(1,max.sample_at_max-nSamplesBeforeMax);
+      xMax=std::min(max.sample_at_max+nSamplesAfterMax,999);
+    }else{
+      //      xMin=170;
+      //      xMax=700;
+      xMin=startSample;
+      xMax=endSample;
+    }
+    waveData=wave;
+    fitWave=amplitudeProfile;
+
+    std::cout<<"xMin:"<<xMin<<" xMAx:"<<xMax<<std::endl;
+
+    sampleRMS=waveRms.rms;
+
+    minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
+
+    minimizer->SetMaxFunctionCalls(100000);
+    minimizer->SetMaxIterations(100);
+    minimizer->SetTolerance(1e-3);
+    minimizer->SetPrintLevel(0);
+
+    if (!y_interpolator)
+      y_interpolator=new ROOT::Math::Interpolator(MAX_INTERPOLATOR_POINTS, ROOT::Math::Interpolation::kCSPLINE);
+
+    std::vector<double> x,y;
+    for (int i=1;i<=amplitudeProfile->GetNbinsX();++i)
+      {
+	x.push_back(amplitudeProfile->GetBinCenter(i));
+	y.push_back(amplitudeProfile->GetBinContent(i));
+	//	std::cout<<"i="<<i<<" "<<amplitudeProfile->GetBinCenter(i)<<" "<<amplitudeProfile->GetBinContent(i)<<std::endl;
+      }
+
+    y_interpolator->SetData(x,y);
+
+
+    ROOT::Math::Functor f(&chi2WaveSimplePlusTime,2);
+    minimizer->SetFunction(f);
+
+    //    std::cout << "INIITIAL VALUES " << max.max_amplitude << "," << max.time_at_max*1.e9 << "," << max.sample_at_max << " RMS:"<<sampleRMS<<std::endl;
+
+    //    minimizer->SetLimitedVariable(0,"amplitude",max.max_amplitude,1e-2,std::max(0.,(double)max.max_amplitude-500),std::min(4000.,(double)max.max_amplitude+4000.));
+    minimizer->SetLimitedVariable(0,"amplitude",max.max_amplitude,1e-2,-500,4000);
+    minimizer->SetLimitedVariable(1,"deltaT",0.,1e-3,0,20e-9);
+
+    minimizer->Minimize();
+
+    if (minimizer->Status()==0||minimizer->Status()==3)
+       {
+	 //	 	 	const double* par=minimizer->X();
+	 
+	 //	 std::cout << "+++++ FIT RESULT: " << par[0] << ","<<par[1]<< std::endl;
 	 // 	residuals(par);
        }
 

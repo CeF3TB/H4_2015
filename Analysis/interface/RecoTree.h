@@ -35,6 +35,7 @@ public :
    vector<float>   *cef3_maxAmpl;
    vector<float>   *cef3_maxAmpl_fit;
    vector<float>   *cef3_maxAmpl_fit_corr;
+   vector<float>   *cef3_maxAmpl_fit_cher;
    vector<float>   *cef3_chaInt;
    vector<float>   *cef3_chaInt_cher;
    vector<float>   *cef3_chaInt_wls;
@@ -105,6 +106,7 @@ public :
    TBranch        *b_cef3_maxAmpl;   //!
    TBranch        *b_cef3_maxAmpl_fit;   //!
    TBranch        *b_cef3_maxAmpl_fit_corr;   //!
+   TBranch        *b_cef3_maxAmpl_fit_cher;   //!
    TBranch        *b_cef3_chaInt;   //!
    TBranch        *b_cef3_chaInt_cher;   //!
    TBranch        *b_cef3_chaInt_wls;   //!
@@ -235,6 +237,7 @@ void RecoTree::Init(TTree *tree)
    cef3_maxAmpl = 0;
    cef3_maxAmpl_fit = 0;
    cef3_maxAmpl_fit_corr = 0;
+   cef3_maxAmpl_fit_cher = 0;
    cef3_chaInt = 0;
    cef3_chaInt_cher = 0;
    cef3_chaInt_wls = 0;
@@ -257,6 +260,7 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("cef3_maxAmpl", &cef3_maxAmpl, &b_cef3_maxAmpl);
    fChain->SetBranchAddress("cef3_maxAmpl_fit", &cef3_maxAmpl_fit, &b_cef3_maxAmpl_fit);
    fChain->SetBranchAddress("cef3_maxAmpl_fit_corr", &cef3_maxAmpl_fit_corr, &b_cef3_maxAmpl_fit_corr);
+   fChain->SetBranchAddress("cef3_maxAmpl_fit_cher", &cef3_maxAmpl_fit_cher, &b_cef3_maxAmpl_fit_cher);
    fChain->SetBranchAddress("cef3_chaInt", &cef3_chaInt, &b_cef3_chaInt);
    fChain->SetBranchAddress("cef3_chaInt_cher", &cef3_chaInt_cher, &b_cef3_chaInt_cher);
    fChain->SetBranchAddress("cef3_chaInt_wls", &cef3_chaInt_wls, &b_cef3_chaInt_wls);

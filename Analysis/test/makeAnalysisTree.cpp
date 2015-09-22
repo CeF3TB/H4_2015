@@ -28,6 +28,7 @@
 void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos );
 void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos );
 void computeCherenkov(std::vector<float> &cher,std::vector<float> wls);
+void computeCherenkovWithFit(std::vector<float> &cher,std::vector<float> &chInt, float waveProfileInt[4],std::vector<float> cef3_maxAmpl_fit,float waveCherInt[4],std::vector<float> cef3_maxAmpl_fit_cher);
 void doHodoReconstructionBool( std::vector<bool> values, int &nClusters, int *nFibres, float *pos, float fibreWidth, int clusterMaxFibres, float Cut );
 std::vector<HodoCluster*> getHodoClustersBool( std::vector<bool> hodo, float fibreWidth, int nClusterMax, float Cut );
 
@@ -115,7 +116,7 @@ int main( int argc, char* argv[] ) {
    std::vector<float>   *digi_time_at_frac30;
    std::vector<float>   *digi_time_at_frac50_bare_noise_sub;
    std::vector<float>   *digi_time_at_1000_bare_noise_sub;
-   std::vector<float>   *digi_time_at_max;
+   std::vector<float>   *digi_time_at_max_noise_sub;
    std::vector<bool>    *HODOX1;
    std::vector<bool>    *HODOX2;
    std::vector<bool>    *HODOY1;
@@ -167,7 +168,7 @@ int main( int argc, char* argv[] ) {
    TBranch        *b_digi_time_at_frac30;   //!
    TBranch        *b_digi_time_at_frac50_bare_noise_sub;   //!
    TBranch        *b_digi_time_at_1000_bare_noise_sub;   //!
-   TBranch        *b_digi_time_at_max;   //!
+   TBranch        *b_digi_time_at_max_noise_sub;   //!
    TBranch        *b_HODOX1;   //!
    TBranch        *b_HODOX2;   //!
    TBranch        *b_HODOY1;   //!
@@ -211,7 +212,7 @@ int main( int argc, char* argv[] ) {
    digi_time_at_frac30 = 0;
    digi_time_at_frac50_bare_noise_sub = 0;
    digi_time_at_1000_bare_noise_sub = 0;
-   digi_time_at_max = 0;
+   digi_time_at_max_noise_sub = 0;
    HODOX1 = 0;
    HODOX2 = 0;
    HODOY1 = 0;
@@ -257,7 +258,7 @@ int main( int argc, char* argv[] ) {
    fChain->SetBranchAddress("digi_max_amplitude", &digi_max_amplitude, &b_digi_max_amplitude);
    fChain->SetBranchAddress("digi_pedestal", &digi_pedestal, &b_digi_pedestal);
    fChain->SetBranchAddress("digi_pedestal_rms", &digi_pedestal_rms, &b_digi_pedestal_rms);
-   fChain->SetBranchAddress("digi_time_at_max", &digi_time_at_max, &b_digi_time_at_max);
+   fChain->SetBranchAddress("digi_time_at_max_noise_sub", &digi_time_at_max_noise_sub, &b_digi_time_at_max_noise_sub);
    fChain->SetBranchAddress("digi_time_at_frac50_bare_noise_sub", &digi_time_at_frac50_bare_noise_sub, &b_digi_time_at_frac50_bare_noise_sub);
    fChain->SetBranchAddress("digi_time_at_1000_bare_noise_sub", &digi_time_at_1000_bare_noise_sub, &b_digi_time_at_1000_bare_noise_sub);
    fChain->SetBranchAddress("HODOX1", &HODOX1, &b_HODOX1);
@@ -305,7 +306,14 @@ int main( int argc, char* argv[] ) {
    TTree* outTree = new TTree("recoTree", "recoTree");
 
    TFile* waveformFile;
-   waveformFile = TFile::Open("outWaveFormUtil_2778.root");
+   if(runName=="2793") waveformFile = TFile::Open("outWaveFormUtil_2793.root");
+   else   waveformFile = TFile::Open("outWaveFormUtil_2778.root");
+
+   TFile* cherFile;
+   if(runName=="2787" || runName == "2807") cherFile = TFile::Open("outWaveFormUtil_2787.root");
+   if(runName=="2798") cherFile = TFile::Open("outWaveFormUtil_2798.root");
+   if(runName=="2890") cherFile = TFile::Open("outWaveFormUtil_2890.root");
+
 
    TFile* noiseFile;
    noiseFile = TFile::Open("outWaveFormUtil_2539.root");
@@ -326,8 +334,13 @@ int main( int argc, char* argv[] ) {
 
    std::vector<float> cef3_maxAmpl( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_maxAmpl", &cef3_maxAmpl );
+   std::vector<float> cef3_maxAmpl_time( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_maxAmpl_time", &cef3_maxAmpl_time );
+
    std::vector<float> cef3_maxAmpl_fit( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_maxAmpl_fit", &cef3_maxAmpl_fit );
+   std::vector<float> cef3_maxAmpl_fit_cher( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_maxAmpl_fit_cher", &cef3_maxAmpl_fit_cher );
    std::vector<float> cef3_maxAmpl_fit_corr( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_maxAmpl_fit_corr", &cef3_maxAmpl_fit_corr );
    std::vector<float> cef3_chaInt( CEF3_CHANNELS, -1. );
@@ -487,7 +500,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //   nentries=5000;
+   nentries=5000;
 
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
@@ -495,6 +508,9 @@ int main( int argc, char* argv[] ) {
  
    //get reference waveform for fits
    std::vector<TProfile*>  waveProfile;
+   float waveProfileInt[4];
+   std::vector<TProfile*>  waveCher;
+   float waveCherInt[4];
 
    for (unsigned int iCh=0; iCh<CEF3_CHANNELS; iCh++) {
      TString name="prof";
@@ -511,10 +527,26 @@ int main( int argc, char* argv[] ) {
       }
      //     TH1F* histo = (TH1F*)waveformFile->Get("waveform_histo_"+istring);
      //     for(int i=0;i<=histo->GetNbinsX();++i) waveProfile.at(iCh)->Fill(histo->GetBinCenter(i), histo->GetBinContent(i));
-
      waveProfile.at(iCh)->Scale(1./waveProfile.at(iCh)->GetMaximum());
-     
 
+     waveProfileInt[iCh]=waveProfile.at(iCh)->Integral(startSample,endSample);
+
+     if(runName=="2787" || runName=="2798" || runName=="2890" || runName=="2807"){
+       name+="cher";
+       waveCher.push_back(new TProfile(name,name,1024,0,0.4e-6));
+       TGraph* graph2 = (TGraph*)cherFile->Get("waveform_"+istring);
+       double X2[graph2->GetN()],Y2[graph2->GetN()];
+       for(int iP=0;iP<graph2->GetN();iP++){
+	 graph2->GetPoint(iP,X2[iP],Y2[iP]);
+	 waveCher.at(iCh)->Fill(X2[iP],Y2[iP]);
+       }
+       waveCher.at(iCh)->Scale(1./waveCher.at(iCh)->GetMaximum());
+       TCanvas c;
+//       if(iCh>0)waveCher.at(1)->Draw();
+//       c.SaveAs("daje.png");
+//       waveCherInt[iCh]=waveCher.at(iCh)->Integral(4,startSample);
+
+     }
    }
 
    //noise histo for pedestal runs
@@ -564,6 +596,8 @@ int main( int argc, char* argv[] ) {
     }
     
 
+
+
     float timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digi_frequency)));
@@ -597,9 +631,6 @@ int main( int argc, char* argv[] ) {
     std::vector<float> charge_slow;
     std::vector<float> charge_fast;
     for (unsigned int i=0; i<CEF3_CHANNELS; i++) {      
-      //      if(iEntry>100)std::cout<<shiftSample<<std::endl;
-//      if(shiftSample<100 && shiftSample>-100)finalFastSample+=shiftSample;
-//      else shiftSample = 0;
       charge_fast.push_back(waveform.at(i)->charge_integrated(4,finalFastSample));
       charge_slow.push_back(waveform.at(i)->charge_integrated(finalFastSample,900));
       
@@ -609,12 +640,18 @@ int main( int argc, char* argv[] ) {
       if(i==2)sampleIntegral=50;
       Waveform::max_amplitude_informations wave_max = waveform.at(i)->max_amplitude(sampleIntegral,900,5);
       Waveform::baseline_informations wave_pedestal = waveform.at(i)->baseline(5,34);
-      // WaveformFit::fitWaveform(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
-      //      if(wave_max.max_amplitude>0) WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer);
-      if(wave_max.max_amplitude>0){
+
+      //WaveformFit on Cher using mean Waveform
+      ROOT::Math::Minimizer* minimizerCher;
+
+      if(wave_max.max_amplitude<0) continue;
 	if(i!=2) {
 	  if(runName!="2539"){//pedestal run
 	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
+	    if((runName=="2787" || runName=="2798" ) || (runName=="2890") || runName=="2807"){
+	      WaveformFit::fitWaveformSimple(waveform.at(i),waveCher.at(i),200,200,wave_max,wave_pedestal,minimizerCher, true, 150, startSample);
+	      //	      WaveformFit::fitWaveformSimplePlusTime(waveform.at(i),waveCher.at(i),50,100,wave_max,wave_pedestal,minimizerCher);
+	    }
 	  }else{
 	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
 	  }
@@ -625,9 +662,16 @@ int main( int argc, char* argv[] ) {
 	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
 	  }
 	}
-      }
+      
       const double* par=minimizer->X();
       cef3_maxAmpl_fit[i]=par[0];
+
+
+      if((runName=="2787" || runName=="2798" )|| runName=="2890" ||  runName=="2807"){
+      const double* parCher=minimizerCher->X();
+	cef3_maxAmpl_fit_cher[i]=parCher[0];
+      }
+
     }
 
 
@@ -666,6 +710,7 @@ int main( int argc, char* argv[] ) {
      cef3Calib.applyCalibration(cef3_maxAmpl_fit_corr);
 
      assignValues( cef3_maxAmpl, *digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL);
+     assignValues( cef3_maxAmpl_time, *digi_time_at_max_noise_sub, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt_wls, charge_slow, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt_cher, charge_fast, CEF3_START_CHANNEL);
@@ -681,7 +726,8 @@ int main( int argc, char* argv[] ) {
 //     cef3_chaInt_cher[2]*=6.67;
 //     cef3_chaInt_cher[3]*=0.59;
 
-     computeCherenkov(cef3_chaInt_cher,cef3_chaInt_wls);
+//     computeCherenkov(cef3_chaInt_cher,cef3_chaInt_wls);
+ if(runName=="2787"|| runName=="2798"|| runName=="2890" ||  runName=="2807")     computeCherenkovWithFit(cef3_chaInt_cher, cef3_chaInt,waveProfileInt,cef3_maxAmpl_fit,waveCherInt,cef3_maxAmpl_fit_cher);
 
      charge_slow.clear();
      charge_fast.clear();
@@ -918,11 +964,10 @@ void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsi
 
 void computeCherenkov(std::vector<float> &cher,std::vector<float> wls){
   TVectorD integrals(4);//values obtained from run2778
-//sample 172
-  integrals[0]=0.0787133;
-  integrals[1]=0.0388933;
-  integrals[2]=0.210458;
-  integrals[3]=0.042154;
+  integrals[0]=0.079;
+  integrals[1]=0.039;
+  integrals[2]=0.20;
+  integrals[3]=0.042;
 
   for (int i=0;i<cher.size();++i){
     float chargeWlsUnderCher=(wls[i]*integrals[i])/(1-integrals[i]);//amount of wls charge under cherenkov peak. estimated by fit
@@ -931,7 +976,27 @@ void computeCherenkov(std::vector<float> &cher,std::vector<float> wls){
   
 }
 
+void computeCherenkovWithFit(std::vector<float> &cher,std::vector<float> &chInt, float waveProfileInt[4],std::vector<float> cef3_maxAmpl_fit,float waveCherInt[4],std::vector<float> cef3_maxAmpl_fit_cher){
 
+  TVectorD integrals(4);//values obtained from run2778
+  integrals[0]=0.079;
+  integrals[1]=0.039;
+  integrals[2]=0.20;
+  integrals[3]=0.042;
+
+  for (int i=0;i<cher.size();++i){
+    float chWls=cef3_maxAmpl_fit[i]*waveProfileInt[i];
+    //float cherPlusWlsFast=chInt[i]-chWls;
+    float cherPlusWlsFast=cef3_maxAmpl_fit_cher[i]*waveCherInt[i];
+    float chargeWlsUnderCher=(chWls*integrals[i])/(1-integrals[i]);//amount of wls charge under cherenkov peak. estimated by fit
+    cher[i]=cherPlusWlsFast-chargeWlsUnderCher;
+//if(TMath::Abs(cher[i])<100){    std::cout<<"chWls:"<<chWls<<" cherPlusWlsFast"<<cherPlusWlsFast<<" cef3_maxAmpl_fit_cher:"<<cef3_maxAmpl_fit_cher[i]<<" int:"<<waveProfileInt[i]<<std::endl;
+//      std::cout<<"total "<<chInt[i]<<" cher[i]:"<<cher[i]<<" chargeWlsUnderCher"<<chargeWlsUnderCher<<std::endl;
+//    }
+  }
+
+
+}
 
 std::vector<HodoCluster*> getHodoClusters( std::vector<float> hodo, float fibreWidth, int nClusterMax, float Cut ) {
 
@@ -1138,3 +1203,5 @@ float timeSampleUnit(int drs4Freq)
     return 1.E-9;
   return -999.;
 }
+
+//  LocalWords:  waveProfileInt computeCherenkovWithFit

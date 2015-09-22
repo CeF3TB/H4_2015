@@ -43,7 +43,7 @@ void WaveformUtil::Loop(){
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //   nentries=1000;
+  //  nentries=2;
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
   float meanTimeAtMax[NFIBERS];
@@ -64,6 +64,7 @@ void WaveformUtil::Loop(){
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
+
     // if (Cut(ientry) < 0) continue;      
     if(jentry==0){
       runNumberString.Form("%d",runNumber);
@@ -71,6 +72,7 @@ void WaveformUtil::Loop(){
     }
     if(jentry%1000 == 0)std::cout<<"Processing entry:"<<jentry<<std::endl;
     //    if(passesHodoSelection()==false)continue;
+
 
     //    float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
@@ -146,6 +148,10 @@ void WaveformUtil::Loop(){
     meanWaveHistosForPlots[i]->Write();
     meanWaveGraphs[i]->Write();
 
+    TCanvas can;
+    meanWaveHistos[i]->Draw("AP");
+    can.SaveAs("plots/meanWave_"+fiber+"_"+runNumberString+".png");
+
 //    TCanvas fitcanvas;
 //    TF1* f1 = new TF1( "func", funcCRRC, lowRange[i]*timeSampleUnit(digiFreq), highRange[i]*timeSampleUnit(digiFreq)*3, 4 );
 //    //    f1->SetParameter( 0, 1.25475e+07);
@@ -185,7 +191,7 @@ void WaveformUtil::Loop(){
     t.setBins(10);
     data.plotOn(frame,RooFit::DataError(RooAbsData::SumW2)) ;
 
-    lxg.plotOn(frame) ;
+        lxg.plotOn(frame) ;
 
 
 
