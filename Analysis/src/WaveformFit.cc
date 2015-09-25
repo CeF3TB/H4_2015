@@ -283,15 +283,15 @@ namespace WaveformFit
     waveData=wave;
     fitWave=amplitudeProfile;
 
-    std::cout<<"xMin:"<<xMin<<" xMAx:"<<xMax<<std::endl;
+    //    std::cout<<"xMin:"<<xMin<<" xMAx:"<<xMax<<std::endl;
 
     sampleRMS=waveRms.rms;
 
     minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
 
     minimizer->SetMaxFunctionCalls(100000);
-    minimizer->SetMaxIterations(100);
-    minimizer->SetTolerance(1e-3);
+    minimizer->SetMaxIterations(1000);
+    minimizer->SetTolerance(1e-5);
     minimizer->SetPrintLevel(0);
 
     if (!y_interpolator)
@@ -315,7 +315,7 @@ namespace WaveformFit
 
     //    minimizer->SetLimitedVariable(0,"amplitude",max.max_amplitude,1e-2,std::max(0.,(double)max.max_amplitude-500),std::min(4000.,(double)max.max_amplitude+4000.));
     minimizer->SetLimitedVariable(0,"amplitude",max.max_amplitude,1e-2,-500,4000);
-    minimizer->SetLimitedVariable(1,"deltaT",0.,1e-3,0,20e-9);
+    minimizer->SetLimitedVariable(1,"deltaT",0.e-9,1e-13,-10.e-9,10.e-9);
 
     minimizer->Minimize();
 

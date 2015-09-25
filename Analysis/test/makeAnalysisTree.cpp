@@ -307,12 +307,31 @@ int main( int argc, char* argv[] ) {
 
    TFile* waveformFile;
    if(runName=="2793") waveformFile = TFile::Open("outWaveFormUtil_2793.root");
+   if(runName=="3076") waveformFile = TFile::Open("outWaveFormUtil_2586.root");
    else   waveformFile = TFile::Open("outWaveFormUtil_2778.root");
 
    TFile* cherFile;
-   if(runName=="2787" || runName == "2807") cherFile = TFile::Open("outWaveFormUtil_2787.root");
-   if(runName=="2798") cherFile = TFile::Open("outWaveFormUtil_2798.root");
-   if(runName=="2890") cherFile = TFile::Open("outWaveFormUtil_2890.root");
+   bool CHER_RUN=false;
+   if(runName=="2787" || runName == "2807"){
+     cherFile = TFile::Open("outWaveFormUtil_2787.root");
+     CHER_RUN=true;
+   }
+   if(runName=="2798"){
+     cherFile = TFile::Open("outWaveFormUtil_2798.root");
+     CHER_RUN=true;
+   }
+   if(runName=="2890"){ 
+     cherFile = TFile::Open("outWaveFormUtil_2890.root");
+     CHER_RUN=true;
+   }
+
+   bool MCP_RUN=false;
+   if(runName=="3076") {
+     cherFile = TFile::Open("outWaveFormUtil_2605.root");//5 gs run
+     CHER_RUN=true;
+     MCP_RUN = true;
+     gROOT->ProcessLine("gErrorIgnoreLevel=kWarning");// BE CAREFUL!this suppress warnings in root!!!Used because of a bug in minuit when doing minimization
+   }
 
 
    TFile* noiseFile;
@@ -341,6 +360,14 @@ int main( int argc, char* argv[] ) {
    outTree->Branch( "cef3_maxAmpl_fit", &cef3_maxAmpl_fit );
    std::vector<float> cef3_maxAmpl_fit_cher( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_maxAmpl_fit_cher", &cef3_maxAmpl_fit_cher );
+   std::vector<float> cef3_maxAmpl_fit_cher_status( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_maxAmpl_fit_cher_status", &cef3_maxAmpl_fit_cher_status );
+   std::vector<float> cef3_maxAmpl_fit_time_cher1( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_maxAmpl_fit_time_cher1", &cef3_maxAmpl_fit_time_cher1 );
+   std::vector<float> cef3_maxAmpl_fit_time_cher2( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_maxAmpl_fit_time_cher2", &cef3_maxAmpl_fit_time_cher2 );
+   std::vector<float> cef3_maxAmpl_fit_time_cher3( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_maxAmpl_fit_time_cher3", &cef3_maxAmpl_fit_time_cher3 );
    std::vector<float> cef3_maxAmpl_fit_corr( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_maxAmpl_fit_corr", &cef3_maxAmpl_fit_corr );
    std::vector<float> cef3_chaInt( CEF3_CHANNELS, -1. );
@@ -498,10 +525,17 @@ int main( int argc, char* argv[] ) {
    float wc_y_corr;
    outTree->Branch( "wc_y_corr", &wc_y_corr, "wc_y_corr/F");
 
+   float mcp_time_frac50;
+   outTree->Branch( "mcp_time_frac50", &mcp_time_frac50, "mcp_time_frac50/F");
+
+   float mcp_time_at_150;
+   outTree->Branch( "mcp_time_at_150", &mcp_time_at_150, "mcp_time_at_150/F");
+
+
+
 
    int nentries = tree->GetEntries();
-   nentries=5000;
-
+      nentries=5000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    std::cout << nentries << std::endl;
@@ -511,14 +545,16 @@ int main( int argc, char* argv[] ) {
    float waveProfileInt[4];
    std::vector<TProfile*>  waveCher;
    float waveCherInt[4];
+   float maxTimeCher[4]; 
 
    for (unsigned int iCh=0; iCh<CEF3_CHANNELS; iCh++) {
      TString name="prof";
      name+=iCh;
      TString istring;
      istring+=iCh;
-
-     waveProfile.push_back(new TProfile(name,name,1024,0,0.4e-6));
+     tree->GetEntry(0);     
+     if(digi_frequency==1)  waveProfile.push_back(new TProfile(name,name,1024,0,0.4e-6));
+     else waveProfile.push_back(new TProfile(name,name,1024,0,0.2e-6));
      TGraph* graph = (TGraph*)waveformFile->Get("waveform_"+istring);
      double X[graph->GetN()],Y[graph->GetN()];
      for(int iP=0;iP<graph->GetN();iP++){
@@ -528,12 +564,18 @@ int main( int argc, char* argv[] ) {
      //     TH1F* histo = (TH1F*)waveformFile->Get("waveform_histo_"+istring);
      //     for(int i=0;i<=histo->GetNbinsX();++i) waveProfile.at(iCh)->Fill(histo->GetBinCenter(i), histo->GetBinContent(i));
      waveProfile.at(iCh)->Scale(1./waveProfile.at(iCh)->GetMaximum());
+     if(digi_frequency==0){
+       startSample=210;
+     }
 
      waveProfileInt[iCh]=waveProfile.at(iCh)->Integral(startSample,endSample);
 
-     if(runName=="2787" || runName=="2798" || runName=="2890" || runName=="2807"){
+
+
+     if(CHER_RUN){
        name+="cher";
-       waveCher.push_back(new TProfile(name,name,1024,0,0.4e-6));
+       if(digi_frequency==1)       waveCher.push_back(new TProfile(name,name,1024,0,0.4e-6));
+       else        waveCher.push_back(new TProfile(name,name,1024,0,0.2e-6));
        TGraph* graph2 = (TGraph*)cherFile->Get("waveform_"+istring);
        double X2[graph2->GetN()],Y2[graph2->GetN()];
        for(int iP=0;iP<graph2->GetN();iP++){
@@ -541,11 +583,12 @@ int main( int argc, char* argv[] ) {
 	 waveCher.at(iCh)->Fill(X2[iP],Y2[iP]);
        }
        waveCher.at(iCh)->Scale(1./waveCher.at(iCh)->GetMaximum());
-       TCanvas c;
+       //       TCanvas c;
 //       if(iCh>0)waveCher.at(1)->Draw();
 //       c.SaveAs("daje.png");
 //       waveCherInt[iCh]=waveCher.at(iCh)->Integral(4,startSample);
 
+       maxTimeCher[iCh]=waveProfile.at(iCh)->GetBinCenter(waveProfile.at(iCh)->GetMaximumBin());
      }
    }
 
@@ -589,7 +632,7 @@ int main( int argc, char* argv[] ) {
     //waveform creation
     std::vector<Waveform*> waveform;
     waveform.clear();
-    for (unsigned int i=0; i<CEF3_CHANNELS; i++) {
+    for (unsigned int i=0; i<CEF3_CHANNELS+MCP_RUN; i++) {
       waveform.push_back(new Waveform());
       waveform.at(i)->clear();
     
@@ -597,23 +640,25 @@ int main( int argc, char* argv[] ) {
     
 
 
-
     float timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
-    float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
+    float shiftTime=0;
+    if (digi_frequency==1)shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
+    if (digi_frequency==0)shiftTime=161.6-timeOfTheEvent;//mean fitted on trigger run 2605
+
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digi_frequency)));
     shiftSample=-shiftSample;
     if(runName=="2539")shiftSample=0;
 
-    for (int i=0;i<1024*4;++i){
-      if(digi_value_ch->at(i) > 3)continue;
+    for (int i=0;i<1024*CEF3_CHANNELS;++i){
+      if(digi_value_ch->at(i) > 3)continue; //just to avoid not useful channels
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
       int iSample=i;
       if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
 	iSample=i+shiftSample;
       }
+
       if(runName!="2539")      waveform.at(digi_value_ch->at(i))->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
       else waveform.at(digi_value_ch->at(i))->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
-      //     else waveform.at(digi_value_ch->at(i))->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample)-(waveNoiseProfile.at(digi_value_ch->at(i)))->GetBinContent(iSample-1024*digi_value_ch->at(i)));
       //      std::cout<<"i:"<<digi_value_ch->at(i)<<" time:"<<(i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency)<<" value"<<digi_value_bare_noise_sub->at(iSample)<<std::endl;
       if(runName=="2539"){
 	//	std::cout<<i<<" "<<digi_value_bare_noise_sub->at(iSample)<<" "<<(waveNoiseProfile.at(digi_value_ch->at(i)))->GetBinContent(iSample-1024*digi_value_ch->at(i))<<std::endl;
@@ -622,11 +667,43 @@ int main( int argc, char* argv[] ) {
       }
 
     }
+    
+    if(MCP_RUN){
+      
+      timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(17);//synchronizing time of events with time of trigger
+      
+      if (digi_frequency==1)shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
+      if (digi_frequency==0)shiftTime=161.9-timeOfTheEvent;//mean fitted on trigger run 3076
+      
+      shiftSample=round(shiftTime/(1e9*timeSampleUnit(digi_frequency)));
+      shiftSample=-shiftSample;
+      for (int i=1024*CEF3_CHANNELS;i<1024*10;++i){
+	if(digi_value_ch->at(i)>9 || digi_value_ch->at(i)<9)continue;//second 8 channels sinchronized with trigger of second digiGroup
+	if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
 
+	int iSample=i;
+	if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
+	  iSample=i+shiftSample;
+	}
+	waveform.at(CEF3_CHANNELS)->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
+      }
 
+    }
 
-    float finalFastSample=230;
-    if(digi_frequency==1)finalFastSample=172;//no direct realtion between 5Gs and 2.5Gs since offset is different
+    if(MCP_RUN){
+      Waveform::max_amplitude_informations wave_max_bare = waveform.at(CEF3_CHANNELS)->max_amplitude(30,500,5);
+      
+      std::vector<float> crossingTimes;
+      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(CEF3_CHANNELS)->time_at_threshold((const float)30.*timeSampleUnit(digi_frequency), 100e-9,150,7);
+      if(crossingTimes.size()>0)    mcp_time_at_150=crossingTimes[0]*1.e9;
+      else mcp_time_at_150=-999;
+      
+      if(wave_max_bare.time_at_max>0)    mcp_time_frac50=waveform.at(CEF3_CHANNELS)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,7)*1.e9;
+      else mcp_time_frac50=-999;
+
+    }
+      float finalFastSample=230;
+      if(digi_frequency==1)finalFastSample=172;//no direct realtion between 5Gs and 2.5Gs since offset is different
     
     std::vector<float> charge_slow;
     std::vector<float> charge_fast;
@@ -644,13 +721,17 @@ int main( int argc, char* argv[] ) {
       //WaveformFit on Cher using mean Waveform
       ROOT::Math::Minimizer* minimizerCher;
 
+
+
       if(wave_max.max_amplitude<0) continue;
 	if(i!=2) {
 	  if(runName!="2539"){//pedestal run
 	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
-	    if((runName=="2787" || runName=="2798" ) || (runName=="2890") || runName=="2807"){
-	      WaveformFit::fitWaveformSimple(waveform.at(i),waveCher.at(i),200,200,wave_max,wave_pedestal,minimizerCher, true, 150, startSample);
-	      //	      WaveformFit::fitWaveformSimplePlusTime(waveform.at(i),waveCher.at(i),50,100,wave_max,wave_pedestal,minimizerCher);
+	    if(CHER_RUN){
+	      int cherStart=150;
+	      if(digi_frequency==0)cherStart=125;
+	      if(digi_time_at_max_noise_sub->at(i)<-22) WaveformFit::fitWaveformSimple(waveform.at(i),waveCher.at(i),200,200,wave_max,wave_pedestal,minimizerCher, true, cherStart, startSample);
+	      else  WaveformFit::fitWaveformSimplePlusTime(waveform.at(i),waveCher.at(i),50,100,wave_max,wave_pedestal,minimizerCher, true,cherStart, startSample);
 	    }
 	  }else{
 	    WaveformFit::fitWaveformSimple(waveform.at(i),waveProfile.at(i),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
@@ -667,24 +748,22 @@ int main( int argc, char* argv[] ) {
       cef3_maxAmpl_fit[i]=par[0];
 
 
-      if((runName=="2787" || runName=="2798" )|| runName=="2890" ||  runName=="2807"){
+      if(CHER_RUN){
       const double* parCher=minimizerCher->X();
 	cef3_maxAmpl_fit_cher[i]=parCher[0];
+	cef3_maxAmpl_fit_time_cher1[i]=(maxTimeCher[i]+parCher[1])*1.e9;
+	cef3_maxAmpl_fit_time_cher2[i]=waveform.at(i)->time_at_frac(0.,(float)100.e-9,0.5,wave_max,7)*1.e9;
+	cef3_maxAmpl_fit_cher_status[i]=minimizerCher->Status();	
       }
 
     }
 
 
-    std::string theBeamEnergy = Form("%.0f",BeamEnergy);
-    if( runNumber > 272 && runNumber < 298){
-      theBeamEnergy = "273"; //For the long position scan prior to tdc adjustment
-    }else if( runNumber  < 273){
-      theBeamEnergy = "259"; //For the first runs, before adjustments
-    }
-    //   std::cout << "The used constant file has label = "<< theBeamEnergy  << std::endl;
-    
-    
+
+
+
     //set the tag for calibration
+    std::string theBeamEnergy = Form("%.0f",BeamEnergy);
     TagHelper tagHelper(tag,theBeamEnergy);
     EnergyCalibration cef3Calib(tagHelper.getCeF3FileName());
     EnergyCalibration bgoCalib(tagHelper.getBGOFileName());
@@ -727,7 +806,7 @@ int main( int argc, char* argv[] ) {
 //     cef3_chaInt_cher[3]*=0.59;
 
 //     computeCherenkov(cef3_chaInt_cher,cef3_chaInt_wls);
- if(runName=="2787"|| runName=="2798"|| runName=="2890" ||  runName=="2807")     computeCherenkovWithFit(cef3_chaInt_cher, cef3_chaInt,waveProfileInt,cef3_maxAmpl_fit,waveCherInt,cef3_maxAmpl_fit_cher);
+ if(CHER_RUN)     computeCherenkovWithFit(cef3_chaInt_cher, cef3_chaInt,waveProfileInt,cef3_maxAmpl_fit,waveCherInt,cef3_maxAmpl_fit_cher);
 
      charge_slow.clear();
      charge_fast.clear();

@@ -77,7 +77,9 @@ void WaveformUtil::Loop(){
     //    float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     //    float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
-    float shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
+    float shiftTime=0;
+    if (digiFreq==1)shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
+    if (digiFreq==0)shiftTime=161.9-timeOfTheEvent;//mean fitted on trigger run 3076
     //    float shiftTime=138.1-timeOfTheEvent;//mean fitted on trigger run 329 for 2014 data
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digiFreq)));
     shiftSample=-shiftSample;
@@ -191,7 +193,7 @@ void WaveformUtil::Loop(){
     t.setBins(10);
     data.plotOn(frame,RooFit::DataError(RooAbsData::SumW2)) ;
 
-        lxg.plotOn(frame) ;
+    //        lxg.plotOn(frame) ;
 
 
 
@@ -200,6 +202,8 @@ void WaveformUtil::Loop(){
 
     TCanvas c1("c_"+fiber);
     frame->Draw();
+    c1.SaveAs("plots/c_"+fiber+"_"+runNumberString+".png");
+    c1.SaveAs("plots/c_"+fiber+"_"+runNumberString+".pdf");
     c1.Write();
 
     //try crrc function convoluted with decay of cef3 and wls
@@ -279,6 +283,7 @@ void WaveformUtil::Loop(){
   outFile->Close();
 
 }
+
 
 
 float WaveformUtil::timeSampleUnit(int drs4Freq)
