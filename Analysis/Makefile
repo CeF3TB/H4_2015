@@ -33,6 +33,10 @@ drawRespVsXnY: DrawTools.o
 drawCherenkov:  Event.o DrawTools.o RecoTree.o RooCruijff.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/drawCherenkov $(EXE_DIR)/drawCherenkov.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
+drawTiming:  DrawTools.o RecoTree.o 
+	$(CC) -Wall $(INCLUDES) -o ./bin/drawTiming $(EXE_DIR)/drawTiming.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
+
+
 kConstantFinder:  Event.o DrawTools.o RecoTree.o RooCruijff.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/kConstantFinder $(EXE_DIR)/kConstantFinder.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 

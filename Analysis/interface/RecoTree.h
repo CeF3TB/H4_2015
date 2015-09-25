@@ -36,6 +36,9 @@ public :
    vector<float>   *cef3_maxAmpl_fit;
    vector<float>   *cef3_maxAmpl_fit_corr;
    vector<float>   *cef3_maxAmpl_fit_cher;
+   vector<float>   *cef3_maxAmpl_fit_cher_status;
+   vector<float>   *cef3_maxAmpl_fit_time_cher1;
+   vector<float>   *cef3_maxAmpl_fit_time_cher2;
    vector<float>   *cef3_chaInt;
    vector<float>   *cef3_chaInt_cher;
    vector<float>   *cef3_chaInt_wls;
@@ -43,6 +46,8 @@ public :
    vector<float>   *cef3_maxAmpl_corr;
    vector<float>   *cef3_chaInt_corr;
    vector<float>   *bgo_corr;
+   Float_t         mcp_time_frac50;
+   Float_t         mcp_time_at_150;
    Float_t         xTable;
    Float_t         yTable;
    Float_t         beamEnergy;
@@ -107,6 +112,11 @@ public :
    TBranch        *b_cef3_maxAmpl_fit;   //!
    TBranch        *b_cef3_maxAmpl_fit_corr;   //!
    TBranch        *b_cef3_maxAmpl_fit_cher;   //!
+   TBranch        *b_cef3_maxAmpl_fit_cher_status;   //!
+   TBranch        *b_cef3_maxAmpl_fit_time_cher1;
+   TBranch        *b_cef3_maxAmpl_fit_time_cher2;
+   TBranch        *b_mcp_time_frac50;
+   TBranch        *b_mcp_time_at_150;
    TBranch        *b_cef3_chaInt;   //!
    TBranch        *b_cef3_chaInt_cher;   //!
    TBranch        *b_cef3_chaInt_wls;   //!
@@ -237,7 +247,9 @@ void RecoTree::Init(TTree *tree)
    cef3_maxAmpl = 0;
    cef3_maxAmpl_fit = 0;
    cef3_maxAmpl_fit_corr = 0;
-   cef3_maxAmpl_fit_cher = 0;
+   cef3_maxAmpl_fit_time_cher1 = 0;
+   cef3_maxAmpl_fit_time_cher2 = 0;
+   cef3_maxAmpl_fit_cher_status = 0;
    cef3_chaInt = 0;
    cef3_chaInt_cher = 0;
    cef3_chaInt_wls = 0;
@@ -261,6 +273,10 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("cef3_maxAmpl_fit", &cef3_maxAmpl_fit, &b_cef3_maxAmpl_fit);
    fChain->SetBranchAddress("cef3_maxAmpl_fit_corr", &cef3_maxAmpl_fit_corr, &b_cef3_maxAmpl_fit_corr);
    fChain->SetBranchAddress("cef3_maxAmpl_fit_cher", &cef3_maxAmpl_fit_cher, &b_cef3_maxAmpl_fit_cher);
+   fChain->SetBranchAddress("cef3_maxAmpl_fit_cher_status", &cef3_maxAmpl_fit_cher_status, &b_cef3_maxAmpl_fit_cher_status);
+   fChain->SetBranchAddress("cef3_maxAmpl_fit_time_cher1", &cef3_maxAmpl_fit_time_cher1, &b_cef3_maxAmpl_fit_time_cher1);
+   fChain->SetBranchAddress("cef3_maxAmpl_fit_time_cher2", &cef3_maxAmpl_fit_time_cher2, &b_cef3_maxAmpl_fit_time_cher2);
+   fChain->SetBranchAddress("cef3_maxAmpl_fit_cher_status", &cef3_maxAmpl_fit_cher_status, &b_cef3_maxAmpl_fit_cher_status);
    fChain->SetBranchAddress("cef3_chaInt", &cef3_chaInt, &b_cef3_chaInt);
    fChain->SetBranchAddress("cef3_chaInt_cher", &cef3_chaInt_cher, &b_cef3_chaInt_cher);
    fChain->SetBranchAddress("cef3_chaInt_wls", &cef3_chaInt_wls, &b_cef3_chaInt_wls);
@@ -268,6 +284,8 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("cef3_maxAmpl_corr", &cef3_maxAmpl_corr, &b_cef3_maxAmpl_corr);
    fChain->SetBranchAddress("cef3_chaInt_corr", &cef3_chaInt_corr, &b_cef3_chaInt_corr);
    fChain->SetBranchAddress("bgo_corr", &bgo_corr, &b_bgo_corr);
+   fChain->SetBranchAddress("mcp_time_frac50", &mcp_time_frac50, &b_mcp_time_frac50);
+   fChain->SetBranchAddress("mcp_time_at_150", &mcp_time_at_150, &b_mcp_time_at_150);
    fChain->SetBranchAddress("xTable", &xTable, &b_xTable);
    fChain->SetBranchAddress("yTable", &yTable, &b_yTable);
    fChain->SetBranchAddress("beamEnergy", &beamEnergy, &b_xbeamEnergy);
