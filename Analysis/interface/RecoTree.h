@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Mon Jul 20 13:53:10 2015 by ROOT version 5.34/18
+// Fri Sep 25 17:00:23 2015 by ROOT version 5.34/18
 // from TTree recoTree/recoTree
-// found on file: analysisTrees_V00/Reco_2778.root
+// found on file: analysisTrees_V00/Reco_3076.root
 //////////////////////////////////////////////////////////
 
 #ifndef RecoTree_h
@@ -11,15 +11,12 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
-#include <iostream>
-#include <cstdlib>
-
 
 // Header file for the classes stored in the TTree if any.
 #include <vector>
+#include <vector>
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
-using namespace std;
 
 class RecoTree {
 public :
@@ -30,24 +27,24 @@ public :
    UInt_t          run;
    UInt_t          spill;
    UInt_t          event;
-   vector<float>   *cef3;
-   vector<float>   *cef3_corr;
-   vector<float>   *cef3_maxAmpl;
-   vector<float>   *cef3_maxAmpl_fit;
-   vector<float>   *cef3_maxAmpl_fit_corr;
-   vector<float>   *cef3_maxAmpl_fit_cher;
-   vector<float>   *cef3_maxAmpl_fit_cher_status;
-   vector<float>   *cef3_maxAmpl_fit_time_cher1;
-   vector<float>   *cef3_maxAmpl_fit_time_cher2;
-   vector<float>   *cef3_chaInt;
-   vector<float>   *cef3_chaInt_cher;
-   vector<float>   *cef3_chaInt_wls;
-   vector<float>   *bgo;
-   vector<float>   *cef3_maxAmpl_corr;
-   vector<float>   *cef3_chaInt_corr;
-   vector<float>   *bgo_corr;
-   Float_t         mcp_time_frac50;
-   Float_t         mcp_time_at_150;
+   std::vector<float>   *cef3;
+   std::vector<float>   *cef3_corr;
+   std::vector<float>   *cef3_maxAmpl;
+   std::vector<float>   *cef3_maxAmpl_time;
+   std::vector<float>   *cef3_maxAmpl_fit;
+   std::vector<float>   *cef3_maxAmpl_fit_cher;
+   std::vector<float>   *cef3_maxAmpl_fit_cher_status;
+   std::vector<float>   *cef3_maxAmpl_fit_time_cher1;
+   std::vector<float>   *cef3_maxAmpl_fit_time_cher2;
+   std::vector<float>   *cef3_maxAmpl_fit_time_cher3;
+   std::vector<float>   *cef3_maxAmpl_fit_corr;
+   std::vector<float>   *cef3_chaInt;
+   std::vector<float>   *cef3_chaInt_cher;
+   std::vector<float>   *cef3_chaInt_wls;
+   std::vector<float>   *bgo;
+   std::vector<float>   *cef3_maxAmpl_corr;
+   std::vector<float>   *cef3_chaInt_corr;
+   std::vector<float>   *bgo_corr;
    Float_t         xTable;
    Float_t         yTable;
    Float_t         beamEnergy;
@@ -57,21 +54,21 @@ public :
    Float_t         xBeam;
    Float_t         yBeam;
    Int_t           nClusters_hodoX1;
-   Int_t           nFibres_hodoX1[17];   //[nClusters_hodoX1]
-   Float_t         pos_hodoX1[17];   //[nClusters_hodoX1]
-   Float_t         pos_corr_hodoX1[17];   //[nClusters_hodoX1]
+   Int_t           nFibres_hodoX1[30];   //[nClusters_hodoX1]
+   Float_t         pos_hodoX1[30];   //[nClusters_hodoX1]
+   Float_t         pos_corr_hodoX1[30];   //[nClusters_hodoX1]
    Int_t           nClusters_hodoY1;
-   Int_t           nFibres_hodoY1[16];   //[nClusters_hodoY1]
-   Float_t         pos_hodoY1[16];   //[nClusters_hodoY1]
-   Float_t         pos_corr_hodoY1[16];   //[nClusters_hodoY1]
+   Int_t           nFibres_hodoY1[30];   //[nClusters_hodoY1]
+   Float_t         pos_hodoY1[30];   //[nClusters_hodoY1]
+   Float_t         pos_corr_hodoY1[30];   //[nClusters_hodoY1]
    Int_t           nClusters_hodoX2;
-   Int_t           nFibres_hodoX2[19];   //[nClusters_hodoX2]
-   Float_t         pos_hodoX2[19];   //[nClusters_hodoX2]
-   Float_t         pos_corr_hodoX2[19];   //[nClusters_hodoX2]
+   Int_t           nFibres_hodoX2[30];   //[nClusters_hodoX2]
+   Float_t         pos_hodoX2[30];   //[nClusters_hodoX2]
+   Float_t         pos_corr_hodoX2[30];   //[nClusters_hodoX2]
    Int_t           nClusters_hodoY2;
-   Int_t           nFibres_hodoY2[15];   //[nClusters_hodoY2]
-   Float_t         pos_hodoY2[15];   //[nClusters_hodoY2]
-   Float_t         pos_corr_hodoY2[15];   //[nClusters_hodoY2]
+   Int_t           nFibres_hodoY2[30];   //[nClusters_hodoY2]
+   Float_t         pos_hodoY2[30];   //[nClusters_hodoY2]
+   Float_t         pos_corr_hodoY2[30];   //[nClusters_hodoY2]
    Int_t           nClusters_hodoSmallX;
    Int_t           nFibres_hodoSmallX[4];   //[nClusters_hodoSmallX]
    Float_t         pos_hodoSmallX[4];   //[nClusters_hodoSmallX]
@@ -80,7 +77,7 @@ public :
    Int_t           nFibres_hodoSmallY[4];   //[nClusters_hodoSmallY]
    Float_t         pos_hodoSmallY[4];   //[nClusters_hodoSmallY]
    Float_t         pos_corr_hodoSmallY[4];   //[nClusters_hodoSmallY]
-   vector<int>     *nTDCHits;
+   std::vector<int>     *nTDCHits;
    Float_t         pos_2FibClust_hodoX1;
    Float_t         pos_2FibClust_corr_hodoX1;
    Float_t         pos_2FibClust_hodoY1;
@@ -101,6 +98,8 @@ public :
    Float_t         wc_y;
    Float_t         wc_x_corr;
    Float_t         wc_y_corr;
+   Float_t         mcp_time_frac50;
+   Float_t         mcp_time_at_150;
 
    // List of branches
    TBranch        *b_run;   //!
@@ -109,14 +108,14 @@ public :
    TBranch        *b_cef3;   //!
    TBranch        *b_cef3_corr;   //!
    TBranch        *b_cef3_maxAmpl;   //!
+   TBranch        *b_cef3_maxAmpl_time;   //!
    TBranch        *b_cef3_maxAmpl_fit;   //!
-   TBranch        *b_cef3_maxAmpl_fit_corr;   //!
    TBranch        *b_cef3_maxAmpl_fit_cher;   //!
    TBranch        *b_cef3_maxAmpl_fit_cher_status;   //!
-   TBranch        *b_cef3_maxAmpl_fit_time_cher1;
-   TBranch        *b_cef3_maxAmpl_fit_time_cher2;
-   TBranch        *b_mcp_time_frac50;
-   TBranch        *b_mcp_time_at_150;
+   TBranch        *b_cef3_maxAmpl_fit_time_cher1;   //!
+   TBranch        *b_cef3_maxAmpl_fit_time_cher2;   //!
+   TBranch        *b_cef3_maxAmpl_fit_time_cher3;   //!
+   TBranch        *b_cef3_maxAmpl_fit_corr;   //!
    TBranch        *b_cef3_chaInt;   //!
    TBranch        *b_cef3_chaInt_cher;   //!
    TBranch        *b_cef3_chaInt_wls;   //!
@@ -177,6 +176,8 @@ public :
    TBranch        *b_wc_y;   //!
    TBranch        *b_wc_x_corr;   //!
    TBranch        *b_wc_y_corr;   //!
+   TBranch        *b_mcp_time_frac50;   //!
+   TBranch        *b_mcp_time_at_150;   //!
 
    RecoTree(TTree *tree=0);
    virtual ~RecoTree();
@@ -196,9 +197,9 @@ RecoTree::RecoTree(TTree *tree) : fChain(0)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("analysisTrees_V00/Reco_2778.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("analysisTrees_V00/Reco_3076.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("analysisTrees_V00/Reco_2778.root");
+         f = new TFile("analysisTrees_V00/Reco_3076.root");
       }
       f->GetObject("recoTree",tree);
 
@@ -245,11 +246,14 @@ void RecoTree::Init(TTree *tree)
    cef3 = 0;
    cef3_corr = 0;
    cef3_maxAmpl = 0;
+   cef3_maxAmpl_time = 0;
    cef3_maxAmpl_fit = 0;
-   cef3_maxAmpl_fit_corr = 0;
+   cef3_maxAmpl_fit_cher = 0;
+   cef3_maxAmpl_fit_cher_status = 0;
    cef3_maxAmpl_fit_time_cher1 = 0;
    cef3_maxAmpl_fit_time_cher2 = 0;
-   cef3_maxAmpl_fit_cher_status = 0;
+   cef3_maxAmpl_fit_time_cher3 = 0;
+   cef3_maxAmpl_fit_corr = 0;
    cef3_chaInt = 0;
    cef3_chaInt_cher = 0;
    cef3_chaInt_wls = 0;
@@ -270,13 +274,14 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("cef3", &cef3, &b_cef3);
    fChain->SetBranchAddress("cef3_corr", &cef3_corr, &b_cef3_corr);
    fChain->SetBranchAddress("cef3_maxAmpl", &cef3_maxAmpl, &b_cef3_maxAmpl);
+   fChain->SetBranchAddress("cef3_maxAmpl_time", &cef3_maxAmpl_time, &b_cef3_maxAmpl_time);
    fChain->SetBranchAddress("cef3_maxAmpl_fit", &cef3_maxAmpl_fit, &b_cef3_maxAmpl_fit);
-   fChain->SetBranchAddress("cef3_maxAmpl_fit_corr", &cef3_maxAmpl_fit_corr, &b_cef3_maxAmpl_fit_corr);
    fChain->SetBranchAddress("cef3_maxAmpl_fit_cher", &cef3_maxAmpl_fit_cher, &b_cef3_maxAmpl_fit_cher);
    fChain->SetBranchAddress("cef3_maxAmpl_fit_cher_status", &cef3_maxAmpl_fit_cher_status, &b_cef3_maxAmpl_fit_cher_status);
    fChain->SetBranchAddress("cef3_maxAmpl_fit_time_cher1", &cef3_maxAmpl_fit_time_cher1, &b_cef3_maxAmpl_fit_time_cher1);
    fChain->SetBranchAddress("cef3_maxAmpl_fit_time_cher2", &cef3_maxAmpl_fit_time_cher2, &b_cef3_maxAmpl_fit_time_cher2);
-   fChain->SetBranchAddress("cef3_maxAmpl_fit_cher_status", &cef3_maxAmpl_fit_cher_status, &b_cef3_maxAmpl_fit_cher_status);
+   fChain->SetBranchAddress("cef3_maxAmpl_fit_time_cher3", &cef3_maxAmpl_fit_time_cher3, &b_cef3_maxAmpl_fit_time_cher3);
+   fChain->SetBranchAddress("cef3_maxAmpl_fit_corr", &cef3_maxAmpl_fit_corr, &b_cef3_maxAmpl_fit_corr);
    fChain->SetBranchAddress("cef3_chaInt", &cef3_chaInt, &b_cef3_chaInt);
    fChain->SetBranchAddress("cef3_chaInt_cher", &cef3_chaInt_cher, &b_cef3_chaInt_cher);
    fChain->SetBranchAddress("cef3_chaInt_wls", &cef3_chaInt_wls, &b_cef3_chaInt_wls);
@@ -284,8 +289,6 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("cef3_maxAmpl_corr", &cef3_maxAmpl_corr, &b_cef3_maxAmpl_corr);
    fChain->SetBranchAddress("cef3_chaInt_corr", &cef3_chaInt_corr, &b_cef3_chaInt_corr);
    fChain->SetBranchAddress("bgo_corr", &bgo_corr, &b_bgo_corr);
-   fChain->SetBranchAddress("mcp_time_frac50", &mcp_time_frac50, &b_mcp_time_frac50);
-   fChain->SetBranchAddress("mcp_time_at_150", &mcp_time_at_150, &b_mcp_time_at_150);
    fChain->SetBranchAddress("xTable", &xTable, &b_xTable);
    fChain->SetBranchAddress("yTable", &yTable, &b_yTable);
    fChain->SetBranchAddress("beamEnergy", &beamEnergy, &b_xbeamEnergy);
@@ -339,6 +342,8 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("wc_y", &wc_y, &b_wc_y);
    fChain->SetBranchAddress("wc_x_corr", &wc_x_corr, &b_wc_x_corr);
    fChain->SetBranchAddress("wc_y_corr", &wc_y_corr, &b_wc_y_corr);
+   fChain->SetBranchAddress("mcp_time_frac50", &mcp_time_frac50, &b_mcp_time_frac50);
+   fChain->SetBranchAddress("mcp_time_at_150", &mcp_time_at_150, &b_mcp_time_at_150);
    Notify();
 }
 
