@@ -43,7 +43,7 @@ void WaveformUtil::Loop(){
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //  nentries=2;
+  nentries=100;
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
   float meanTimeAtMax[NFIBERS];
@@ -60,13 +60,17 @@ void WaveformUtil::Loop(){
   TString runNumberString;
   int digiFreq;
   Long64_t nbytes = 0, nb = 0;
+
+  bool isOctober2015Run=false;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
 
     // if (Cut(ientry) < 0) continue;      
+
     if(jentry==0){
+      isOctober2015Run=  (runNumber > 3900. && runNumber<4200);
       runNumberString.Form("%d",runNumber);
       digiFreq=digi_frequency;
     }
@@ -84,21 +88,29 @@ void WaveformUtil::Loop(){
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digiFreq)));
     shiftSample=-shiftSample;
     shiftSampleHisto->Fill(shiftSample);     
-    for (int i=0;i<4;++i){
-      if(digi_time_at_max_bare_noise_sub->at(i)>0 && digi_time_at_max_bare_noise_sub->at(i))meanTimeAtMax[i]+=digi_time_at_max_bare_noise_sub->at(i); 
+    for (int i=0;i<(CEF3_CHANNELS+1*isOctober2015Run);++i){
+      int iChannel=i;
+      if(isOctober2015Run){
+	if (i==2)continue;//channel2 was broken in October test
+	if (i>2)iChannel--;//channel2 was broken in October test
+      }
+      if(digi_time_at_max_bare_noise_sub->at(i)>0 && digi_time_at_max_bare_noise_sub->at(i)<400)meanTimeAtMax[iChannel]+=digi_time_at_max_bare_noise_sub->at(i); 
     }
-    for (int i=0;i<1024*4;++i){
-      if(digi_value_ch->at(i) > 3)continue;
+    for (int i=0;i<1024*(CEF3_CHANNELS+1*isOctober2015Run);++i){
+      int iChannel=digi_value_ch->at(i);
+      if(isOctober2015Run){
+	if(digi_value_ch->at(i)==2) continue;
+	if(digi_value_ch->at(i)>2)iChannel--;//channel2 was broken in October test
+      }
+
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
       int iSample=i;
       if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
 	iSample=i+shiftSample;
-
       }
       //      if(digi_value_ch->at(i)==1 )      std::cout<<"i:"<<i<<" isample:"<<iSample<<"digivalue:"<<digi_value_bare_noise_sub->at(i)<<" digivalue new:"<<digi_value_bare_noise_sub->at(iSample)<<" channel:"<<digi_value_ch->at(iSample)<<std::endl;
-      mean[digi_value_ch->at(i)][i-1024*digi_value_ch->at(i)]+=(float)(digi_value_bare_noise_sub->at(iSample)/nentries);
+      mean[iChannel][i-1024*digi_value_ch->at(i)]+=(float)(digi_value_bare_noise_sub->at(iSample)/nentries);
       if(i<1024)time[i]=digi_value_time->at(i);
-    
       
    }
   }
@@ -127,16 +139,17 @@ void WaveformUtil::Loop(){
     meanWaveHistos[i]=new TH1F("waveform_histo_"+fiber,"",1024,0,time[1023]);
     //    meanWaveHistosForPlots[i]=new TH1F("waveform_histo_forplots_"+fiber,"",1024,-300*1e9*time[1],1e9*time[1023-300]);
     meanTimeAtMax[i]/=nentries;
-    //    std::cout<<meanTimeAtMax[i]<< " unit:"<<timeSampleUnit(digiFreq)<<std::endl;
+    //std::cout<<meanTimeAtMax[i]<< " unit:"<<timeSampleUnit(digiFreq)<<std::endl;
     meanWaveHistosForPlots[i]=new TH1F("waveform_histo_forplots_"+fiber,"",1024,-meanTimeAtMax[i],1e9*time[1023-(int)(meanTimeAtMax[i]*1.e-9/timeSampleUnit(digiFreq))]);
-  
-    for (int j=0;j<NDIGISAMPLES;++j){  
 
+    for (int j=0;j<NDIGISAMPLES;++j){  
       for(int k=0;k<mean[i][j];k++){
+
 	meanWaveHistos[i]->Fill(time[j]);
 	meanWaveHistosForPlots[i]->Fill(1e9*(time[j])-meanTimeAtMax[i]);
       }
     }
+
 
     meanWaveHistos[i]->Scale(nentries);
     meanWaveHistos[i]->Sumw2();
@@ -151,8 +164,11 @@ void WaveformUtil::Loop(){
     meanWaveGraphs[i]->Write();
 
     TCanvas can;
-    meanWaveHistos[i]->Draw("AP");
+    gStyle->SetPadRightMargin(0.15);
+    meanWaveGraphs[i]->GetXaxis()->SetTitle("t [s]");
+    meanWaveGraphs[i]->Draw("APL");
     can.SaveAs("plots/meanWave_"+fiber+"_"+runNumberString+".png");
+    can.SaveAs("plots/meanWave_"+fiber+"_"+runNumberString+".pdf");
 
 //    TCanvas fitcanvas;
 //    TF1* f1 = new TF1( "func", funcCRRC, lowRange[i]*timeSampleUnit(digiFreq), highRange[i]*timeSampleUnit(digiFreq)*3, 4 );
@@ -186,7 +202,7 @@ void WaveformUtil::Loop(){
     RooFFTConvPdf lxg("lxg","landau (X) gauss",t,landau,gauss) ;
 
     // Fit gxlx to data
-    lxg.fitTo(data,RooFit::Range(time[lowRange[i]],time[highRange[i]])) ;
+    //    lxg.fitTo(data,RooFit::Range(time[lowRange[i]],time[highRange[i]])) ;
 
     // Plot data, landau pdf, landau (X) gauss pdf
     RooPlot* frame = t.frame(RooFit::Title("fiber_"+fiber)) ;
