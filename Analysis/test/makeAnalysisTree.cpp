@@ -535,7 +535,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   nentries=100;
+   //   nentries=100;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
@@ -737,10 +737,7 @@ int main( int argc, char* argv[] ) {
 	//WaveformFit on Cher using mean Waveform
 	ROOT::Math::Minimizer* minimizerCher;
 
-      std::cout<<iChannel<<" ";
-      std::cout<<wave_max.max_amplitude<<" ";
       if(wave_max.max_amplitude<0) continue;
-      std::cout<<iChannel<<" ";
 	if(iChannel!=2) {
 	  if(runName!="2539"){//pedestal run
 	    WaveformFit::fitWaveformSimple(waveform.at(iChannel),waveProfile.at(iChannel),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
@@ -763,7 +760,6 @@ int main( int argc, char* argv[] ) {
       
       const double* par=minimizer->X();
       cef3_maxAmpl_fit[iChannel]=par[0];
-      std::cout<<iChannel<<" "<<cef3_maxAmpl_fit[iChannel]<<std::endl;
       
       if(CHER_RUN){
       const double* parCher=minimizerCher->X();
