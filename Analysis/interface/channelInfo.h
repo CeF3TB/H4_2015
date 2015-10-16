@@ -40,8 +40,13 @@
 #define HODOSMALLY_CHANNELS 4
 #define HODOSMALLY_ADC_START_CHANNEL 4
 
-
+//#define ISOCTOBER2015
+#ifndef ISOCTOBER2015
 #define CEF3_CHANNELS 4
+#else
+#define CEF3_CHANNELS 5
+#endif
+
 #define CEF3_START_CHANNEL 0
 
 

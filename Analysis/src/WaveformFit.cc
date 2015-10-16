@@ -291,7 +291,7 @@ namespace WaveformFit
 
     minimizer->SetMaxFunctionCalls(100000);
     minimizer->SetMaxIterations(1000);
-    minimizer->SetTolerance(1e-5);
+    minimizer->SetTolerance(1e-3);
     minimizer->SetPrintLevel(0);
 
     if (!y_interpolator)
@@ -332,6 +332,7 @@ namespace WaveformFit
     
 
   }
+
 
 
 
