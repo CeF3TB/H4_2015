@@ -43,11 +43,14 @@ void WaveformUtil::Loop(){
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //  nentries=100;
+  //    nentries=100;
+  float  timeMinusTimeAtMax[NDIGISAMPLES];
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
+
   float meanTimeAtMax[NFIBERS];
-  
+  TGraph* meanWaveGraphsForPlots[NFIBERS];  
+
   for (int i=0;i<NFIBERS;++i){
     meanTimeAtMax[i]=0;
     for (int j=0;j<NDIGISAMPLES;++j){
@@ -143,13 +146,15 @@ void WaveformUtil::Loop(){
     meanWaveHistosForPlots[i]=new TH1F("waveform_histo_forplots_"+fiber,"",1024,-meanTimeAtMax[i],1e9*time[1023-(int)(meanTimeAtMax[i]*1.e-9/timeSampleUnit(digiFreq))]);
 
     for (int j=0;j<NDIGISAMPLES;++j){  
+      timeMinusTimeAtMax[j]=(1e9*(time[j])-meanTimeAtMax[i]);
       for(int k=0;k<mean[i][j];k++){
-
 	meanWaveHistos[i]->Fill(time[j]);
 	meanWaveHistosForPlots[i]->Fill(1e9*(time[j])-meanTimeAtMax[i]);
       }
     }
 
+    meanWaveGraphsForPlots[i]=new TGraph(1024, timeMinusTimeAtMax, mean[i]);
+    meanWaveGraphsForPlots[i]->SetName("waveform_plots_"+fiber);
 
     meanWaveHistos[i]->Scale(nentries);
     meanWaveHistos[i]->Sumw2();
@@ -162,10 +167,13 @@ void WaveformUtil::Loop(){
     meanWaveHistos[i]->Write();
     meanWaveHistosForPlots[i]->Write();
     meanWaveGraphs[i]->Write();
+    meanWaveGraphsForPlots[i]->Write();
 
     TCanvas can;
     gStyle->SetPadRightMargin(0.15);
+    //    meanWaveGraphs[i]->GetYaxis()->SetRangeUser(0.,meanWaveGraphs[i]->GetMaximum()*1.10);
     meanWaveGraphs[i]->GetXaxis()->SetTitle("t [s]");
+
     meanWaveGraphs[i]->Draw("APL");
     can.SaveAs("plots/meanWave_"+fiber+"_"+runNumberString+".png");
     can.SaveAs("plots/meanWave_"+fiber+"_"+runNumberString+".pdf");
@@ -280,12 +288,13 @@ void WaveformUtil::Loop(){
 
     //    meanWaveHistos[i]->Scale(1./meanWaveHistos[i]->Integral());
     TPaveText* pave = DrawTools::getLabelTop("100 GeV Electron Beam");
-    meanWaveHistosForPlots[i]->GetXaxis()->SetTitle("Time [ns]");
-    meanWaveHistosForPlots[i]->GetYaxis()->SetTitle("Signal Amplitude [mV]");
     std::cout<<meanTimeAtMax[i]<<std::endl;
-    //      meanWaveHistosForPlots[i]->GetXaxis()->SetRangeUser(-meanTimeAtMax[i],1e9*time[1023]-meanTimeAtMax[i]));
-    
-    meanWaveHistosForPlots[i]->Draw("histl");
+    //      meanWaveGraphsForPlots[i]->GetXaxis()->SetRangeUser(-meanTimeAtMax[i],1e9*time[1023]-meanTimeAtMax[i]));
+    TH2F* axis=new TH2F("axis","axis",100,-80,290,100,0,meanWaveHistosForPlots[i]->GetMaximum()*4*1.10);
+    axis->GetXaxis()->SetTitle("Time [ns]");
+    axis->GetYaxis()->SetTitle("Signal Amplitude [mV]");
+    axis->Draw();
+    meanWaveGraphsForPlots[i]->Draw("plsame");
     pave->Draw("same");
     c1.Write("pulseShape"+fiber);
     c1.SaveAs("plots/pulseShape"+fiber+".png");
