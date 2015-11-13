@@ -73,7 +73,7 @@ int main( int argc, char* argv[] ) {
   //  TFile* file = TFile::Open("data/run_457.root"); //15 GeV
   //TFile* file = TFile::Open("data/run_431.root"); //10 GeV
   //  TFile* file = TFile::Open("data/run_273.root");
-  TFile* file = TFile::Open("dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/micheli/rawData/output_run2894.root");
+  TFile* file = TFile::Open("dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/micheli/rawData/output_run4492.root");
   TTree* tree = (TTree*)file->Get("outputTree");
 
 
@@ -247,7 +247,7 @@ int main( int argc, char* argv[] ) {
 
 
   int nentries = tree->GetEntries();
-
+  if(nentries>10000)  nentries=10000;
   for( unsigned iEntry=0; iEntry<nentries; ++iEntry ) {
 
     tree->GetEntry(iEntry);
@@ -297,23 +297,44 @@ int main( int argc, char* argv[] ) {
 //     float hodoSmallX_low = digi_max_amplitude->at(4);
 //     float hodoSmallX_hi  = digi_max_amplitude->at(5);
 
+     bool isOctober2015Run=  (runNumber > 3900. && runNumber<4600);
+
      float hodoSmallY_low = HODOSMALLvalues->at(1);
      float hodoSmallY_hi  = HODOSMALLvalues->at(2);
      float hodoSmallX_low = HODOSMALLvalues->at(5);
      float hodoSmallX_hi  = HODOSMALLvalues->at(6);
 
+     if (isOctober2015Run){
+       hodoSmallY_low = HODOSMALLvalues->at(0);
+       hodoSmallY_hi  = HODOSMALLvalues->at(1);
+       hodoSmallX_low = HODOSMALLvalues->at(2);
+       hodoSmallX_hi  = HODOSMALLvalues->at(3);
+     }
+
      //     std::cout<< hodoSmallY_low<<" "<<hodoSmallY_hi<<" "<<hodoSmallX_low<<" "<<hodoSmallX_hi<<std::endl;
      std::vector<float> pedMeanX,pedMeanY, pedSigmaX, pedSigmaY;
-     pedMeanY.push_back(141.30);
-     pedMeanY.push_back(152.90);
-     pedMeanX.push_back(139.89);
-     pedMeanX.push_back(151.73);
+     if(!isOctober2015Run){
+       pedMeanY.push_back(141.30);
+       pedMeanY.push_back(152.90);
+       pedMeanX.push_back(139.89);
+       pedMeanX.push_back(151.73);
+       
+       pedSigmaY.push_back(1.25);
+       pedSigmaY.push_back(1.60);
+       pedSigmaX.push_back(1.32);
+       pedSigmaX.push_back(1.31);
+     }else{//ped value for october 2015 run
+       pedMeanY.push_back(212.5);
+       pedMeanY.push_back(202.0);
+       pedMeanX.push_back(218.6);//this channels are not working in these runs....
+       pedMeanX.push_back(208.0);
+       
+       pedSigmaY.push_back(1.51);
+       pedSigmaY.push_back(1.67);
+       pedSigmaX.push_back(2.04);
+       pedSigmaX.push_back(1.83);
 
-     pedSigmaY.push_back(1.25);
-     pedSigmaY.push_back(1.60);
-     pedSigmaX.push_back(1.32);
-     pedSigmaX.push_back(1.31);
-
+     }
 
   // y low
      if( hodoSmallY_low>pedMeanY[0]+5*pedSigmaY[0] ) {
