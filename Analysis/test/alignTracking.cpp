@@ -47,12 +47,17 @@ int main( int argc, char* argv[] ) {
   TGaxis::SetMaxDigits(3);
 
   std::string tag="V0";
-  if( argc<2 ) {
-    std::cout << "USAGE: ./alignTracking [startTag]" << std::endl;
+  std::string runName = "";
+  if( argc<3 ) {
+    std::cout << "USAGE: ./alignTracking [startTag] [run]" << std::endl;
     exit(11);
-  } else {
+  } else if(argc>1) {
     std::string tag_str(argv[1]);
     tag = tag_str;
+    if(argc>2){
+     std::string runName_str(argv[2]);
+     runName = runName_str;
+    }
   }
     // this is the dir in which the offsets will be saved:
   std::string constDirName = "Alignment";
@@ -73,9 +78,10 @@ int main( int argc, char* argv[] ) {
   //  TFile* file = TFile::Open("data/run_457.root"); //15 GeV
   //TFile* file = TFile::Open("data/run_431.root"); //10 GeV
   //  TFile* file = TFile::Open("data/run_273.root");
-  TFile* file = TFile::Open("dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/micheli/rawData/output_run4492.root");
+  std::string fileName="dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/micheli/rawData/output_run"+runName+".root";
+  TFile* file = TFile::Open(fileName.c_str());
   TTree* tree = (TTree*)file->Get("outputTree");
-
+  std::cout<<"Reading run:"<<runName<<std::endl;
 
   // Declaration of leaf types
    UInt_t          runNumber;
