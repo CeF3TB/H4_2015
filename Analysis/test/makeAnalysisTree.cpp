@@ -25,7 +25,7 @@
 #include "interface/WaveformFit.h"
 #include "TCanvas.h"
 
-void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos, int skipChannel=-1);
+void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos , int skipChannel=-1, bool isOctober2015EarlyRun=false);
 void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos );
 void computeCherenkov(std::vector<float> &cher,std::vector<float> wls);
 void computeCherenkovWithFit(std::vector<float> &cher,std::vector<float> &chInt, float waveProfileInt[4],std::vector<float> cef3_maxAmpl_fit,float waveCherInt[4],std::vector<float> cef3_maxAmpl_fit_cher);
@@ -535,13 +535,15 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //   nentries=100;
+   //   nentries=1000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
-   bool isOctober2015Run=  (runNumber > 3900. && runNumber<4200);
-   std::cout<<"daje:"<<isOctober2015Run<<std::endl;
-   std::cout << nentries << std::endl;
+   bool isOctober2015EarlyRun =  (runNumber > 3900. && runNumber<4200);//in first runs of october 2015 there was one broken channel (ch 2)
+   bool isOctober2015LateRun  = (runNumber>4490 && runNumber<4550);
+   if(isOctober2015LateRun) waveformFile = TFile::Open("outWaveFormUtil_4493.root");
+
+   std::cout <<"nentries:"<<nentries << std::endl;
  
    //get reference waveform for fits
    std::vector<TProfile*>  waveProfile;
@@ -550,9 +552,9 @@ int main( int argc, char* argv[] ) {
    float waveCherInt[4];
    float maxTimeCher[4]; 
 
-   for (unsigned int iCh=0; iCh<(CEF3_CHANNELS+1*isOctober2015Run); iCh++) {
+   for (unsigned int iCh=0; iCh<(CEF3_CHANNELS+1*isOctober2015EarlyRun); iCh++) {
      int iChannel=iCh;
-     if(isOctober2015Run){
+     if(isOctober2015EarlyRun){
        if (iCh==2)continue;//channel2 was broken in October test
        if (iCh>2)iChannel--;//channel2 was broken in October test
      }
@@ -638,7 +640,7 @@ int main( int argc, char* argv[] ) {
     //waveform creation
     std::vector<Waveform*> waveform;
     waveform.clear();
-    for (unsigned int i=0; i<CEF3_CHANNELS+1*isOctober2015Run+MCP_RUN; i++) {
+    for (unsigned int i=0; i<CEF3_CHANNELS+1*isOctober2015EarlyRun+MCP_RUN; i++) {
       waveform.push_back(new Waveform());
       waveform.at(i)->clear();
     
@@ -655,10 +657,10 @@ int main( int argc, char* argv[] ) {
     shiftSample=-shiftSample;
     if(runName=="2539")shiftSample=0;
 
-    for (int i=0;i<1024*(CEF3_CHANNELS+1*isOctober2015Run);++i){
+    for (int i=0;i<1024*(CEF3_CHANNELS+1*isOctober2015EarlyRun);++i){
       //      if(digi_value_ch->at(i) > 5)continue; //just to avoid not useful channels
       int iChannel=digi_value_ch->at(i);
-      if(isOctober2015Run){
+      if(isOctober2015EarlyRun){
 	if(digi_value_ch->at(i)==2) continue;
 	if(digi_value_ch->at(i)>2)iChannel--;//channel2 was broken in October test
       }
@@ -717,9 +719,9 @@ int main( int argc, char* argv[] ) {
     
       std::vector<float> charge_slow;
       std::vector<float> charge_fast;
-      for (unsigned int i=0; i<(CEF3_CHANNELS+1*isOctober2015Run); i++) {      
+      for (unsigned int i=0; i<(CEF3_CHANNELS+1*isOctober2015EarlyRun); i++) {      
 	int iChannel=i;
-	if(isOctober2015Run){
+	if(isOctober2015EarlyRun){
 	  if (i==2)continue;//channel2 was broken in October test
 	  if (i>2)iChannel--;//channel2 was broken in October test
 	}
@@ -737,6 +739,7 @@ int main( int argc, char* argv[] ) {
 	//WaveformFit on Cher using mean Waveform
 	ROOT::Math::Minimizer* minimizerCher;
 
+	if(isOctober2015LateRun && iChannel!=2) continue;
       if(wave_max.max_amplitude<0) continue;
 	if(iChannel!=2) {
 	  if(runName!="2539"){//pedestal run
@@ -788,8 +791,8 @@ int main( int argc, char* argv[] ) {
 
 
      //BACKWARDS COMPATIBILITY///
-    assignValues( cef3, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2*isOctober2015Run);      
-    assignValues( cef3_corr, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL ,2*isOctober2015Run);  
+    assignValues( cef3, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);      
+    assignValues( cef3_corr, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL ,2,isOctober2015EarlyRun);  
      //FIX ME this is just a temporary fix
 //     cef3_corr[0]*=1.59;
 //     cef3_corr[1]*=0.66;
@@ -800,9 +803,9 @@ int main( int argc, char* argv[] ) {
      assignValues( cef3_maxAmpl_fit_corr, cef3_maxAmpl_fit, CEF3_START_CHANNEL );  
      cef3Calib.applyCalibration(cef3_maxAmpl_fit_corr);
 
-     assignValues( cef3_maxAmpl, *digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL,2*isOctober2015Run);
-     assignValues( cef3_maxAmpl_time, *digi_time_at_max_noise_sub, CEF3_START_CHANNEL,2*isOctober2015Run);
-     assignValues( cef3_chaInt, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2*isOctober2015Run);
+     assignValues( cef3_maxAmpl, *digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL,2*isOctober2015EarlyRun);
+     assignValues( cef3_maxAmpl_time, *digi_time_at_max_noise_sub, CEF3_START_CHANNEL,2*isOctober2015EarlyRun);
+     assignValues( cef3_chaInt, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2*isOctober2015EarlyRun);
      assignValues( cef3_chaInt_wls, charge_slow, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt_cher, charge_fast, CEF3_START_CHANNEL);
 
@@ -1038,12 +1041,12 @@ int main( int argc, char* argv[] ) {
   
 
 
-void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos , int skipChannel) {
-  for( unsigned i=0; i<target.size()+1*(skipChannel>-1); ++i ) {
+void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos , int skipChannel, bool isOctober2015EarlyRun) {
+  for( unsigned i=0; i<target.size()+1*(isOctober2015EarlyRun && skipChannel>-1); ++i ) {
     int iCh=i;
-    if(i==skipChannel){
+    if(i==skipChannel && isOctober2015EarlyRun){
       continue;
-    }else if (i>skipChannel){
+    }else if (i>skipChannel && isOctober2015EarlyRun){
       iCh--;
     }
     target[iCh] = source[startPos+i];
