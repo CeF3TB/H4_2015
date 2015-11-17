@@ -43,13 +43,14 @@ void WaveformUtil::Loop(){
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //    nentries=100;
+  //  nentries=500;
   float  timeMinusTimeAtMax[NDIGISAMPLES];
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
 
   float meanTimeAtMax[NFIBERS];
   TGraph* meanWaveGraphsForPlots[NFIBERS];  
+
 
   for (int i=0;i<NFIBERS;++i){
     meanTimeAtMax[i]=0;
@@ -78,14 +79,23 @@ void WaveformUtil::Loop(){
       digiFreq=digi_frequency;
     }
     if(jentry%1000 == 0)std::cout<<"Processing entry:"<<jentry<<std::endl;
+
+
+
+
     //    if(passesHodoSelection()==false)continue;
 
+    //    if(TMath::Abs(TDCreco->at(0))>2 || TMath::Abs(TDCreco->at(1))>2)continue;    //FIXME
 
     //    float timeOfTheEvent=digi_time_at_frac50_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     //    float shiftTime=190.3-timeOfTheEvent;//mean fitted on trigger run 2778
     float shiftTime=0;
-    if (digiFreq==1)shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
+    if (digiFreq==1){
+      shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
+      if(isOctober2015Run)shiftTime=139.2-timeOfTheEvent;
+      if(runNumber>4490)shiftTime=156.6-timeOfTheEvent;//last day of beam test configuration
+    }
     if (digiFreq==0)shiftTime=161.9-timeOfTheEvent;//mean fitted on trigger run 3076
     //    float shiftTime=138.1-timeOfTheEvent;//mean fitted on trigger run 329 for 2014 data
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digiFreq)));
@@ -143,6 +153,7 @@ void WaveformUtil::Loop(){
     //    meanWaveHistosForPlots[i]=new TH1F("waveform_histo_forplots_"+fiber,"",1024,-300*1e9*time[1],1e9*time[1023-300]);
     meanTimeAtMax[i]/=nentries;
     //std::cout<<meanTimeAtMax[i]<< " unit:"<<timeSampleUnit(digiFreq)<<std::endl;
+    if(runNumberString=="4054" || runNumberString=="4053")meanTimeAtMax[1]=24;//FIXME
     meanWaveHistosForPlots[i]=new TH1F("waveform_histo_forplots_"+fiber,"",1024,-meanTimeAtMax[i],1e9*time[1023-(int)(meanTimeAtMax[i]*1.e-9/timeSampleUnit(digiFreq))]);
 
     for (int j=0;j<NDIGISAMPLES;++j){  
@@ -151,6 +162,7 @@ void WaveformUtil::Loop(){
 	meanWaveHistos[i]->Fill(time[j]);
 	meanWaveHistosForPlots[i]->Fill(1e9*(time[j])-meanTimeAtMax[i]);
       }
+      mean[i][j]*=0.25; //be careful!this is to do meanWaveGraphsForPlots in milliVolt, change it if you need to reuse it
     }
 
     meanWaveGraphsForPlots[i]=new TGraph(1024, timeMinusTimeAtMax, mean[i]);
@@ -287,18 +299,22 @@ void WaveformUtil::Loop(){
     c1.Clear();
 
     //    meanWaveHistos[i]->Scale(1./meanWaveHistos[i]->Integral());
-    TPaveText* pave = DrawTools::getLabelTop("100 GeV Electron Beam");
+    std::string energy(Form("%.0f", BeamEnergy));
+    TPaveText* pave = DrawTools::getLabelTop(energy+" GeV Electron Beam");
+
+
     std::cout<<meanTimeAtMax[i]<<std::endl;
     //      meanWaveGraphsForPlots[i]->GetXaxis()->SetRangeUser(-meanTimeAtMax[i],1e9*time[1023]-meanTimeAtMax[i]));
-    TH2F* axis=new TH2F("axis","axis",100,-80,290,100,0,meanWaveHistosForPlots[i]->GetMaximum()*4*1.10);
+    TH2F* axis=new TH2F("axis","axis",100,-80,290,100,0,meanWaveHistosForPlots[i]->GetMaximum()*1.10);
+    //    TH2F* axis=new TH2F("axis","axis",100,-10,190,100,0,28);
     axis->GetXaxis()->SetTitle("Time [ns]");
     axis->GetYaxis()->SetTitle("Signal Amplitude [mV]");
     axis->Draw();
     meanWaveGraphsForPlots[i]->Draw("plsame");
     pave->Draw("same");
     c1.Write("pulseShape"+fiber);
-    c1.SaveAs("plots/pulseShape"+fiber+".png");
-    c1.SaveAs("plots/pulseShape"+fiber+".pdf");
+    c1.SaveAs("plots/pulseShape"+fiber+"_"+runNumberString+".png");
+    c1.SaveAs("plots/pulseShape"+fiber+"_"+runNumberString+".pdf");
   }
 
   integrals.Write("integrals_fast");
