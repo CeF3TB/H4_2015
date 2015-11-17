@@ -17,6 +17,20 @@ TPaveText* DrawTools::getLabelTop( const std::string& text ) {
 
 }
 
+TPaveText* DrawTools::getLabelTop_expOnXaxis( const std::string& text ) {
+
+  TPaveText* label_top = new TPaveText(0.4,0.953,0.93,0.96, "brNDC");
+  label_top->SetFillColor(kWhite);
+  label_top->SetTextSize(0.038);
+  label_top->SetTextAlign(31); // align right
+  label_top->SetTextFont(62);
+  label_top->AddText(text.c_str());
+
+  return label_top;
+
+}
+
+
 
 TPaveText* DrawTools::getLabelRun( const std::string& runName, bool top ) {
 

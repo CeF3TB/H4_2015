@@ -137,7 +137,7 @@ int main( int argc, char* argv[] ) {
 
       TLegend* leg_neat = new TLegend(0.4, 0.92-0.06*5 , 0.8, 0.92);
       leg_neat->SetTextSize(0.038);
-      string ene="Data fibre ";
+      std::string ene="Data fibre ";
       //  ene+=Form("%.0f",energies[i]);
       //    ene+=" GeV";
       ene+=fibre;
@@ -181,9 +181,9 @@ int main( int argc, char* argv[] ) {
       fun->Draw("L same");
 
 
-      TLegend* leg_neat = new TLegend(0.42, 0.92-0.06*5 , 0.85, 0.92);
+      TLegend* leg_neat = new TLegend(0.42, 0.89-0.06*3.5 , 0.85, 0.89);
       leg_neat->SetTextSize(0.038);
-      string ene="Data fibre ";
+      std::string ene="Data fibre ";
       //  ene+=Form("%.0f",energies[i]);
       //    ene+=" GeV";
       ene+=fibre;
@@ -197,6 +197,9 @@ int main( int argc, char* argv[] ) {
       leg_neat->SetFillColor(0);
       leg_neat->Draw("same");
       std::cout<<"parameters: S="<<fun->GetParameter(0)<<" C="<<fun->GetParameter(1)<<" N="<<fun->GetParameter(2)<<std::endl;
+      TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+      pave->Draw("same");
+
       c1->SaveAs(outdir+"/reso_maxAmplFit_HV1450_"+fibre+".png");
       c1->SaveAs(outdir+"/reso_maxAmplFit_HV1450_"+fibre+".pdf");
     }

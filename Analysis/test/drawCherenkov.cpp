@@ -129,7 +129,7 @@ int main( int argc, char* argv[] ) {
     wlsHistos_tight[i] = new TH1F ("wlsHisto_tight_"+fibre,"",200,0,500000);
 
     totalHistos_tight_maxAmpl[i] = new TH1F ("totalHisto_tight_maxAmpl"+fibre,"",700,0,4000);
-    totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",700,0,4000);
+    totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",727,0,4000);
     //    else 	totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",1400,0,8000*4);
   }
 
@@ -556,7 +556,7 @@ int main( int argc, char* argv[] ) {
     double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
     
     
-    TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
+    TCanvas* cans = new TCanvas("cans_chInt_"+fibre, "un canvas", 600,600);
     cans->cd();
     frame->Draw();
     TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
@@ -651,7 +651,7 @@ int main( int argc, char* argv[] ) {
     double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
     
     
-    TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
+    TCanvas* cans = new TCanvas("cans_maxAmpl_"+fibre, "un canvas", 600,600);
     cans->cd();
     frame->Draw();
     TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
@@ -697,8 +697,8 @@ int main( int argc, char* argv[] ) {
     double fitmax;
     
     
-    fitmin = peakpos-5*sigma;
-    fitmax = peakpos+5*sigma;
+    fitmin = peakpos-5.5*sigma;
+    fitmax = peakpos+5.5*sigma;
         
     RooRealVar x("x","MaxAmpl", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
@@ -729,7 +729,8 @@ int main( int argc, char* argv[] ) {
 
       //      frame = x.frame("Title",RooFit::Range("R1"));
       frame = x.frame("Title");
-
+      frame->SetXTitle("Amplitude [ADC Count]");
+      frame->SetYTitle("Events / 5.5");
       //      data.plotOn(frame,RooFit::CutRange("R1"), RooFit::NormRange("R2"),RooFit::AutoBinned(0));  //this will show histogram data points on canvas 
       data.plotOn(frame);  //this will show histogram data points on canvas 
       //      fit_fct.plotOn(frame,RooFit::LineColor(4),RooFit::Range("R1"));//this will show fit overlay on canvas  
@@ -760,17 +761,23 @@ int main( int argc, char* argv[] ) {
     double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
     
     
-    TCanvas* cans = new TCanvas("cans", "un canvas", 600,600);
+    TCanvas* cans = new TCanvas("cans_maxAmpl_fit"+fibre, "un canvas", 600,600);
     cans->cd();
     frame->Draw();
     TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
     lego->SetTextSize(0.038);
-    lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
-    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
-    lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
+    //    lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f", meanr.getVal() ), "");
+    //    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f ", rms), "");
+    //    lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
     lego->SetFillColor(0);
     lego->Draw("same");
+
+    std::string energy(Form("%.0f", t.beamEnergy));
+    TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
+    pave->Draw("same");
 
     meanValuemaxAmpl_fit[i]=meanr.getVal();
     meanErrValuemaxAmpl_fit[i]=meanr.getError();
