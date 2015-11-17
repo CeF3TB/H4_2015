@@ -25,7 +25,8 @@ int main( int argc, char* argv[] ) {
 
   gStyle->SetPadLeftMargin(0.1);
 
-  std::string fileName = "analysisTrees_V00/Reco_100GeV.root";
+  //  std::string fileName = "analysisTrees_V00/Reco_100GeV.root";
+  std::string fileName = "analysisTrees_V00/Reco_4052.root";
   TFile* file = TFile::Open(fileName.c_str());
   if( file==0 ) {
     std::cout << "ERROR! Din't find file " << fileName << std::endl;
@@ -67,7 +68,8 @@ int main( int argc, char* argv[] ) {
   tree->Draw( "(wc_x_corr - cluster_pos_corr_hodoX2[0]) : run  >> h2",  selection2.c_str(), "profile");
 
 
-  TH2D* h2_axes = new TH2D( "axes", "", 400, 2775, 2790, 10, -4, 2. );
+  //  TH2D* h2_axes = new TH2D( "axes", "", 400, 2775, 2790, 10, -4, 2. );
+  TH2D* h2_axes = new TH2D( "axes", "", 400, 2775, 5000, 10, -4, 2. );
   h2_axes->SetXTitle( "Run Number" );
   h2_axes->SetYTitle( "x(wire) - x(Hodo2) [mm]" );
   h2_axes->Draw("");
