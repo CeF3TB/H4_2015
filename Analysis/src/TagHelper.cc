@@ -49,6 +49,12 @@ void TagHelper::setTag( const std::string& tag, const std::string& Energy ) {
     tag_bgo_ ="V0";
     tag_align_ = Energy+"_V0";
 
+  }else if (tag=="V10"){//october2015 runs start with V1
+
+    tag_cef3_ ="V0";
+    tag_bgo_ ="V0";
+    tag_align_ = Energy+"_V1";
+
   }else if( tag=="dev" ) {
 
     tag_cef3_ ="V1";
