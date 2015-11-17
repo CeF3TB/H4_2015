@@ -147,6 +147,7 @@ int main( int argc, char* argv[] ) {
    float gainR1450=1.5e+6;
    float gainR5380=7e+4;
    
+   bool   isOctober2015LateRun=false;
    
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -154,6 +155,7 @@ int main( int argc, char* argv[] ) {
       if (ientry < 0) break;
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
+      if(jentry==0)  isOctober2015LateRun  = (t.run>4490 && t.run<4550);
       for(int i=0;i<CEF3_CHANNELS;++i){
 	totalHistos[i]->Fill(t.cef3_chaInt->at(i));
 	if(i==2)	totalHistosGainCorr[i]->Fill(t.cef3_chaInt->at(i)/gainR5380);
@@ -487,14 +489,18 @@ int main( int argc, char* argv[] ) {
 
     
   for(int i=0;i<4;++i){
+    if(isOctober2015LateRun && i!=2) continue;
     TH1F* histo;
     if(i!=2) histo=wlsHistos_tight[i];
     else histo=totalHistos_tight[i];
     //else histo=wlsHistos_tight[i];
 
-    double peakpos = histo->GetMean();
+    //    double peakpos = histo->GetMean();
+    double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
     
+    if (5*sigma>histo->GetMean())sigma/=2;
+
     double fitmin;
     double fitmax;
     
@@ -598,12 +604,16 @@ int main( int argc, char* argv[] ) {
 
     
   for(int i=0;i<4;++i){
+    if(isOctober2015LateRun && i!=2) continue;
     TH1F* histo;
     histo=totalHistos_tight_maxAmpl[i];
 
-    double peakpos = histo->GetMean();
+    //    double peakpos = histo->GetMean();
+    double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
     
+    if (5*sigma>histo->GetMean())sigma/=2;
+
     double fitmin;
     double fitmax;
     
@@ -681,12 +691,16 @@ int main( int argc, char* argv[] ) {
 
   //maxAmpl_fit
   for(int i=0;i<4;++i){
+    if(isOctober2015LateRun && i!=2) continue;
     TH1F* histo;
     histo=totalHistos_tight_maxAmpl_fit[i];
 
-    double peakpos = histo->GetMean();
+    //    double peakpos = histo->GetMean();
+    double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
     
+    if (5*sigma>histo->GetMean())sigma/=2;
+
     histo->Print();
     std::cout<<"#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
     TCanvas dummy;
@@ -697,8 +711,8 @@ int main( int argc, char* argv[] ) {
     double fitmax;
     
     
-    fitmin = peakpos-5.5*sigma;
-    fitmax = peakpos+5.5*sigma;
+    fitmin = peakpos-5*sigma;
+    fitmax = peakpos+5*sigma;
         
     RooRealVar x("x","MaxAmpl", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
@@ -802,7 +816,8 @@ int main( int argc, char* argv[] ) {
     histo=wlsHistos_tight_tot;
     
     
-    double peakpos = histo->GetMean();
+    //    double peakpos = histo->GetMean();
+    double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
   
     double fitmin;
@@ -873,7 +888,8 @@ int main( int argc, char* argv[] ) {
     TH1F* histo;
     histo=totalHistos_tight_maxAmpl_tot;
   
-    double peakpos = histo->GetMean();
+    //    double peakpos = histo->GetMean();
+    double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
   
     double fitmin;
@@ -954,7 +970,8 @@ int main( int argc, char* argv[] ) {
     TH1F* histo;
     histo=totalHistos_tight_maxAmpl_fit_tot;
   
-    double peakpos = histo->GetMean();
+    //    double peakpos = histo->GetMean();
+    double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
   
     double fitmin;
