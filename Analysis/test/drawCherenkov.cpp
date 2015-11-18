@@ -128,7 +128,7 @@ int main( int argc, char* argv[] ) {
     cherHistos_tight[i] = new TH1F ("cherHisto_tight_"+fibre,"",200,0,55e3);
     wlsHistos_tight[i] = new TH1F ("wlsHisto_tight_"+fibre,"",200,0,500000);
 
-    totalHistos_tight_maxAmpl[i] = new TH1F ("totalHisto_tight_maxAmpl"+fibre,"",700,0,4000);
+    totalHistos_tight_maxAmpl[i] = new TH1F ("totalHisto_tight_maxAmpl"+fibre,"",727,0,4000);
     totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",727,0,4000);
     //    else 	totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",1400,0,8000*4);
   }
@@ -364,7 +364,7 @@ int main( int argc, char* argv[] ) {
 
   //maxAmpl
   for(int i=0;i<4;++i){
-    totalHistos_tight_maxAmpl[i]->GetXaxis()->SetRangeUser(0,2000);
+    totalHistos_tight_maxAmpl[i]->GetXaxis()->SetRangeUser(0,4000);
     totalHistos_tight_maxAmpl[i]->GetYaxis()->SetRangeUser(1,max*1.1);
     totalHistos_tight_maxAmpl[i]->GetXaxis()->SetTitle("Max Amplitude");
     totalHistos_tight_maxAmpl[i]->GetYaxis()->SetTitle("Events");
@@ -381,7 +381,7 @@ int main( int argc, char* argv[] ) {
 
   //maxAmpl_fit
   for(int i=0;i<4;++i){
-    if(i!=2)    totalHistos_tight_maxAmpl_fit[i]->GetXaxis()->SetRangeUser(0,2000);
+    if(i!=2)    totalHistos_tight_maxAmpl_fit[i]->GetXaxis()->SetRangeUser(0,4000);
     totalHistos_tight_maxAmpl_fit[i]->GetYaxis()->SetRangeUser(1,max*1.1);
     totalHistos_tight_maxAmpl_fit[i]->GetXaxis()->SetTitle("Max Amplitude");
     totalHistos_tight_maxAmpl_fit[i]->GetYaxis()->SetTitle("Events");
@@ -498,8 +498,10 @@ int main( int argc, char* argv[] ) {
     //    double peakpos = histo->GetMean();
     double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
-    
-    if (5*sigma>histo->GetMean())sigma/=2;
+
+    if(peakpos<histo->GetMean())peakpos=histo->GetMean()+histo->GetRMS();    
+
+    if (5*sigma>peakpos)sigma/=2;
 
     double fitmin;
     double fitmax;
@@ -608,11 +610,29 @@ int main( int argc, char* argv[] ) {
     TH1F* histo;
     histo=totalHistos_tight_maxAmpl[i];
 
+    TCanvas dummy;		
+    histo->Draw();		
+    dummy.SaveAs("dummy.png");
+
+
     //    double peakpos = histo->GetMean();
     double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
     
-    if (5*sigma>histo->GetMean())sigma/=2;
+    if(isOctober2015LateRun){//manual fix, hadron contamination doesn't allow automatic allocation of boundaries with getmaximum
+      if(runNumberString=="4493"){
+	peakpos=2100.;
+	sigma=170.;
+      }else if(runNumberString=="4492"){
+	peakpos=2750.;
+	sigma=220.;
+      }
+    }
+    
+    if (5*sigma>peakpos)sigma/=2;
+    if (5*sigma>peakpos)sigma/=2;
+
+    std::cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
 
     double fitmin;
     double fitmax;
@@ -620,11 +640,14 @@ int main( int argc, char* argv[] ) {
     
     fitmin = peakpos-5*sigma;
     fitmax = peakpos+5*sigma;
+
+
+
         
     RooRealVar x("x","MaxAmpl", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
 
-    //    std::cout<<"#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
+
     RooRealVar meanr("meanr","Mean",peakpos,peakpos-2*sigma, peakpos+2*sigma);
     //    if(i==0)meanr.setConstant(kTRUE);
     
@@ -638,11 +661,18 @@ int main( int argc, char* argv[] ) {
     RooRealVar alphaL("alphaL","#alpha",1.08615e-02 , 0., 1.);
     RooRealVar alphaR("alphaR","#alpha",1.08615e-02 , 0., 1.);
 
-
-    RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); int ndf = 5;
+    int ndf;
+    RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); ndf = 5;
     fit_fct.fitTo(data);
     RooPlot* frame;
     frame = x.frame("Title");
+    frame->SetXTitle("Amplitude [ADC Count]");
+    float binWidth = histo->GetXaxis()->GetBinWidth(1);
+    std::string ytitle = Form("Events / %.1f",binWidth); 
+    frame->SetYTitle(ytitle.c_str());
+      
+
+
     data.plotOn(frame);  //this will show histogram data points on canvas
     fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
 
@@ -666,12 +696,18 @@ int main( int argc, char* argv[] ) {
     frame->Draw();
     TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
     lego->SetTextSize(0.038);
-    lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
-    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
-    lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
+    //    lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f", meanr.getVal() ), "");
+    //    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f ", rms), "");
+    //    lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
     lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
     lego->SetFillColor(0);
     lego->Draw("same");
+
+    std::string energy(Form("%.0f", t.beamEnergy));
+    TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
+    pave->Draw("same");
 
     meanValuemaxAmpl[i]=meanr.getVal();
     meanErrValuemaxAmpl[i]=meanr.getError();
@@ -699,13 +735,26 @@ int main( int argc, char* argv[] ) {
     double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
     
+  
+    if(isOctober2015LateRun){//manual fix, hadron contamination doesn't allow automatic allocation of boundaries with getmaximum
+      if(runNumberString=="4493"){
+	peakpos=1136.;
+	sigma=70.;
+      }else if(runNumberString=="4492"){
+	peakpos=1465.;
+	sigma=150.;
+      }
+    }
+  
+
+
     if (5*sigma>histo->GetMean())sigma/=2;
 
     histo->Print();
     std::cout<<"#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
-    TCanvas dummy;
-    histo->Draw();
-    dummy.SaveAs("dummy.png");
+//    TCanvas dummy;
+//    histo->Draw();
+//    dummy.SaveAs("dummy.png");
 
     double fitmin;
     double fitmax;
@@ -744,7 +793,10 @@ int main( int argc, char* argv[] ) {
       //      frame = x.frame("Title",RooFit::Range("R1"));
       frame = x.frame("Title");
       frame->SetXTitle("Amplitude [ADC Count]");
-      frame->SetYTitle("Events / 5.5");
+      float binWidth = histo->GetXaxis()->GetBinWidth(1);
+      std::string ytitle = Form("Events / %.1f",binWidth); 
+      frame->SetYTitle(ytitle.c_str());
+
       //      data.plotOn(frame,RooFit::CutRange("R1"), RooFit::NormRange("R2"),RooFit::AutoBinned(0));  //this will show histogram data points on canvas 
       data.plotOn(frame);  //this will show histogram data points on canvas 
       //      fit_fct.plotOn(frame,RooFit::LineColor(4),RooFit::Range("R1"));//this will show fit overlay on canvas  
@@ -820,6 +872,8 @@ int main( int argc, char* argv[] ) {
     double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
   
+
+
     double fitmin;
     double fitmax;
   
@@ -894,8 +948,8 @@ int main( int argc, char* argv[] ) {
   
     double fitmin;
     double fitmax;
-  
-  
+
+
     fitmin = peakpos-5*sigma;
     fitmax = peakpos+5*sigma;
         
