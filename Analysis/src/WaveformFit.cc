@@ -211,7 +211,7 @@ namespace WaveformFit
   void fitWaveformSimple(Waveform* wave, TProfile* amplitudeProfile, int nSamplesBeforeMax, int nSamplesAfterMax, const Waveform::max_amplitude_informations& max, const Waveform::baseline_informations& waveRms, ROOT::Math::Minimizer* &minimizer, bool fixedWindow, int startSample, int endSample)
   {
     if(!fixedWindow){
-      xMin=std::max(1,max.sample_at_max-nSamplesBeforeMax);
+      xMin=std::max(10,max.sample_at_max-nSamplesBeforeMax);
       xMax=std::min(max.sample_at_max+nSamplesAfterMax,999);
     }else{
       //      xMin=170;
@@ -334,6 +334,80 @@ namespace WaveformFit
   }
 
 
+  //----------Get leading edge time at a given threshold and in a given range---------------
+  std::pair<float, float> GetTimeLE(Waveform* wave,const Waveform::baseline_informations& waveRms,float thr, int nmFitSamples, int npFitSamples, int min, int max, float timeUnit){
+
+    float leThr=-1;
+    float leSample=-1;
+    float leTime=-1;
+    float chi2le=-1;
+
+    if(thr != leThr || leSample != -1)
+      {
+        //---find first sample above thr
+        leThr = thr;
+        for(int iSample=min; iSample<max; ++iSample)
+	  {
+            if((*wave)._samples[iSample] > leThr) 
+	      {
+                leSample = iSample;
+                break;
+	      }
+	  }
+        //---interpolate -- A+Bx = amp
+        float A=0, B=0;
+        chi2le = LinearInterpolation(wave,waveRms, A, B, leSample-nmFitSamples, leSample+npFitSamples, timeUnit);
+        leTime = (leThr - A) / B;
+      }
+
+    return make_pair(leTime, chi2le);
+
+  }
+
+
+  //----------Linear interpolation util-----------------------------------------------------
+  float LinearInterpolation(Waveform* wave,const Waveform::baseline_informations& waveRms, float& A, float& B, const int& min, const int& max, float timeUnit)
+  {
+    //fuck ROOT, i will use the analytical formula for linear fits since it's faster
+    //---definitions---
+    float xx= 0.;
+    float xy= 0.;
+    float Sx = 0.;
+    float Sy = 0.;
+    float Sxx = 0.;
+    float Sxy = 0.;
+
+    //---compute sums
+    int usedSamples=0;
+    for(int iSample=min; iSample<=max; ++iSample)
+      {
+        if(iSample<0 || iSample>=(*wave)._samples.size()) 
+	  continue;
+        xx = iSample*iSample*timeUnit*timeUnit;
+        xy = iSample*timeUnit*(*wave)._samples[iSample];
+        Sx = Sx + (iSample)*timeUnit;
+        Sy = Sy + (*wave)._samples[iSample];
+        Sxx = Sxx + xx;
+        Sxy = Sxy + xy;
+        ++usedSamples;
+      }
+    
+    float Delta = usedSamples*Sxx - Sx*Sx;
+    A = (Sxx*Sy - Sx*Sxy) / Delta;
+    B = (usedSamples*Sxy - Sx*Sy) / Delta;
+
+    //---compute chi2---
+    float chi2=0;
+    float sigma2 = pow(waveRms.rms, 2);
+    for(int iSample=min; iSample<=max; ++iSample)
+      {
+        if(iSample<0 || iSample>=(*wave)._samples.size()) 
+	  continue;
+        chi2 = chi2 + pow((*wave)._samples[iSample] - A - B*iSample*timeUnit, 2)/sigma2;
+      } 
+
+    return chi2/(usedSamples-2);
+  }
 
 
   
