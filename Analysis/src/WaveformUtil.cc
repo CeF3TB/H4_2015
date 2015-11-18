@@ -94,7 +94,7 @@ void WaveformUtil::Loop(){
     if (digiFreq==1){
       shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
       if(isOctober2015Run)shiftTime=139.2-timeOfTheEvent;
-      if(runNumber>4490)shiftTime=156.6-timeOfTheEvent;//last day of beam test configuration
+      if(runNumber>4490  && runNumber<4550)shiftTime=156.6-timeOfTheEvent;//last day of beam test configuration
     }
     if (digiFreq==0)shiftTime=161.9-timeOfTheEvent;//mean fitted on trigger run 3076
     //    float shiftTime=138.1-timeOfTheEvent;//mean fitted on trigger run 329 for 2014 data

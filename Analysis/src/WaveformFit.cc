@@ -346,6 +346,7 @@ namespace WaveformFit
       {
         //---find first sample above thr
         leThr = thr;
+	if(max>(*wave)._samples.size()) return make_pair(-1,-1);
         for(int iSample=min; iSample<max; ++iSample)
 	  {
             if((*wave)._samples[iSample] > leThr) 

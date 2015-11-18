@@ -535,13 +535,16 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //      nentries=10000;
+   //   nentries=20000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
    bool isOctober2015EarlyRun =  (runNumber > 3900. && runNumber<4200);//in first runs of october 2015 there was one broken channel (ch 2)
    bool isOctober2015LateRun  = (runNumber>4490 && runNumber<4550);
-   if(isOctober2015LateRun) waveformFile = TFile::Open("outWaveFormUtil_4493.root");
+   if(isOctober2015LateRun){
+     waveformFile = TFile::Open("outWaveFormUtil_4493.root");
+     //     MCP_RUN=true;
+   }
 
    std::cout <<"nentries:"<<nentries << std::endl;
    std::cout<< "using waveform average shape from file "<<waveformFile->GetName()<<std::endl;
@@ -650,8 +653,13 @@ int main( int argc, char* argv[] ) {
 
     float timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(8);//synchronizing time of events with time of trigger
     float shiftTime=0;
-    if (digi_frequency==1)shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
+    if (digi_frequency==1){
+      shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
+      if(isOctober2015EarlyRun)shiftTime=139.2-timeOfTheEvent;
+      if(isOctober2015LateRun)shiftTime=156.6-timeOfTheEvent;//last day of beam test configuration
+    }
     if (digi_frequency==0)shiftTime=161.6-timeOfTheEvent;//mean fitted on trigger run 2605
+      
 
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digi_frequency)));
     shiftSample=-shiftSample;
@@ -681,7 +689,7 @@ int main( int argc, char* argv[] ) {
     }
     
     if(MCP_RUN){
-      
+      if(!isOctober2015LateRun){
       timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(17);//synchronizing time of events with time of trigger
       
       if (digi_frequency==1)shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
@@ -698,6 +706,10 @@ int main( int argc, char* argv[] ) {
 	  iSample=i+shiftSample;
 	}
 	waveform.at(CEF3_CHANNELS)->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
+      }
+
+      }else{//october2015 runs with mcp in front of ch1 fibre (quartz + nino)
+
       }
 
     }
@@ -735,12 +747,20 @@ int main( int argc, char* argv[] ) {
 	if(iChannel==2)sampleIntegral=50;
 	Waveform::max_amplitude_informations wave_max = waveform.at(iChannel)->max_amplitude(sampleIntegral,900,5);
 	Waveform::baseline_informations wave_pedestal = waveform.at(iChannel)->baseline(5,34);
+
+	//fit for NINO in october 2015 runs
+	if(isOctober2015LateRun && iChannel==1){
+	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,3,1,125,timeSampleUnit(digi_frequency));
+	  //	  std::cout<<timeInfo.first<<" "<<timeInfo.second<<std::endl;
+	}
+	
+
 	
 	//WaveformFit on Cher using mean Waveform
 	ROOT::Math::Minimizer* minimizerCher;
-
+	
 	if(isOctober2015LateRun && iChannel!=2) continue;
-      if(wave_max.max_amplitude<0) continue;
+	if(wave_max.max_amplitude<0) continue;
 	if(iChannel!=2) {
 	  if(runName!="2539"){//pedestal run
 	    WaveformFit::fitWaveformSimple(waveform.at(iChannel),waveProfile.at(iChannel),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
@@ -749,6 +769,8 @@ int main( int argc, char* argv[] ) {
 	      if(digi_frequency==0)cherStart=125;
 	      if(digi_time_at_max_noise_sub->at(iChannel)<-22) WaveformFit::fitWaveformSimple(waveform.at(iChannel),waveCher.at(iChannel),200,200,wave_max,wave_pedestal,minimizerCher, true, cherStart, startSample);
 	      else  WaveformFit::fitWaveformSimplePlusTime(waveform.at(iChannel),waveCher.at(iChannel),50,100,wave_max,wave_pedestal,minimizerCher, true,cherStart, startSample);
+
+
 	    }
 	  }else{
 	    WaveformFit::fitWaveformSimple(waveform.at(iChannel),waveProfile.at(iChannel),200,200,wave_max,wave_pedestal,minimizer, true, startSample, endSample);
