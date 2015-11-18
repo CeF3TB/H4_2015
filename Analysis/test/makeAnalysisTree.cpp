@@ -535,7 +535,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //   nentries=1000;
+   //      nentries=10000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
@@ -544,7 +544,7 @@ int main( int argc, char* argv[] ) {
    if(isOctober2015LateRun) waveformFile = TFile::Open("outWaveFormUtil_4493.root");
 
    std::cout <<"nentries:"<<nentries << std::endl;
- 
+   std::cout<< "using waveform average shape from file "<<waveformFile->GetName()<<std::endl;
    //get reference waveform for fits
    std::vector<TProfile*>  waveProfile;
    float waveProfileInt[4];
