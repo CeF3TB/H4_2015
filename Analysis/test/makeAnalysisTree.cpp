@@ -543,7 +543,7 @@ int main( int argc, char* argv[] ) {
    bool isOctober2015LateRun  = (runNumber>4490 && runNumber<4550);
    if(isOctober2015LateRun){
      waveformFile = TFile::Open("outWaveFormUtil_4493.root");
-     //     MCP_RUN=true;
+     MCP_RUN=true;
    }
 
    std::cout <<"nentries:"<<nentries << std::endl;
@@ -709,14 +709,26 @@ int main( int argc, char* argv[] ) {
       }
 
       }else{//october2015 runs with mcp in front of ch1 fibre (quartz + nino)
-
+	float timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(8);
+	if (digi_frequency==1){
+	  shiftTime=156.6-timeOfTheEvent;//last day of beam test configuration
+	}
+	shiftSample=round(shiftTime/(1e9*timeSampleUnit(digi_frequency)));
+	shiftSample=-shiftSample;
+	for (int i=1024*CEF3_CHANNELS;i<1024*(CEF3_CHANNELS+1);++i){
+	  if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
+	  int iSample=i;
+	  if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
+	    iSample=i+shiftSample;
+	  }
+	  waveform.at(CEF3_CHANNELS)->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
+      }
       }
 
     }
 
     if(MCP_RUN){
       Waveform::max_amplitude_informations wave_max_bare = waveform.at(CEF3_CHANNELS)->max_amplitude(30,500,5);
-      
       std::vector<float> crossingTimes;
       if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(CEF3_CHANNELS)->time_at_threshold((const float)30.*timeSampleUnit(digi_frequency), 100e-9,150,7);
       if(crossingTimes.size()>0)    mcp_time_at_150=crossingTimes[0]*1.e9;
