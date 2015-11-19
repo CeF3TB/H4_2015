@@ -531,11 +531,18 @@ int main( int argc, char* argv[] ) {
    float mcp_time_at_150;
    outTree->Branch( "mcp_time_at_150", &mcp_time_at_150, "mcp_time_at_150/F");
 
+   float mcp_max_amplitude;
+   outTree->Branch( "mcp_max_amplitude", &mcp_max_amplitude, "mcp_max_amplitude/F");
 
+   float nino_LEtime;
+   outTree->Branch( "nino_LEtime", &nino_LEtime, "nino_LEtime/F");
+
+   float nino_LEchi2;
+   outTree->Branch( "nino_LEchi2", &nino_LEchi2, "nino_LEchi2/F");
 
 
    int nentries = tree->GetEntries();
-   //   nentries=20000;
+   //   nentries=1000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
@@ -721,14 +728,15 @@ int main( int argc, char* argv[] ) {
 	  if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
 	    iSample=i+shiftSample;
 	  }
+	  //	    std::cout<<i-1024*digi_value_ch->at(i)<<" "<<" "<<digi_value_ch->at(i)<<" "<<digi_value_bare_noise_sub->at(iSample)<<std::endl;
 	  waveform.at(CEF3_CHANNELS)->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
+	}
       }
-      }
-
+      
     }
 
     if(MCP_RUN){
-      Waveform::max_amplitude_informations wave_max_bare = waveform.at(CEF3_CHANNELS)->max_amplitude(30,500,5);
+      Waveform::max_amplitude_informations wave_max_bare = waveform.at(CEF3_CHANNELS)->max_amplitude(4,900,5);
       std::vector<float> crossingTimes;
       if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(CEF3_CHANNELS)->time_at_threshold((const float)30.*timeSampleUnit(digi_frequency), 100e-9,150,7);
       if(crossingTimes.size()>0)    mcp_time_at_150=crossingTimes[0]*1.e9;
@@ -737,6 +745,8 @@ int main( int argc, char* argv[] ) {
       if(wave_max_bare.time_at_max>0)    mcp_time_frac50=waveform.at(CEF3_CHANNELS)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,7)*1.e9;
       else mcp_time_frac50=-999;
 
+      mcp_max_amplitude=wave_max_bare.max_amplitude;
+      //      std::cout<<"ampl:"<<wave_max_bare.max_amplitude;
     }
       float finalFastSample=230;
       if(digi_frequency==1)finalFastSample=172;//no direct realtion between 5Gs and 2.5Gs since offset is different
@@ -762,8 +772,12 @@ int main( int argc, char* argv[] ) {
 
 	//fit for NINO in october 2015 runs
 	if(isOctober2015LateRun && iChannel==1){
-	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,3,1,125,timeSampleUnit(digi_frequency));
-	  //	  std::cout<<timeInfo.first<<" "<<timeInfo.second<<std::endl;
+	  //	  std::cout<<"entry:"<<iEntry<<std::endl;
+	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,1,1,200,timeSampleUnit(digi_frequency));
+	  nino_LEtime=timeInfo.first*1.e9;
+	  nino_LEchi2=timeInfo.second;
+	  //	  nino_chInt=digi_max_amplitude->at(5);
+	  //	  std::cout<<" ampl nino:"<<wave_max.max_amplitude<<" time:"<<timeInfo.first*1.e9<<" chi2:"<<timeInfo.second<<std::endl;
 	}
 	
 
@@ -836,7 +850,6 @@ int main( int argc, char* argv[] ) {
 
      assignValues( cef3_maxAmpl_fit_corr, cef3_maxAmpl_fit, CEF3_START_CHANNEL );  
      cef3Calib.applyCalibration(cef3_maxAmpl_fit_corr);
-
      assignValues( cef3_maxAmpl, *digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL,2*isOctober2015EarlyRun);
      assignValues( cef3_maxAmpl_time, *digi_time_at_max_noise_sub, CEF3_START_CHANNEL,2*isOctober2015EarlyRun);
      assignValues( cef3_chaInt, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2*isOctober2015EarlyRun);

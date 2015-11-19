@@ -339,16 +339,18 @@ namespace WaveformFit
 
     float leThr=-1;
     float leSample=-1;
-    float leTime=-1;
-    float chi2le=-1;
+    float leTime=-100;
+    float chi2le=-100;
+
 
     if(thr != leThr || leSample != -1)
       {
         //---find first sample above thr
         leThr = thr;
-	if(max>(*wave)._samples.size()) return make_pair(-1,-1);
+	if(max>(*wave)._samples.size()) return make_pair(-100,-100);
         for(int iSample=min; iSample<max; ++iSample)
 	  {
+	    //	    std::cout<<iSample<<" "<<(*wave)._samples[iSample]<<std::endl;
             if((*wave)._samples[iSample] > leThr) 
 	      {
                 leSample = iSample;
@@ -356,9 +358,10 @@ namespace WaveformFit
 	      }
 	  }
         //---interpolate -- A+Bx = amp
-        float A=0, B=0;
+	if(leSample<1) return make_pair(-100,-100);
+	float A=0, B=0;
         chi2le = LinearInterpolation(wave,waveRms, A, B, leSample-nmFitSamples, leSample+npFitSamples, timeUnit);
-        leTime = (leThr - A) / B;
+	if(B!=0)        leTime = (leThr - A) / B;
       }
 
     return make_pair(leTime, chi2le);
@@ -404,7 +407,10 @@ namespace WaveformFit
       {
         if(iSample<0 || iSample>=(*wave)._samples.size()) 
 	  continue;
+	//	std::cout<<iSample*timeUnit*1.e9<<" "<<(*wave)._samples[iSample]<<" B:"<<B<<std::endl;
+	//	std::cout<<iSample<<" "<<chi2<<" "<<(*wave)._samples[iSample]<<" "<<A<<" "<<B<<" "<<waveRms.rms<<" "<<timeUnit<<" min:"<<min<<" max:"<<max<<std::endl;
         chi2 = chi2 + pow((*wave)._samples[iSample] - A - B*iSample*timeUnit, 2)/sigma2;
+	//	std::cout<<iSample<<" "<<chi2<<std::endl;
       } 
 
     return chi2/(usedSamples-2);
