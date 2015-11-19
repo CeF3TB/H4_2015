@@ -621,10 +621,10 @@ int main( int argc, char* argv[] ) {
     
     if(isOctober2015LateRun){//manual fix, hadron contamination doesn't allow automatic allocation of boundaries with getmaximum
       if(runNumberString=="4493"){
-	peakpos=2100.;
+	peakpos=2234.;
 	sigma=170.;
       }else if(runNumberString=="4492"){
-	peakpos=2750.;
+	peakpos=2818.;
 	sigma=220.;
       }
     }
@@ -735,16 +735,17 @@ int main( int argc, char* argv[] ) {
     double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
     
-  
+
     if(isOctober2015LateRun){//manual fix, hadron contamination doesn't allow automatic allocation of boundaries with getmaximum
       if(runNumberString=="4493"){
-	peakpos=1136.;
-	sigma=70.;
+	peakpos=2244.;
+	sigma=170.;
       }else if(runNumberString=="4492"){
-	peakpos=1465.;
-	sigma=150.;
+	peakpos=2834.;
+	sigma=220.;
       }
     }
+
   
 
 
