@@ -51,7 +51,7 @@ int main( int argc, char* argv[] ) {
      }
    } else {
      std::cout << "Usage:" << std::endl;
-     std::cout << "./drawCherenkov [runName] ([tag])" << std::endl;
+     std::cout << "./timingStudies [runName] ([tag])" << std::endl;
      exit(12345);
    }
 
@@ -68,7 +68,6 @@ int main( int argc, char* argv[] ) {
   }
 
   TH1F* reso_histo = new TH1F("reso_histo","reso_histo",200,-2,12);
-
   
   TTree* recoTree=(TTree*)file->Get("recoTree");
   RecoTree t(recoTree);
@@ -79,24 +78,33 @@ int main( int argc, char* argv[] ) {
       if (ientry < 0) break;
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
-      if( t.nino_LEtime<30 || t.nino_LEtime > 50 )continue;
+      if( t.nino_LEtime<30 || t.nino_LEtime > 50 || t.mcp_max_amplitude<200)continue;
       reso_histo->Fill(t.mcp_time_at_150-t.nino_LEtime);
    }
 
    float reso_mean = reso_histo->GetMean();
    float reso_sigma = reso_histo->GetRMS();
 
+   //   TH1F* reso_histo_corr = new TH1F("reso_histo_corr","reso_histo",200,-5*reso_sigma,5*reso_sigma);
+   int nNinoCuts=6;
+   TH1F* reso_histo_corr[nNinoCuts];
 
-
-   TH1F* reso_histo_corr = new TH1F("reso_histo_corr","reso_histo",200,-5*reso_sigma,5*reso_sigma);
+   for (int i=0;i<nNinoCuts;++i){
+    TString icut;
+    icut.Form("%d",i); 
+    reso_histo_corr[i] = new TH1F("reso_histo_corr_"+icut,"reso_histo_corr_"+icut,200,-5*reso_sigma,5*reso_sigma);
+   }
 
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
       Long64_t ientry = t.LoadTree(jentry);
       if (ientry < 0) break;
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
-      if( t.nino_LEtime<30 || t.nino_LEtime > 50)continue;
-      reso_histo_corr->Fill(t.mcp_time_at_150-t.nino_LEtime-reso_mean);
+      if( t.nino_LEtime<30 || t.nino_LEtime > 50 || t.mcp_max_amplitude<200)continue;
+      //      reso_histo_corr->Fill(t.mcp_time_at_150-t.nino_LEtime-reso_mean);
+      for (int i=0;i<nNinoCuts;++i){
+	if(t.nino_maxAmpl>(i>0)*(15+(i>1)*i*5))reso_histo_corr[i]->Fill(t.mcp_time_at_150-t.nino_LEtime-reso_mean);
+      }
    }
 
 
@@ -111,37 +119,43 @@ int main( int argc, char* argv[] ) {
   c1.SaveAs(dir+"/reso_histo_"+runNumberString+".png");
   c1.SaveAs(dir+"/reso_histo_"+runNumberString+".pdf");
 
-  c1.Clear();
-  TF1 *fb = new TF1("fb","[0]*exp(-0.5*((x-[1])/[2])**2)",-1,1.5);
-  fb->SetParameter(0,reso_histo_corr->Integral());
-  fb->SetParameter(1,0.1);
-  fb->SetParameter(2,2);
-  reso_histo_corr->Fit(fb,"RN");
-  fb->SetLineWidth(2.);
-  fb->SetLineColor(kBlue);
-  reso_histo_corr->GetXaxis()->SetTitle("time_{nino}-time_{mcp} [ns]");
-  float binWidth =reso_histo_corr->GetXaxis()->GetBinWidth(1);
+  for (int i=0;i<nNinoCuts;++i){
+    TString icut;
+    icut.Form("%d",i); 
+    
+    c1.Clear();
+    reso_histo_corr[i]->Fit("gaus","","",-0.5,1.5);
+    //  double *par=reso_histo_corr[i]->GetFunction("gaus")->GetParameters();
+  TF1* fgaus=reso_histo_corr[i]->GetFunction("gaus");
+  fgaus->SetLineWidth(2.);
+  fgaus->SetLineColor(kBlue);
+  reso_histo_corr[i]->GetXaxis()->SetTitle("time_{nino}-time_{mcp} [ns]");
+  float binWidth =reso_histo_corr[i]->GetXaxis()->GetBinWidth(1);
   //  std::string ytitle = Form("Events / %.0f ps",binWidth*1.e3); 
   std::string ytitle = Form("Events");
-  reso_histo_corr->SetYTitle(ytitle.c_str());
-  reso_histo_corr->Draw();
-  fb->Draw("L same");
+  reso_histo_corr[i]->SetYTitle(ytitle.c_str());
+  reso_histo_corr[i]->Draw();
+  std::string energy(Form("%.0f", t.beamEnergy));
+  TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
+  pave->Draw("same");
 
-  TLegend* leg_gauss = new TLegend(0.57, 0.7, 0.8, 0.92);
+  fgaus->Draw("same");
+
+  TLegend* leg_gauss = new TLegend(0.6, 0.8, 0.8, 0.92);
   leg_gauss->SetTextSize(0.038);
-  leg_gauss->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ps", fb->GetParameter(2)*1.e3, fb->GetParError(2)*1.e3), "");
+  leg_gauss->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ps", fgaus->GetParameter(2)*1.e3, fgaus->GetParError(2)*1.e3), "");
   leg_gauss->SetFillColor(0);
   leg_gauss->Draw("same");
 
 
 
-  c1.SaveAs(dir+"/reso_histo_corr_gaus_"+runNumberString+".png");
-  c1.SaveAs(dir+"/reso_histo_corr_gaus_"+runNumberString+".pdf");
+  c1.SaveAs(dir+"/reso_histo_corr_gaus_"+icut+"_"+runNumberString+".png");
+  c1.SaveAs(dir+"/reso_histo_corr_gaus_"+icut+"_"+runNumberString+".pdf");
 
 
-  //fit with cruijff and plot reso
+  //-----------------fit with cruijff ------------------------
   TH1F* histo;
-  histo=reso_histo_corr;
+  histo=reso_histo_corr[i];
   double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
   double sigma = histo->GetRMS();
 
@@ -181,19 +195,63 @@ int main( int argc, char* argv[] ) {
   TCanvas* cans = new TCanvas();
   cans->cd();
   frame->Draw();
-  TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
+  TLegend* lego = new TLegend(0.6, 0.8, 0.8, 0.92);
   lego->SetTextSize(0.038);
   lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.1f #pm %.1f ps", rms*1.e3, rmsErr*1.e3), "");
 
   lego->SetFillColor(0);
   lego->Draw("same");
   
-  std::string energy(Form("%.0f", t.beamEnergy));
-  TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
   pave->Draw("same");
 
-  cans->SaveAs(dir+"/reso_histo_corr"+runNumberString+".png");
-  cans->SaveAs(dir+"/reso_histo_corr"+runNumberString+".pdf");
+  cans->SaveAs(dir+"/reso_histo_cruijff_"+icut+"_"+runNumberString+".png");
+  cans->SaveAs(dir+"/reso_histo_cruijff_"+icut+"_"+runNumberString+".pdf");
 
+  //////------------ fit with crystal ball-------
+  bool fitWithCB=true;
+  if(fitWithCB){
+    RooRealVar x("x","deltaT", fitmin, fitmax);
+    RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
+    
+    RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-3*sigma, peakpos+3*sigma);
+    RooRealVar width("width","#sigma",sigma , 0, 5.*sigma);
+    RooRealVar A("A","Dist",2., 0.0, 7.0);
+    RooRealVar N("N","Deg",5, 0.0, 10);
+    int ndf;
+
+    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); ndf = 4;
+    fit_fct.fitTo(data);
+    fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay 
+
+    RooPlot* frame;
+    frame = x.frame("Title");
+    frame->SetXTitle("time_{nino}-time_{mcp} [ns]");
+    frame->SetYTitle(ytitle.c_str());
+    
+    data.plotOn(frame);  //this will show histogram data points on canvas 
+    fit_fct.plotOn(frame);//this will show fit overlay on canvas  
+
+    rms = width.getVal();
+    rmsErr = width.getError();
+    TCanvas* cans = new TCanvas();
+    cans->cd();
+    frame->Draw();
+
+    TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
+    lego->SetTextSize(0.038);
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.1f #pm %.1f ps", rms*1.e3, rmsErr*1.e3), "");
+    lego->SetFillColor(0);
+    lego->Draw("same");
+
+    pave->Draw("same");
+
+  cans->SaveAs(dir+"/reso_histo_cb_"+icut+"_"+runNumberString+".png");
+  cans->SaveAs(dir+"/reso_histo_cb_"+icut+"_"+runNumberString+".pdf");
+
+
+  }
+
+
+  }
 
 }
