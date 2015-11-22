@@ -540,9 +540,12 @@ int main( int argc, char* argv[] ) {
    float nino_LEchi2;
    outTree->Branch( "nino_LEchi2", &nino_LEchi2, "nino_LEchi2/F");
 
+   float nino_maxAmpl;
+   outTree->Branch( "nino_maxAmpl", &nino_maxAmpl, "nino_maxAmpl/F");
+
 
    int nentries = tree->GetEntries();
-   //   nentries=1000;
+   //   nentries=10000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
@@ -773,10 +776,10 @@ int main( int argc, char* argv[] ) {
 	//fit for NINO in october 2015 runs
 	if(isOctober2015LateRun && iChannel==1){
 	  //	  std::cout<<"entry:"<<iEntry<<std::endl;
-	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,1,1,200,timeSampleUnit(digi_frequency));
+	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,1,80,100,timeSampleUnit(digi_frequency));
 	  nino_LEtime=timeInfo.first*1.e9;
 	  nino_LEchi2=timeInfo.second;
-	  //	  nino_chInt=digi_max_amplitude->at(5);
+	  nino_maxAmpl=digi_max_amplitude_bare_noise_sub->at(5);
 	  //	  std::cout<<" ampl nino:"<<wave_max.max_amplitude<<" time:"<<timeInfo.first*1.e9<<" chi2:"<<timeInfo.second<<std::endl;
 	}
 	

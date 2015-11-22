@@ -100,6 +100,14 @@ public :
    Float_t         wc_y_corr;
    Float_t         mcp_time_frac50;
    Float_t         mcp_time_at_150;
+   Float_t         mcp_max_amplitude;
+   Float_t         nino_LEtime;
+   Float_t         nino_LEchi2;
+   Float_t         nino_maxAmpl;
+
+
+
+
 
    // List of branches
    TBranch        *b_run;   //!
@@ -178,6 +186,12 @@ public :
    TBranch        *b_wc_y_corr;   //!
    TBranch        *b_mcp_time_frac50;   //!
    TBranch        *b_mcp_time_at_150;   //!
+   TBranch        *b_mcp_max_amplitude;
+   TBranch        *b_nino_LEtime;
+   TBranch        *b_nino_LEchi2;
+   TBranch        *b_nino_maxAmpl;
+
+
 
    RecoTree(TTree *tree=0);
    virtual ~RecoTree();
@@ -344,6 +358,11 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("wc_y_corr", &wc_y_corr, &b_wc_y_corr);
    fChain->SetBranchAddress("mcp_time_frac50", &mcp_time_frac50, &b_mcp_time_frac50);
    fChain->SetBranchAddress("mcp_time_at_150", &mcp_time_at_150, &b_mcp_time_at_150);
+   fChain->SetBranchAddress( "mcp_max_amplitude", &mcp_max_amplitude, &b_mcp_max_amplitude);
+   fChain->SetBranchAddress( "nino_LEtime", &nino_LEtime, &b_nino_LEtime);
+   fChain->SetBranchAddress( "nino_LEchi2", &nino_LEchi2, &b_nino_LEchi2);
+   fChain->SetBranchAddress( "nino_maxAmpl", &nino_maxAmpl, &b_nino_maxAmpl);
+
    Notify();
 }
 
