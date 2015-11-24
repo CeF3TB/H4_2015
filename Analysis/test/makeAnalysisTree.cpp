@@ -545,7 +545,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //   nentries=10000;
+   //   nentries=1000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
@@ -554,6 +554,11 @@ int main( int argc, char* argv[] ) {
    if(isOctober2015LateRun){
      waveformFile = TFile::Open("outWaveFormUtil_4493.root");
      MCP_RUN=true;
+   }
+   bool isOctober2015PMTRun=false;
+   if(isOctober2015EarlyRun){
+     isOctober2015PMTRun=runNumber>=4063 && runNumber<=4104;
+     if(isOctober2015PMTRun)waveformFile = TFile::Open("outWaveFormUtil_4076.root");
    }
 
    std::cout <<"nentries:"<<nentries << std::endl;
@@ -571,6 +576,7 @@ int main( int argc, char* argv[] ) {
        if (iCh==2)continue;//channel2 was broken in October test
        if (iCh>2)iChannel--;//channel2 was broken in October test
      }
+
 
      TString name="prof";
      name+=iChannel;
@@ -842,7 +848,7 @@ int main( int argc, char* argv[] ) {
 
 
      //BACKWARDS COMPATIBILITY///
-    assignValues( cef3, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);      
+    assignValues( cef3, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);     
     assignValues( cef3_corr, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL ,2,isOctober2015EarlyRun);  
      //FIX ME this is just a temporary fix
 //     cef3_corr[0]*=1.59;
@@ -853,9 +859,9 @@ int main( int argc, char* argv[] ) {
 
      assignValues( cef3_maxAmpl_fit_corr, cef3_maxAmpl_fit, CEF3_START_CHANNEL );  
      cef3Calib.applyCalibration(cef3_maxAmpl_fit_corr);
-     assignValues( cef3_maxAmpl, *digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL,2*isOctober2015EarlyRun);
-     assignValues( cef3_maxAmpl_time, *digi_time_at_max_noise_sub, CEF3_START_CHANNEL,2*isOctober2015EarlyRun);
-     assignValues( cef3_chaInt, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2*isOctober2015EarlyRun);
+     assignValues( cef3_maxAmpl, *digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
+     assignValues( cef3_maxAmpl_time, *digi_time_at_max_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
+     assignValues( cef3_chaInt, *digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
      assignValues( cef3_chaInt_wls, charge_slow, CEF3_START_CHANNEL);
      assignValues( cef3_chaInt_cher, charge_fast, CEF3_START_CHANNEL);
 
