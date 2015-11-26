@@ -545,7 +545,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //   nentries=1000;
+   //   nentries=10000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
@@ -558,7 +558,10 @@ int main( int argc, char* argv[] ) {
    bool isOctober2015PMTRun=false;
    if(isOctober2015EarlyRun){
      isOctober2015PMTRun=runNumber>=4063 && runNumber<=4104;
-     if(isOctober2015PMTRun)waveformFile = TFile::Open("outWaveFormUtil_4076.root");
+     if(isOctober2015PMTRun){
+       waveformFile = TFile::Open("outWaveFormUtil_4076.root");
+       startSample=105;//offset was different....
+     }
    }
 
    std::cout <<"nentries:"<<nentries << std::endl;
@@ -684,14 +687,17 @@ int main( int argc, char* argv[] ) {
     for (int i=0;i<1024*(CEF3_CHANNELS+1*isOctober2015EarlyRun);++i){
       //      if(digi_value_ch->at(i) > 5)continue; //just to avoid not useful channels
       int iChannel=digi_value_ch->at(i);
+
+      bool doWeWantToShift=!(isOctober2015LateRun && (iChannel==1 || iChannel ==5));
+
       if(isOctober2015EarlyRun){
 	if(digi_value_ch->at(i)==2) continue;
 	if(digi_value_ch->at(i)>2)iChannel--;//channel2 was broken in October test
       }
       if(digi_max_amplitude->at(digi_value_ch->at(i))>10000 || digi_max_amplitude->at(digi_value_ch->at(i))<0)continue;
       int iSample=i;
-      if(i+shiftSample>1023*digi_value_ch->at(i) && i+shiftSample<(1023+(1024*digi_value_ch->at(i)))){
-	iSample=i+shiftSample;
+      if(i+shiftSample*doWeWantToShift>1023*digi_value_ch->at(i) && i+shiftSample*doWeWantToShift<(1023+(1024*digi_value_ch->at(i)))){
+	iSample=i+shiftSample*doWeWantToShift;
       }
       if(runName!="2539")      waveform.at(iChannel)->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
       else waveform.at(iChannel)->addTimeAndSample((i-1024*digi_value_ch->at(i))*timeSampleUnit(digi_frequency),digi_value_bare_noise_sub->at(iSample));
@@ -727,7 +733,8 @@ int main( int argc, char* argv[] ) {
       }else{//october2015 runs with mcp in front of ch1 fibre (quartz + nino)
 	float timeOfTheEvent=digi_time_at_1000_bare_noise_sub->at(8);
 	if (digi_frequency==1){
-	  shiftTime=156.6-timeOfTheEvent;//last day of beam test configuration
+	  //	  shiftTime=156.6-timeOfTheEvent;//last day of beam test configuration
+	  shiftTime=0;//FIX ME! for the moment we don't sync mcp and nino let's see what happens
 	}
 	shiftSample=round(shiftTime/(1e9*timeSampleUnit(digi_frequency)));
 	shiftSample=-shiftSample;
@@ -747,7 +754,7 @@ int main( int argc, char* argv[] ) {
     if(MCP_RUN){
       Waveform::max_amplitude_informations wave_max_bare = waveform.at(CEF3_CHANNELS)->max_amplitude(4,900,5);
       std::vector<float> crossingTimes;
-      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(CEF3_CHANNELS)->time_at_threshold((const float)30.*timeSampleUnit(digi_frequency), 100e-9,150,7);
+      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(CEF3_CHANNELS)->time_at_threshold((const float)10.*timeSampleUnit(digi_frequency), 100e-9,150,4);
       if(crossingTimes.size()>0)    mcp_time_at_150=crossingTimes[0]*1.e9;
       else mcp_time_at_150=-999;
       
@@ -782,7 +789,8 @@ int main( int argc, char* argv[] ) {
 	//fit for NINO in october 2015 runs
 	if(isOctober2015LateRun && iChannel==1){
 	  //	  std::cout<<"entry:"<<iEntry<<std::endl;
-	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,1,80,100,timeSampleUnit(digi_frequency));
+	  //	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,1,80,100,timeSampleUnit(digi_frequency));//window with sync
+	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,1,80,120,timeSampleUnit(digi_frequency));//window without sync
 	  nino_LEtime=timeInfo.first*1.e9;
 	  nino_LEchi2=timeInfo.second;
 	  nino_maxAmpl=digi_max_amplitude_bare_noise_sub->at(5);
