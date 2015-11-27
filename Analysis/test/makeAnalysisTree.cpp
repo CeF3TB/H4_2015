@@ -42,7 +42,7 @@ std::vector<HodoCluster*> getHodoClustersMultipleCuts( std::vector<float> hodo, 
 void copyArray( int n, float *source, float *target );
 void doHodoReconstructionMultipleCuts( std::vector<float> values, int &nClusters, int *nFibres, float *pos, float fibreWidth, int clusterMaxFibres, std::vector<float> Cut );
 float timeSampleUnit(int drs4Freq);
-CeF3_Config_t readConfiguration();
+CeF3_Config_t readConfiguration(std::string configName);
 
 
 
@@ -56,6 +56,7 @@ int main( int argc, char* argv[] ) {
 
    std::string runName = "";
    std::string tag = "V00";
+   std::string config = "June2015Config";
 
 
    if( argc>1 ) {
@@ -64,16 +65,20 @@ int main( int argc, char* argv[] ) {
      if( argc>2 ) {
        std::string tag_str(argv[2]);
        tag = tag_str;
+       if(argc>3){
+	 std::string config_str(argv[3]);
+	 config=config_str;
+       }
      }
    } else {
 
      std::cout << "Usage:" << std::endl;
-     std::cout << "./makeAnalysisTree [runName] ([tag])" << std::endl;
+     std::cout << "./makeAnalysisTree [runName] ([tag]) ([config])" << std::endl;
      exit(12345);
 
    }
 
-   theConfiguration_=readConfiguration();
+   theConfiguration_=readConfiguration(config);
 
    //   std::string fileName = "data/Corr04_12/run_" + runName + ".root";
    std::string fileName = "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/micheli/rawData/output_run" + runName + ".root";
@@ -151,8 +156,8 @@ int main( int argc, char* argv[] ) {
    outTree->Branch( "cef3_maxAmpl_time", &cef3_maxAmpl_time );
    std::vector<float> cef3_time_at_frac50( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_time_at_frac50", &cef3_time_at_frac50 );
-   std::vector<float> cef3_time_at_15( CEF3_CHANNELS, -1. );
-   outTree->Branch( "cef3_time_at_15", &cef3_time_at_15 );
+   std::vector<float> cef3_time_at_thresh( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_time_at_thresh", &cef3_time_at_thresh );
 
 
 
@@ -328,8 +333,8 @@ int main( int argc, char* argv[] ) {
    float mcp_time_frac50;
    outTree->Branch( "mcp_time_frac50", &mcp_time_frac50, "mcp_time_frac50/F");
 
-   float mcp_time_at_150;
-   outTree->Branch( "mcp_time_at_150", &mcp_time_at_150, "mcp_time_at_150/F");
+   float mcp_time_at_thresh;
+   outTree->Branch( "mcp_time_at_thresh", &mcp_time_at_thresh, "mcp_time_at_thresh/F");
 
    float mcp_max_amplitude;
    outTree->Branch( "mcp_max_amplitude", &mcp_max_amplitude, "mcp_max_amplitude/F");
@@ -345,16 +350,13 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   nentries=1000;
+   //   nentries=1000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
    bool isOctober2015EarlyRun =  (inputTree->runNumber > 3900. && inputTree->runNumber<4200);//in first runs of october 2015 there was one broken channel (ch 2)
    bool isOctober2015LateRun  = (inputTree->runNumber>4490 && inputTree->runNumber<4550);
-   if(isOctober2015LateRun){
-     //FIXME     waveformFile = TFile::Open("outWaveFormUtil_4493.root");
-     MCP_RUN=true;
-   }
+
    bool isOctober2015PMTRun=false;
    bool isOctober2015EarlyMAPDRun=false;
    bool isOctober2015EarlySiPMRun=false;
@@ -375,39 +377,26 @@ int main( int argc, char* argv[] ) {
 
 
    int counterChannel=-1;
-   for (unsigned int iCh=0; iCh<(CEF3_CHANNELS+1*isOctober2015EarlyRun); iCh++) {
-     int iChannel=iCh;//FIX ME here the skip is not needed i think
-
-     bool skipChannel=true;
-     for (int i=0;i<theConfiguration_.cef3Channels.size();++i){
-       if(iChannel==theConfiguration_.cef3Channels[i]){
-	 skipChannel=false;
-	 counterChannel++;
-	 break;
-       }
-     }
-     if(skipChannel) continue;
-
+   for (unsigned int iCh=0; iCh<CEF3_CHANNELS; iCh++) {
+     int iChannel=iCh;
      TString name="prof";
-     name+=counterChannel;
+     name+=iChannel;
      TString istring;
-     istring+=counterChannel;
+     istring+=iChannel;
      if(inputTree->digi_frequency==1)  waveProfile.push_back(new TProfile(name,name,1024,0,0.4e-6));
      else waveProfile.push_back(new TProfile(name,name,1024,0,0.2e-6));
      TGraph* graph = (TGraph*)waveformFile->Get("waveform_"+istring);
      double X[graph->GetN()],Y[graph->GetN()];
      for(int iP=0;iP<graph->GetN();iP++){
        graph->GetPoint(iP,X[iP],Y[iP]);
-       waveProfile.at(counterChannel)->Fill(X[iP],Y[iP]);
+       waveProfile.at(iChannel)->Fill(X[iP],Y[iP]);
       }
      //     TH1F* histo = (TH1F*)waveformFile->Get("waveform_histo_"+istring);
      //     for(int i=0;i<=histo->GetNbinsX();++i) waveProfile.at(iCh)->Fill(histo->GetBinCenter(i), histo->GetBinContent(i));
-     waveProfile.at(counterChannel)->Scale(1./waveProfile.at(counterChannel)->GetMaximum());
-     if(inputTree->digi_frequency==0){
-       //FIXME       theConfiguration_.startSample=210;
-     }
+     waveProfile.at(iChannel)->Scale(1./waveProfile.at(iChannel)->GetMaximum());
 
-     waveProfileInt[counterChannel]=waveProfile.at(counterChannel)->Integral(theConfiguration_.startSample,theConfiguration_.endSample);
+
+     waveProfileInt[iChannel]=waveProfile.at(iChannel)->Integral(theConfiguration_.startSample,theConfiguration_.endSample);
 
      if(CHER_RUN){
        name+="cher";
@@ -417,12 +406,12 @@ int main( int argc, char* argv[] ) {
        double X2[graph2->GetN()],Y2[graph2->GetN()];
        for(int iP=0;iP<graph2->GetN();iP++){
 	 graph2->GetPoint(iP,X2[iP],Y2[iP]);
-	 waveCher.at(counterChannel)->Fill(X2[iP],Y2[iP]);
+	 waveCher.at(iChannel)->Fill(X2[iP],Y2[iP]);
        }
-       waveCher.at(counterChannel)->Scale(1./waveCher.at(counterChannel)->GetMaximum());
-       maxTimeCher[counterChannel]=waveProfile.at(counterChannel)->GetBinCenter(waveProfile.at(counterChannel)->GetMaximumBin());
+       waveCher.at(iChannel)->Scale(1./waveCher.at(iChannel)->GetMaximum());
+       maxTimeCher[iChannel]=waveProfile.at(iChannel)->GetBinCenter(waveProfile.at(iChannel)->GetMaximumBin());
      }
-   }
+   }//end loop get waveforms
 
    //noise histo for pedestal runs
    //   TH1F* noiseHisto[4][1024];
@@ -473,13 +462,8 @@ int main( int argc, char* argv[] ) {
     
     float timeOfTheEvent=inputTree->digi_time_at_1000_bare_noise_sub->at(theConfiguration_.triggerChannel);//synchronizing time of events with time of trigger
     float shiftTime=0;
-    if (inputTree->digi_frequency==1){
-      shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
-      if(isOctober2015EarlyRun)shiftTime=139.2-timeOfTheEvent;
-      if(isOctober2015LateRun)shiftTime=156.6-timeOfTheEvent;//last day of beam test configuration
-    }
-    if (inputTree->digi_frequency==0)shiftTime=161.6-timeOfTheEvent;//mean fitted on trigger run 2605
-      
+    shiftTime = theConfiguration_.meanTriggerTime-timeOfTheEvent;
+
 
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(inputTree->digi_frequency)));
     shiftSample=-shiftSample;
@@ -490,7 +474,7 @@ int main( int argc, char* argv[] ) {
     for (int i=0;i<1024*(CEF3_CHANNELS+1*isOctober2015EarlyRun);++i){
       //      if(digi_value_ch->at(i) > 5)continue; //just to avoid not useful channels
       int iChannel=inputTree->digi_value_ch->at(i);
-      //      std::cout<<i<<" "<<inputTree->digi_value_ch->at(i)<<" ";
+     //      std::cout<<i<<" "<<inputTree->digi_value_ch->at(i)<<" ";
 
       if(i==1024*inputTree->digi_value_ch->at(i)){
 	bool skipChannel=true;
@@ -510,7 +494,7 @@ int main( int argc, char* argv[] ) {
 
       //FIXME      bool doWeWantToShift=!(((isOctober2015LateRun || isOctober2015EarlySiPMRun) && (iChannel==1 || iChannel ==5)) || (isOctober2015EarlyMAPDRun && (iChannel==0 || iChannel ==5))) ;
 
-     //         if(i==1024*iChannel)      std::cout<<doWeWantToShift<<"<-do we iChannel->"<<iChannel<<" ich"<<ch<< " isample"<<i<<std::endl;
+     //              if(i==1024*iChannel)      std::cout<<doWeWantToShift<<"<-do we iChannel->"<<iChannel<<" ich"<<ch<< " isample"<<i<<std::endl;
 
       if(inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))>10000 || inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))<0)continue;
       int iSample=i;
@@ -533,15 +517,12 @@ int main( int argc, char* argv[] ) {
     if(MCP_RUN){
       if(!isOctober2015LateRun){
       timeOfTheEvent=inputTree->digi_time_at_1000_bare_noise_sub->at(theConfiguration_.mcpTriggerChannel);//synchronizing time of events with time of trigger
-      
-      if (inputTree->digi_frequency==1)shiftTime=190.2-timeOfTheEvent;//mean fitted on trigger run 2778
-      if (inputTree->digi_frequency==0)shiftTime=161.9-timeOfTheEvent;//mean fitted on trigger run 3076
-      //FIXME shifttime for late2015	  shiftTime=156.6-timeOfTheEvent;//last day of beam test configuration
-      
+      shiftTime = theConfiguration_.meanTriggerTime-timeOfTheEvent;
       shiftSample=round(shiftTime/(1e9*timeSampleUnit(inputTree->digi_frequency)));
       shiftSample=-shiftSample;
-      for (int i=1024*CEF3_CHANNELS;i<1024*10;++i){
-	if(inputTree->digi_value_ch->at(i)!=theConfiguration_.mcpTriggerChannel)continue;
+
+      for (int i=1024*CEF3_CHANNELS;i<1024*(theConfiguration_.mcpChannel+1);++i){
+	if(inputTree->digi_value_ch->at(i)!=theConfiguration_.mcpChannel)continue;
 	if(inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))>10000 || inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))<0)continue;
 
 	int iSample=i;
@@ -555,9 +536,9 @@ int main( int argc, char* argv[] ) {
 
       Waveform::max_amplitude_informations wave_max_bare = waveform.at(CEF3_CHANNELS)->max_amplitude(4,900,5);
       std::vector<float> crossingTimes;
-      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(CEF3_CHANNELS)->time_at_threshold((const float)10.*timeSampleUnit(inputTree->digi_frequency), 100e-9,150,4);
-      if(crossingTimes.size()>0)    mcp_time_at_150=crossingTimes[0]*1.e9;
-      else mcp_time_at_150=-999;
+      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(CEF3_CHANNELS)->time_at_threshold((const float)10.*timeSampleUnit(inputTree->digi_frequency), 100e-9,theConfiguration_.mcpTimingThresh,4);
+      if(crossingTimes.size()>0)    mcp_time_at_thresh=crossingTimes[0]*1.e9;
+      else mcp_time_at_thresh=-999;
       
       if(wave_max_bare.time_at_max>0)    mcp_time_frac50=waveform.at(CEF3_CHANNELS)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,4)*1.e9;
       else mcp_time_frac50=-999;
@@ -620,9 +601,9 @@ int main( int argc, char* argv[] ) {
       //timing var
       Waveform::max_amplitude_informations wave_max_bare = waveform.at(iChannel)->max_amplitude(4,900,5);
       std::vector<float> crossingTimes;
-      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(iChannel)->time_at_threshold((const float)10.*timeSampleUnit(inputTree->digi_frequency), 100e-9,15,4);
-      if(crossingTimes.size()>0)    cef3_time_at_15[iChannel]=crossingTimes[0]*1.e9;
-      else cef3_time_at_15[iChannel]=-999;
+      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(iChannel)->time_at_threshold((const float)10.*timeSampleUnit(inputTree->digi_frequency), 100e-9,theConfiguration_.timingThresh[iChannel],4);
+      if(crossingTimes.size()>0)    cef3_time_at_thresh[iChannel]=crossingTimes[0]*1.e9;
+      else cef3_time_at_thresh[iChannel]=-999;
 
 
 
@@ -651,12 +632,6 @@ int main( int argc, char* argv[] ) {
      //BACKWARDS COMPATIBILITY///
     assignValues( cef3, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);     
     assignValues( cef3_corr, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL ,2,isOctober2015EarlyRun);  
-     //FIX ME this is just a temporary fix
-//     cef3_corr[0]*=1.59;
-//     cef3_corr[1]*=0.66;
-//     cef3_corr[2]*=6.67;
-//     cef3_corr[3]*=0.59;
-     //     cef3Calib.applyCalibration(cef3_corr);
 
      assignValues( cef3_maxAmpl_fit_corr, cef3_maxAmpl_fit, CEF3_START_CHANNEL );  
      cef3Calib.applyCalibration(cef3_maxAmpl_fit_corr);
@@ -664,17 +639,6 @@ int main( int argc, char* argv[] ) {
      assignValues( cef3_maxAmpl_time, *inputTree->digi_time_at_max_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
      assignValues( cef3_chaInt, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
 
-
-     //FIX ME this is just a temporary fix
-//     cef3_chaInt_wls[0]*=1.59;
-//     cef3_chaInt_wls[1]*=0.66;
-//     cef3_chaInt_wls[2]*=6.67;
-//     cef3_chaInt_wls[3]*=0.59;
-//
-//     cef3_chaInt_cher[0]*=1.59;
-//     cef3_chaInt_cher[1]*=0.66;
-//     cef3_chaInt_cher[2]*=6.67;
-//     cef3_chaInt_cher[3]*=0.59;
 
 //     computeCherenkov(cef3_chaInt_cher,cef3_chaInt_wls);
 
@@ -697,10 +661,10 @@ int main( int argc, char* argv[] ) {
      assignValuesBool( hodoY2_values, *inputTree->HODOY2, 0 );
 
 
-     std::vector<float> hodoSmallX_values(HODOSMALLX_CHANNELS, -1.);
-     std::vector<float> hodoSmallY_values(HODOSMALLY_CHANNELS, -1.);
+     std::vector<float> hodoSmallX_values(theConfiguration_.pedMeanX.size(), -1.);
+     std::vector<float> hodoSmallY_values(theConfiguration_.pedMeanY.size(), -1.);
      assignValues( hodoSmallY_values, *inputTree->HODOSMALLvalues, 0 );
-     assignValues( hodoSmallX_values, *inputTree->HODOSMALLvalues, 4 );
+     assignValues( hodoSmallX_values, *inputTree->HODOSMALLvalues, theConfiguration_.pedMeanX.size() );
 
 
 
@@ -712,28 +676,12 @@ int main( int argc, char* argv[] ) {
      doHodoReconstructionBool( hodoY2_values    , nClusters_hodoY2    , nFibres_hodoY2    , pos_hodoY2    , 0.5, clusterMaxFibres, 0. );
 
      std::vector<float> pedMeanX,pedMeanY, pedSigmaX, pedSigmaY,cutValuesX,cutValuesY;
-     //values obtained fitting pedestals from run 2778 //FIXME! they are different in new runs, and make it configurable
-     pedMeanY.push_back(155.15);
-     pedMeanY.push_back(141.30);
-     pedMeanY.push_back(152.90);
-     pedMeanY.push_back(152.13);
+     for(int i=0;i<theConfiguration_.pedMeanY.size();++i){
+       pedMeanY.push_back(theConfiguration_.pedMeanY[i]);
+       pedSigmaY.push_back(theConfiguration_.pedSigmaY[i]);
+       pedMeanX.push_back(theConfiguration_.pedMeanX[i]);
+       pedSigmaX.push_back(theConfiguration_.pedSigmaX[i]);
 
-     pedMeanX.push_back(146.89);     
-     pedMeanX.push_back(139.89);
-     pedMeanX.push_back(151.73);
-     pedMeanX.push_back(53.27);
-
-     pedSigmaY.push_back(1.20);
-     pedSigmaY.push_back(1.25);
-     pedSigmaY.push_back(1.60);
-     pedSigmaY.push_back(1.20);
-
-     pedSigmaX.push_back(1.28);
-     pedSigmaX.push_back(1.32);
-     pedSigmaX.push_back(1.31);
-     pedSigmaX.push_back(0.83);
-
-     for(int i=0;i<pedMeanX.size();++i){
        cutValuesX.push_back(pedMeanX[i]+5*pedSigmaX[i]);
        cutValuesY.push_back(pedMeanY[i]+5*pedSigmaY[i]);
      }
@@ -1162,12 +1110,12 @@ float timeSampleUnit(int drs4Freq)
 //  LocalWords:  waveProfileInt computeCherenkovWithFit
 
 
-CeF3_Config_t readConfiguration(){
+CeF3_Config_t readConfiguration(std::string configName){
    //config file
   Configurator* configurator_ = new Configurator();
-  configurator_->xmlFileName="config/MAPDEarlyOctober2015Config.xml";
+  std::string fileName = Form ("./config/%s.xml",configName.c_str());
+  configurator_->xmlFileName=fileName.c_str();
   configurator_->Init();
-  
 
   CeF3_Config_t conf;
   string content = Configurable::getElementContent (*configurator_, "cef3Channels",configurator_->root_element) ;
@@ -1176,7 +1124,27 @@ CeF3_Config_t readConfiguration(){
    content=Configurable::getElementContent (*configurator_, "syncChannels",configurator_->root_element) ;
    Configurator::GetVecInt(content,conf.syncChannels);
 
+   content=Configurable::getElementContent (*configurator_, "pedMeanY",configurator_->root_element) ;
+   Configurator::GetVecFloat(content,conf.pedMeanY);
+
+   content=Configurable::getElementContent (*configurator_, "pedSigmaY",configurator_->root_element) ;
+   Configurator::GetVecFloat(content,conf.pedSigmaY);
+
+   content=Configurable::getElementContent (*configurator_, "pedMeanX",configurator_->root_element) ;
+   Configurator::GetVecFloat(content,conf.pedMeanX);
+
+   content=Configurable::getElementContent (*configurator_, "pedSigmaX",configurator_->root_element) ;
+   Configurator::GetVecFloat(content,conf.pedSigmaX);
+
+
+   content=Configurable::getElementContent (*configurator_, "timingThresh",configurator_->root_element) ;
+   Configurator::GetVecInt(content,conf.timingThresh);
+
+
    conf.triggerChannel= Configurator::GetInt(Configurable::getElementContent(*configurator_,"triggerChannel",configurator_->root_element));
+
+
+   conf.meanTriggerTime= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"meanTriggerTime",configurator_->root_element));
 
    conf.mcpRun= Configurator::GetInt(Configurable::getElementContent(*configurator_,"mcpRun",configurator_->root_element));
    
@@ -1184,7 +1152,11 @@ CeF3_Config_t readConfiguration(){
 
    conf.mcpTriggerChannel= Configurator::GetInt(Configurable::getElementContent(*configurator_,"mcpTriggerChannel",configurator_->root_element));
 
+   conf.mcpMeanTriggerTime= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"mcpMeanTriggerTime",configurator_->root_element));
+
    conf.syncMcp= Configurator::GetInt(Configurable::getElementContent(*configurator_,"syncMcp",configurator_->root_element));
+
+   conf.mcpTimingThresh= Configurator::GetInt(Configurable::getElementContent(*configurator_,"mcpTimingThresh",configurator_->root_element));
 
    conf.waveformFile=Configurable::getElementContent (*configurator_, "waveformFile",configurator_->root_element) ;
 

@@ -53,6 +53,7 @@ class Configurator
   static int    GetInt   (string value);// { return atoi(value.c_str());}
   static inline long   GetLong  (string value) { return atol(value.c_str());}
   static void  GetVecInt(string value,vector<int> &v) ;
+  static void  GetVecFloat(string value,vector<float> &v) ;
   
   // -------------XML
 };

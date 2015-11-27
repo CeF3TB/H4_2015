@@ -77,6 +77,28 @@ void   Configurator::GetVecInt(string value,vector<int> &v) {
   } while ( comma_pos != string::npos);
 }
 
+
+void   Configurator::GetVecFloat(string value,vector<float> &v) {
+  size_t comma_pos;
+  size_t dash_pos;
+  // split againt ,
+  do {
+    comma_pos=value.find(",");
+    string str=value.substr(0,comma_pos);
+    value.erase(0,comma_pos+1);
+    // split againt -
+    dash_pos=str.find("-");
+    if(dash_pos == string::npos) v.push_back(atof(str.c_str()) );
+    else {
+      string begin=str.substr(0,dash_pos);
+      string end= str.substr(dash_pos+1,string::npos);
+      for(int k=atoi(begin.c_str()); k<= atoi(end.c_str()) ;k++)
+	v.push_back((float)k);
+    }
+  } while ( comma_pos != string::npos);
+}
+
+
 /* assuming there's no sub-structure in the searched note */
 string Configurable::getElementContent (xmlDocPtr doc, const char * key, const xmlNode * node)
 {
