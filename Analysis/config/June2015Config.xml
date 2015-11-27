@@ -1,0 +1,16 @@
+<general>
+  <cef3Channels>0,1,2,3</cef3Channels> <!-- fibre channels -->
+  <!-- cef3DigiGroup>0</cef3DigiGroup-->
+  <syncChannels>0,0,0,0</syncChannels> <!-- 1 if you want to shift wavefor for time of trigger-->
+  <triggerChannel>8</triggerChannel> <!-- channel used for sync-->
+  <mcpRun>0</mcpRun>
+  <mcpChannel>5</mcpChannel> <!-- mcp channels -->
+  <!-- mcpDigiGroup>0</mcpDigiGroup -->
+  <mcpTriggerChannel>17</mcpTriggerChannel> <!-- sometimes mcp is on another digiGroup-->
+  <syncMcp>0</syncMcp>
+  <waveformFile>outWaveFormUtil_2778.root</waveformFile> <!-- root file of average waveforms -->
+  <startSample>170</startSample> <!-- defining window for waveform fit -->
+  <endSample>890</endSample> <!-- defining window for waveform fit -->
+  <cherRun>0</cherRun>
+  <cherFile>outWaveFormUtil_2787.root</cherFile>
+</general>
