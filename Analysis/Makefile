@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -c -g
+CFLAGS = -Wall -c -g 
 
 
 INCLUDES = -I. -I$(ROOTSYS)/include -I../ -I./interface -I../CommonTools/interface
@@ -12,11 +12,13 @@ ROOTSYS ?= ERROR_RootSysIsNotDefined
 
 ROOTFLAG = `${ROOTSYS}/bin/root-config --cflags --libs`
 
-EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore -lGenVector -lMinuit -lTMVA -lRooFit 
+EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore -lGenVector -lMinuit -lTMVA -lRooFit `xml2-config --cflags` `xml2-config --libs`
 
 
 
 all: drawCherenkov drawAlignmentCorrVsRun  makeAnalysisTree alignTracking fastPlotter drawLinearity drawWaveform drawRespVsXnY drawResolution
+
+
 
 drawHVEnergyScan: DrawTools.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/drawHVEnergyScan $(EXE_DIR)/drawHVEnergyScan.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
@@ -44,8 +46,8 @@ kConstantFinder:  Event.o DrawTools.o RecoTree.o RooCruijff.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/kConstantFinder $(EXE_DIR)/kConstantFinder.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
 
-makeAnalysisTree: RunHelper.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o Waveform.o WaveformFit.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/makeAnalysisTree $(EXE_DIR)/makeAnalysisTree.cpp $(LIB_DIR)/Waveform.o  $(LIB_DIR)/WaveformFit.o $(LIB_DIR)/RunHelper.o $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/EnergyCalibration.o $(LIB_DIR)/AlignmentOfficer.o $(ROOTFLAG) $(EXTRALIBS)
+makeAnalysisTree: RunHelper.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o Waveform.o WaveformFit.o Configurator.o CeF3InputTree.o
+	$(CC) -Wall $(INCLUDES) -o ./bin/makeAnalysisTree $(EXE_DIR)/makeAnalysisTree.cpp $(LIB_DIR)/Waveform.o  $(LIB_DIR)/WaveformFit.o $(LIB_DIR)/RunHelper.o $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/EnergyCalibration.o $(LIB_DIR)/AlignmentOfficer.o $(LIB_DIR)/Configurator.o $(LIB_DIR)/CeF3InputTree.o $(ROOTFLAG) $(EXTRALIBS)
 
 alignTracking:  HodoCluster.o AlignmentOfficer.o TagHelper.o DrawTools.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/alignTracking $(EXE_DIR)/alignTracking.cpp $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/AlignmentOfficer.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
@@ -111,6 +113,11 @@ WaveformFit.o: ./src/WaveformFit.cc
 RooCruijff.o: ./src/RooCruijff.cc
 	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/RooCruijff.o -c ./src/RooCruijff.cc $(ROOTFLAG) $(EXTRALIBS)
 
+Configurator.o: ./src/Configurator.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/Configurator.o -c ./src/Configurator.cc $(ROOTFLAG) $(EXTRALIBS)
+
+CeF3InputTree.o: ./src/CeF3InputTree.cc
+	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/CeF3InputTree.o -c ./src/CeF3InputTree.cc $(ROOTFLAG) $(EXTRALIBS)
 
 
 clean:
