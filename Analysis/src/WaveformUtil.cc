@@ -43,7 +43,7 @@ void WaveformUtil::Loop(){
 
   Long64_t nentries = fChain->GetEntries();
   std::cout<<"nentries"<<nentries<<std::endl;
-  //  nentries=500;
+  nentries=50000;
   float  timeMinusTimeAtMax[NDIGISAMPLES];
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];

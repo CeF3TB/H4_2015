@@ -103,12 +103,12 @@ int main( int argc, char* argv[] ) {
 
    std::string outfileName;
    outfileName= outdir + "/Reco_" + runName + ".root";
-   if(argc>3){
-     std::ostringstream convertStart, convertEnd;
-     convertStart<<theConfiguration_.startSample;
-     convertEnd<<theConfiguration_.endSample;
-     outfileName= outdir + "/Reco_" + runName + "_start_"+convertStart.str()+"_end_"+convertEnd.str()+".root";
-   }
+//FIXME not useful anymore   if(argc>3){
+//     std::ostringstream convertStart, convertEnd;
+//     convertStart<<theConfiguration_.startSample;
+//     convertEnd<<theConfiguration_.endSample;
+//     outfileName= outdir + "/Reco_" + runName + "_start_"+convertStart.str()+"_end_"+convertEnd.str()+".root";
+//   }
    TFile* outfile = TFile::Open( outfileName.c_str(), "RECREATE" );
 
    TTree* outTree = new TTree("recoTree", "recoTree");
@@ -350,7 +350,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //   nentries=1000;
+   //     nentries=10000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
@@ -476,30 +476,32 @@ int main( int argc, char* argv[] ) {
       int iChannel=inputTree->digi_value_ch->at(i);
      //      std::cout<<i<<" "<<inputTree->digi_value_ch->at(i)<<" ";
 
-      if(i==1024*inputTree->digi_value_ch->at(i)){
-	bool skipChannel=true;
-	for (int j=0;j<theConfiguration_.cef3Channels.size();++j){
-	  if(iChannel==theConfiguration_.cef3Channels[j]){
-	    skipChannel=false;
-	    ch++;
-	    break;
-	  }
+      
+      bool skipChannel=true;
+      for (int j=0;j<theConfiguration_.cef3Channels.size();++j){
+	if(iChannel==theConfiguration_.cef3Channels[j]){
+	  skipChannel=false;
+	  if(i==1024*iChannel)ch++;
+	  break;
 	}
-	if(skipChannel) continue;
       }
+      if(skipChannel) continue;
+      
       
 
 	
      bool doWeWantToShift=theConfiguration_.syncChannels[ch];
 
+
       //FIXME      bool doWeWantToShift=!(((isOctober2015LateRun || isOctober2015EarlySiPMRun) && (iChannel==1 || iChannel ==5)) || (isOctober2015EarlyMAPDRun && (iChannel==0 || iChannel ==5))) ;
 
-     //              if(i==1024*iChannel)      std::cout<<doWeWantToShift<<"<-do we iChannel->"<<iChannel<<" ich"<<ch<< " isample"<<i<<std::endl;
+     //     if(i==1024*iChannel)      std::cout<<doWeWantToShift<<"<-do we iChannel->"<<iChannel<<" ich"<<ch<< " shift:"<<shiftSample<<std::endl;
 
       if(inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))>10000 || inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))<0)continue;
       int iSample=i;
       if(i+shiftSample*doWeWantToShift>1023*inputTree->digi_value_ch->at(i) && i+shiftSample*doWeWantToShift<(1023+(1024*inputTree->digi_value_ch->at(i)))){
 	iSample=i+shiftSample*doWeWantToShift;
+	//		std::cout<<inputTree->digi_value_ch->at(i)<<" "<<i<<" "<<shiftSample*doWeWantToShift<<std::endl;
       }
       waveform.at(ch)->addTimeAndSample((i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency),inputTree->digi_value_bare_noise_sub->at(iSample));
 
