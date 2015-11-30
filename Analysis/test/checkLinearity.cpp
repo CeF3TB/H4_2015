@@ -67,16 +67,30 @@ int main( int argc, char* argv[] ) {
   std::vector<TGraphErrors*> gr_mean_vs_energyPMT;
   std::vector<TGraphErrors*> gr_mean_vs_energyMAPDDiff;
 
+  std::vector<TGraphErrors*> gr_mean_vs_energyMAPDnoDiff_fit;
+  std::vector<TGraphErrors*> gr_mean_vs_energyPMT_fit;
+  std::vector<TGraphErrors*> gr_mean_vs_energyMAPDDiff_fit;
+
+
   for(int i=0;i<energies.size();++i){
-    gr_mean_vs_energyMAPDnoDiff.push_back( new TGraphErrors(0));
-    gr_mean_vs_energyPMT.push_back( new TGraphErrors(0));
-    gr_mean_vs_energyMAPDDiff.push_back( new TGraphErrors(0));
+      gr_mean_vs_energyMAPDnoDiff.push_back( new TGraphErrors(0));
+      gr_mean_vs_energyPMT.push_back( new TGraphErrors(0));
+      gr_mean_vs_energyMAPDDiff.push_back( new TGraphErrors(0));
+
+      gr_mean_vs_energyMAPDnoDiff_fit.push_back( new TGraphErrors(0));
+      gr_mean_vs_energyPMT_fit.push_back( new TGraphErrors(0));
+      gr_mean_vs_energyMAPDDiff_fit.push_back( new TGraphErrors(0));
+
    }
 
-  //HV MAPDnoDiff
+  // MAPDnoDiff
   float meanFirst[4];
   float meanFirstErr[4];
   float energyFirst[4];
+
+  float meanFirst_fit[4];
+  float meanFirstErr_fit[4];
+
 
   for (int i=0;i<runsMAPDnoDiff.size();++i){
     TString run;
@@ -85,23 +99,33 @@ int main( int argc, char* argv[] ) {
     TVectorD* mean=(TVectorD*)inputFile->Get("meanValuemaxAmpl");
     TVectorD* meanErr=(TVectorD*)inputFile->Get("meanErrValuemaxAmpl");
 
+    TVectorD* mean_fit=(TVectorD*)inputFile->Get("meanValuemaxAmpl_fit");
+    TVectorD* meanErr_fit=(TVectorD*)inputFile->Get("meanErrValuemaxAmpl_fit");
+
+
     for(int j=0;j<4;++j){
       if(i==0){
 	meanFirst[j]=(*mean)[j];
 	meanFirstErr[j]=(*meanErr)[j];
 	energyFirst[j]=energies[i];
+
+	meanFirst_fit[j]=(*mean_fit)[j];
+	meanFirstErr_fit[j]=(*meanErr_fit)[j];
       }
 
 
       //      std::cout<<j<<" "<<(*mean)[j]<< " "<<meanFirst[j]<< " "<<energyFirst[j]<<" "<<energies[i]<<" "<<((*mean)[j]/meanFirst[j])*(energyFirst[j]/energies[i])<<std::endl;
       gr_mean_vs_energyMAPDnoDiff[j]->SetPoint( i, energies[i], ((*mean)[j]/meanFirst[j])*(energyFirst[j]/energies[i]));
       gr_mean_vs_energyMAPDnoDiff[j]->SetPointError( i, 0, (energyFirst[j]/energies[i])*getRatioError((*mean)[j],meanFirst[j],(*meanErr)[j],meanFirstErr[j]));
+      gr_mean_vs_energyMAPDnoDiff_fit[j]->SetPoint( i, energies[i], ((*mean_fit)[j]/meanFirst_fit[j])*(energyFirst[j]/energies[i]));
+      gr_mean_vs_energyMAPDnoDiff_fit[j]->SetPointError( i, 0, (energyFirst[j]/energies[i])*getRatioError((*mean_fit)[j],meanFirst_fit[j],(*meanErr)[j],meanFirstErr_fit[j]));
+
     }
 
   }
 
 
-  //HV PMT
+  //PMT
   for (int i=0;i<runsPMT.size();++i){
     TString run;
     run.Form("%d",runsPMT[i]); 
@@ -110,17 +134,28 @@ int main( int argc, char* argv[] ) {
     TVectorD* mean=(TVectorD*)inputFile->Get("meanValuemaxAmpl");
     TVectorD* meanErr=(TVectorD*)inputFile->Get("meanErrValuemaxAmpl");
 
+    TVectorD* mean_fit=(TVectorD*)inputFile->Get("meanValuemaxAmpl_fit");
+    TVectorD* meanErr_fit=(TVectorD*)inputFile->Get("meanErrValuemaxAmpl_fit");
+
+
     for(int j=0;j<4;++j){
       if(i==0){
 	meanFirst[j]=(*mean)[j];
 	meanFirstErr[j]=(*meanErr)[j];
 	energyFirst[j]=energies[i];
+
+	meanFirst_fit[j]=(*mean_fit)[j];
+	meanFirstErr_fit[j]=(*meanErr_fit)[j];
       }
 
 
       //      if(j==2)std::cout<<"-----------PMT:"<<j<<" "<<(*mean)[j]<< " "<<meanFirst[j]<< " "<<energyFirst[j]<<" "<<energies[i]<<" "<<((*mean)[j]/meanFirst[j])*(energyFirst[j]/energies[i])<<std::endl;
       gr_mean_vs_energyPMT[j]->SetPoint( i, energies[i], ((*mean)[j]/meanFirst[j])*(energyFirst[j]/energies[i]));
       gr_mean_vs_energyPMT[j]->SetPointError( i, 0, (energyFirst[j]/energies[i])*getRatioError((*mean)[j],meanFirst[j],(*meanErr)[j],meanFirstErr[j]));
+
+      gr_mean_vs_energyPMT_fit[j]->SetPoint( i, energies[i], ((*mean_fit)[j]/meanFirst_fit[j])*(energyFirst[j]/energies[i]));
+      gr_mean_vs_energyPMT_fit[j]->SetPointError( i, 0, (energyFirst[j]/energies[i])*getRatioError((*mean_fit)[j],meanFirst_fit[j],(*meanErr)[j],meanFirstErr_fit[j]));
+
     }
 
   }
@@ -134,17 +169,28 @@ int main( int argc, char* argv[] ) {
     TVectorD* mean=(TVectorD*)inputFile->Get("meanValuemaxAmpl");
     TVectorD* meanErr=(TVectorD*)inputFile->Get("meanErrValuemaxAmpl");
 
+    TVectorD* mean_fit=(TVectorD*)inputFile->Get("meanValuemaxAmpl_fit");
+    TVectorD* meanErr_fit=(TVectorD*)inputFile->Get("meanErrValuemaxAmpl_fit");
+
     for(int j=0;j<4;++j){
       if(i==0){
 	meanFirst[j]=(*mean)[j];
 	meanFirstErr[j]=(*meanErr)[j];
 	energyFirst[j]=energies[i];
-      }
+
+	meanFirst_fit[j]=(*mean_fit)[j];
+	meanFirstErr_fit[j]=(*meanErr_fit)[j];
+     }
 
 
       //            std::cout<<j<<" "<<(*mean)[j]<< " "<<meanFirst[j]<< " "<<energyFirst[j]<<" "<<energies[i]<<" "<<((*mean)[j]/meanFirst[j])*(energyFirst[j]/energies[i])<<std::endl;
       gr_mean_vs_energyMAPDDiff[j]->SetPoint( i, energies[i], ((*mean)[j]/meanFirst[j])*(energyFirst[j]/energies[i]));
       gr_mean_vs_energyMAPDDiff[j]->SetPointError( i, 0, (energyFirst[j]/energies[i])*getRatioError((*mean)[j],meanFirst[j],(*meanErr)[j],meanFirstErr[j]));
+
+      gr_mean_vs_energyMAPDDiff_fit[j]->SetPoint( i, energies[i], ((*mean_fit)[j]/meanFirst_fit[j])*(energyFirst[j]/energies[i]));
+      gr_mean_vs_energyMAPDDiff_fit[j]->SetPointError( i, 0, (energyFirst[j]/energies[i])*getRatioError((*mean_fit)[j],meanFirst_fit[j],(*meanErr)[j],meanFirstErr_fit[j]));
+
+
     }
 
   }
@@ -198,6 +244,31 @@ int main( int argc, char* argv[] ) {
     c1->SaveAs(outFile.c_str()+fibre+".png");
     c1->SaveAs(outFile.c_str()+fibre+".pdf");
 
+    //fit
+    c1->Clear();
+
+    h2_axes2->Draw("");
+    gr_mean_vs_energyMAPDnoDiff[i]->SetMarkerStyle(20);
+    gr_mean_vs_energyMAPDnoDiff[i]->SetMarkerSize(1.6);
+    gr_mean_vs_energyMAPDnoDiff[i]->SetMarkerColor(kBlack);
+    gr_mean_vs_energyMAPDnoDiff[i]->Draw("p same");
+
+    gr_mean_vs_energyPMT[i]->SetMarkerStyle(20);
+    gr_mean_vs_energyPMT[i]->SetMarkerSize(1.6);
+    gr_mean_vs_energyPMT[i]->SetMarkerColor(kBlue);
+    gr_mean_vs_energyPMT[i]->Draw("p same");
+
+    gr_mean_vs_energyMAPDDiff[i]->SetMarkerStyle(20);
+    gr_mean_vs_energyMAPDDiff[i]->SetMarkerSize(1.6);
+    gr_mean_vs_energyMAPDDiff[i]->SetMarkerColor(kRed);
+    gr_mean_vs_energyMAPDDiff[i]->Draw("p same");
+
+    leg_neat->Draw("same");
+    outFile=dirName+"/mean_linearity_fit_";
+    c1->SaveAs(outFile.c_str()+fibre+".png");
+    c1->SaveAs(outFile.c_str()+fibre+".pdf");
+
+
     c1->Clear();
     h2_axes2->Draw("");
     gr_mean_vs_energyMAPDnoDiff[i]->Draw("p same");
@@ -216,6 +287,28 @@ int main( int argc, char* argv[] ) {
     h2_axes2->Draw("");
     gr_mean_vs_energyMAPDDiff[i]->Draw("p same");
     outFile=dirName+"/mean_linearity_MAPDDiff_";
+    c1->SaveAs(outFile.c_str()+fibre+".png");
+    c1->SaveAs(outFile.c_str()+fibre+".pdf");
+
+    //fit
+    c1->Clear();
+    h2_axes2->Draw("");
+    gr_mean_vs_energyMAPDnoDiff_fit[i]->Draw("p same");
+    outFile=dirName+"/mean_linearity_fit_MAPDnoDiff_";
+    c1->SaveAs(outFile.c_str()+fibre+".png");
+    c1->SaveAs(outFile.c_str()+fibre+".pdf");
+
+    c1->Clear();
+    h2_axes2->Draw("");
+    gr_mean_vs_energyPMT_fit[i]->Draw("p same");
+    outFile=dirName+"/mean_linearity_fit_PMT_";
+    c1->SaveAs(outFile.c_str()+fibre+".png");
+    c1->SaveAs(outFile.c_str()+fibre+".pdf");
+
+    c1->Clear();
+    h2_axes2->Draw("");
+    gr_mean_vs_energyMAPDDiff_fit[i]->Draw("p same");
+    outFile=dirName+"/mean_linearity_fit_MAPDDiff_";
     c1->SaveAs(outFile.c_str()+fibre+".png");
     c1->SaveAs(outFile.c_str()+fibre+".pdf");
 
