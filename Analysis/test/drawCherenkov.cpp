@@ -165,6 +165,13 @@ int main( int argc, char* argv[] ) {
 
 	if((t.nClusters_hodoX1==1||t.pos_2FibClust_hodoX1>-999) && (t.nClusters_hodoX2==1||t.pos_2FibClust_hodoX2>-999) && (t.nClusters_hodoY1==1||t.pos_2FibClust_hodoY1>-999) && (t.nClusters_hodoY1==1||t.pos_2FibClust_hodoY1>-999)){//exactly one cluster, or, if there are multiple clusters, exactly one 2-fiber cluster
 	  if(TMath::Abs(0.5* (t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2))< 3 && TMath::Abs( 0.5* (t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2))< 3 && (t.wc_x_corr-t.cluster_pos_corr_hodoX2)<4 && (t.wc_y_corr-t.cluster_pos_corr_hodoY2)< 4  && TMath::Abs( (t.cluster_pos_corr_hodoX1-t.cluster_pos_corr_hodoX2))<1.5 &&TMath::Abs( (t.cluster_pos_corr_hodoY1-t.cluster_pos_corr_hodoY2))<1.5){
+
+	  //hadron contamination on run 4001 and 4025 imposes a cut on maxAmpl FIXME!!! no hardcoded
+	    if((t.run==4001 && t.cef3_maxAmpl->at(2)<650) || (t.run == 4026 && t.cef3_maxAmpl->at(2)<750) || (t.run == 4063 && t.cef3_maxAmpl->at(2)<200) || (t.run == 4102 && t.cef3_maxAmpl->at(2)<300) || (t.run ==4493 && t.cef3_maxAmpl->at(2)<1400) || (t.run ==4492 && t.cef3_maxAmpl->at(2)<1500 ))continue;
+	    //error on hv for fibre 2 on first spills?
+	    if(t.run==4063 && t.spill<20)continue;
+
+
 	  totalHistos_tight[i]->Fill(t.cef3_chaInt->at(i)); 
 	  if(i==2)	totalHistosGainCorr_tight[i]->Fill(t.cef3_chaInt->at(i)/gainR5380);
 	  else totalHistosGainCorr_tight[i]->Fill(t.cef3_chaInt->at(i)/gainR1450);
@@ -177,7 +184,7 @@ int main( int argc, char* argv[] ) {
 	    totalHistos_tight_maxAmpl_fit_tot->Fill(t.cef3_maxAmpl_fit_corr->at(0)+t.cef3_maxAmpl_fit_corr->at(1)+t.cef3_maxAmpl_fit_corr->at(2)+t.cef3_maxAmpl_fit_corr->at(3));
 	  }
 	  totalHistos_tight_maxAmpl[i]->Fill(t.cef3_maxAmpl->at(i)); 
-	  totalHistos_tight_maxAmpl_fit[i]->Fill(t.cef3_maxAmpl_fit_corr->at(i)); //FIXME!!!!!
+	  totalHistos_tight_maxAmpl_fit[i]->Fill(t.cef3_maxAmpl_fit_corr->at(i));
 	  }
 	}
       }
@@ -489,7 +496,7 @@ int main( int argc, char* argv[] ) {
 
     
   for(int i=0;i<4;++i){
-    if(isOctober2015LateRun && i!=2) continue;
+    //    if(isOctober2015LateRun && i!=2) continue;
     TH1F* histo;
     if(i!=2) histo=wlsHistos_tight[i];
     else histo=totalHistos_tight[i];
@@ -606,7 +613,7 @@ int main( int argc, char* argv[] ) {
 
     
   for(int i=0;i<4;++i){
-    if(isOctober2015LateRun && i!=2) continue;
+    //    if(isOctober2015LateRun && i!=2) continue;
     TH1F* histo;
     histo=totalHistos_tight_maxAmpl[i];
 
@@ -619,15 +626,15 @@ int main( int argc, char* argv[] ) {
     double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
     double sigma = histo->GetRMS();
     
-    if(isOctober2015LateRun){//manual fix, hadron contamination doesn't allow automatic allocation of boundaries with getmaximum
-      if(runNumberString=="4493"){
-	peakpos=2234.;
-	sigma=170.;
-      }else if(runNumberString=="4492"){
-	peakpos=2818.;
-	sigma=220.;
-      }
-    }
+//    if(isOctober2015LateRun){//manual fix, hadron contamination doesn't allow automatic allocation of boundaries with getmaximum
+//      if(runNumberString=="4493"){
+//	peakpos=2234.;
+//	sigma=170.;
+//      }else if(runNumberString=="4492"){
+//	peakpos=2818.;
+//	sigma=220.;
+//      }
+//    }
     
     if (5*sigma>peakpos)sigma/=2;
     if (5*sigma>peakpos)sigma/=2;
@@ -727,7 +734,7 @@ int main( int argc, char* argv[] ) {
 
   //maxAmpl_fit
   for(int i=0;i<4;++i){
-    if(isOctober2015LateRun && i!=2) continue;
+    //    if(isOctober2015LateRun && i!=2) continue;
     TH1F* histo;
     histo=totalHistos_tight_maxAmpl_fit[i];
 
@@ -736,15 +743,15 @@ int main( int argc, char* argv[] ) {
     double sigma = histo->GetRMS();
     
 
-    if(isOctober2015LateRun){//manual fix, hadron contamination doesn't allow automatic allocation of boundaries with getmaximum
-      if(runNumberString=="4493"){
-	peakpos=2244.;
-	sigma=170.;
-      }else if(runNumberString=="4492"){
-	peakpos=2834.;
-	sigma=220.;
-      }
-    }
+//    if(isOctober2015LateRun){//manual fix, hadron contamination doesn't allow automatic allocation of boundaries with getmaximum
+//      if(runNumberString=="4493"){
+//	peakpos=2244.;
+//	sigma=170.;
+//      }else if(runNumberString=="4492"){
+//	peakpos=2834.;
+//	sigma=220.;
+//      }
+//    }
 
   
 

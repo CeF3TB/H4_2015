@@ -23,6 +23,10 @@ all: drawCherenkov drawAlignmentCorrVsRun  makeAnalysisTree alignTracking fastPl
 drawHVEnergyScan: DrawTools.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/drawHVEnergyScan $(EXE_DIR)/drawHVEnergyScan.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
+checkLinearity: DrawTools.o
+	$(CC) -Wall $(INCLUDES) -o ./bin/checkLinearity $(EXE_DIR)/checkLinearity.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
+
+
 
 drawResolution: DrawTools.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/drawResolution $(EXE_DIR)/drawResolution.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
