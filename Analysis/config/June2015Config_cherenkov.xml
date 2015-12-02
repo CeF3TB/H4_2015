@@ -3,14 +3,24 @@
   <!-- cef3DigiGroup>0</cef3DigiGroup-->
   <syncChannels>0,0,0,0</syncChannels> <!-- 1 if you want to shift wavefor for time of trigger-->
   <triggerChannel>8</triggerChannel> <!-- channel used for sync-->
+  <triggerChannel>8</triggerChannel> <!-- channel used for sync-->
+  <meanTriggerTime>190.2</meanTriggerTime> <!-- mean of distribution of trigger time-->
   <mcpRun>0</mcpRun>
   <mcpChannel>5</mcpChannel> <!-- mcp channels -->
   <!-- mcpDigiGroup>0</mcpDigiGroup -->
   <mcpTriggerChannel>17</mcpTriggerChannel> <!-- sometimes mcp is on another digiGroup-->
+  <mcpMeanTriggerTime>190.2</mcpMeanTriggerTime> <!-- mean of distribution of trigger time-->
   <syncMcp>0</syncMcp>
+  <mcpTimingThresh>150</mcpTimingThresh>
   <waveformFile>outWaveFormUtil_2778.root</waveformFile> <!-- root file of average waveforms -->
   <startSample>170</startSample> <!-- defining window for waveform fit -->
   <endSample>890</endSample> <!-- defining window for waveform fit -->
   <cherRun>1</cherRun>
   <cherFile>outWaveFormUtil_2787.root</cherFile> <!-- from the code: run 2787,2807 used out..2787, 298 used out..2798, 2890 used out...2890, 3076 used 2605 -->
+  <pedMeanY>155.15,141.30,152.90,152.13</pedMeanY>
+  <pedMeanX>146.89,139.89,151.73,53.27</pedMeanX>
+  <pedSigmaY>1.20,1.25,1.60,1.20</pedSigmaY>
+  <pedSigmaX>1.28,1.32,1.31,0.83</pedSigmaX>
+  <addTagFileName>0</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
+  <tagFileName>dummy</tagFileName>
 </general>

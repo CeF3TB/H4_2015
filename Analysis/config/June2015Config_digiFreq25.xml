@@ -21,4 +21,6 @@
   <pedMeanX>146.89,139.89,151.73,53.27</pedMeanX>
   <pedSigmaY>1.20,1.25,1.60,1.20</pedSigmaY>
   <pedSigmaX>1.28,1.32,1.31,0.83</pedSigmaX>
+  <addTagFileName>0</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
+  <tagFileName>dummy</tagFileName>
 </general>
