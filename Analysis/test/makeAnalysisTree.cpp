@@ -103,12 +103,10 @@ int main( int argc, char* argv[] ) {
 
    std::string outfileName;
    outfileName= outdir + "/Reco_" + runName + ".root";
-//FIXME not useful anymore   if(argc>3){
-//     std::ostringstream convertStart, convertEnd;
-//     convertStart<<theConfiguration_.startSample;
-//     convertEnd<<theConfiguration_.endSample;
-//     outfileName= outdir + "/Reco_" + runName + "_start_"+convertStart.str()+"_end_"+convertEnd.str()+".root";
-//   }
+   if(theConfiguration_.addTagFileName){
+     outfileName= outdir + "/Reco_" + runName + "_" + theConfiguration_.tagFileName + ".root";   
+   }
+
    TFile* outfile = TFile::Open( outfileName.c_str(), "RECREATE" );
 
    TTree* outTree = new TTree("recoTree", "recoTree");
@@ -350,7 +348,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //     nentries=10000;
+   //   nentries=20000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
@@ -1169,6 +1167,10 @@ CeF3_Config_t readConfiguration(std::string configName){
    conf.cherRun= Configurator::GetInt(Configurable::getElementContent(*configurator_,"cherRun",configurator_->root_element));
 
    conf.cherFile=Configurable::getElementContent (*configurator_, "cherFile",configurator_->root_element) ;
+
+   conf.addTagFileName= Configurator::GetInt(Configurable::getElementContent(*configurator_,"addTagFileName",configurator_->root_element));
+
+   conf.tagFileName=Configurable::getElementContent (*configurator_, "tagFileName",configurator_->root_element) ;
 
    return conf;
 

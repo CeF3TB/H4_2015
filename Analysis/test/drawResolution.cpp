@@ -83,8 +83,8 @@ int main( int argc, char* argv[] ) {
        
 
     TFile *inputFile=TFile::Open("CherenkovPlots_"+run+"_"+tag.c_str()+".root");
-    TVectorD* res=(TVectorD*)inputFile->Get("resValue");
-    TVectorD* resErr=(TVectorD*)inputFile->Get("resErrValue");
+    TVectorD* res=(TVectorD*)inputFile->Get("resValueMaxAmpl");
+    TVectorD* resErr=(TVectorD*)inputFile->Get("resErrValueMaxAmpl");
 
     TVectorD* meanValuemaxAmpl_fit=(TVectorD*)inputFile->Get("meanValuemaxAmpl_fit");
 

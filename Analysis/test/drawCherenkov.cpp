@@ -167,7 +167,7 @@ int main( int argc, char* argv[] ) {
 	  if(TMath::Abs(0.5* (t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2))< 3 && TMath::Abs( 0.5* (t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2))< 3 && (t.wc_x_corr-t.cluster_pos_corr_hodoX2)<4 && (t.wc_y_corr-t.cluster_pos_corr_hodoY2)< 4  && TMath::Abs( (t.cluster_pos_corr_hodoX1-t.cluster_pos_corr_hodoX2))<1.5 &&TMath::Abs( (t.cluster_pos_corr_hodoY1-t.cluster_pos_corr_hodoY2))<1.5){
 
 	  //hadron contamination on run 4001 and 4025 imposes a cut on maxAmpl FIXME!!! no hardcoded
-	    if((t.run==4001 && t.cef3_maxAmpl->at(2)<650) || (t.run == 4026 && t.cef3_maxAmpl->at(2)<750) || (t.run == 4063 && t.cef3_maxAmpl->at(2)<200) || (t.run == 4102 && t.cef3_maxAmpl->at(2)<300) || (t.run ==4493 && t.cef3_maxAmpl->at(2)<1400) || (t.run ==4492 && t.cef3_maxAmpl->at(2)<1500 ))continue;
+	    if((t.run==4001 && t.cef3_maxAmpl->at(2)<650) || (t.run == 4026 && t.cef3_maxAmpl->at(2)<750) || (t.run == 4063 && t.cef3_maxAmpl->at(2)<200) || (t.run == 4102 && t.cef3_maxAmpl->at(2)<300) || (t.run ==4493 && t.cef3_maxAmpl->at(2)<1400) || (t.run ==4492 && t.cef3_maxAmpl->at(2)<1500 ) || (t.run==4064 && t.cef3_maxAmpl->at(2)<200)  || (t.run==4065 && t.cef3_maxAmpl->at(2)<220) || (t.run==4103 && t.cef3_maxAmpl->at(2)<300)|| (t.run==4104 && t.cef3_maxAmpl->at(2)<300))continue;
 	    //error on hv for fibre 2 on first spills?
 	    if(t.run==4063 && t.spill<20)continue;
 
@@ -775,7 +775,7 @@ int main( int argc, char* argv[] ) {
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
 
 
-
+    if(runNumberString=="4089" && i==3)peakpos+=sigma;//fixme bad fit for fiber 3 in this run
     RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-3*sigma, peakpos+3*sigma);
     RooRealVar widthL("widthL","#sigmaL",sigma , 2, 5*sigma);
     RooRealVar widthR("widthR","#sigmaR",sigma , 2, 5*sigma);
