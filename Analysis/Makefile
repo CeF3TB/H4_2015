@@ -39,6 +39,9 @@ drawRespVsXnY: DrawTools.o
 drawCherenkov:  Event.o DrawTools.o RecoTree.o RooCruijff.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/drawCherenkov $(EXE_DIR)/drawCherenkov.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
+pickEvents:  Event.o DrawTools.o RecoTree.o 
+	$(CC) -Wall $(INCLUDES) -o ./bin/pickEvents $(EXE_DIR)/pickEvents.cpp $(LIB_DIR)/RecoTree.o  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
+
 timingStudies:  Event.o DrawTools.o RecoTree.o RooCruijff.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/timingStudies $(EXE_DIR)/timingStudies.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
@@ -62,8 +65,8 @@ drawAlignmentCorrVsRun:	DrawTools.o
 #	 $(CC) -Wall $(INCLUDES) -o ./bin/analyzeCherenkov $(EXE_DIR)/analyzeCherenkov.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/CherenkovAnalyzer.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
 
 
-drawWaveform: Event.o WaveformUtil.o DrawTools.o HodoCluster.o 
-	 $(CC) -Wall $(INCLUDES) -o ./bin/drawWaveform $(EXE_DIR)/drawWaveform.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/WaveformUtil.o  $(LIB_DIR)/DrawTools.o  $(LIB_DIR)/HodoCluster.o $(ROOTFLAG) $(EXTRALIBS)
+drawWaveform: Event.o WaveformUtil.o DrawTools.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o
+	 $(CC) -Wall $(INCLUDES) -o ./bin/drawWaveform $(EXE_DIR)/drawWaveform.cpp  $(LIB_DIR)/TagHelper.o $(LIB_DIR)/EnergyCalibration.o $(LIB_DIR)/AlignmentOfficer.o $(LIB_DIR)/Event.o $(LIB_DIR)/WaveformUtil.o  $(LIB_DIR)/DrawTools.o  $(LIB_DIR)/HodoCluster.o $(ROOTFLAG) $(EXTRALIBS)
 
 drawLinearity: Event.o LinearityLooper.o DrawTools.o
 	 $(CC) -Wall $(INCLUDES) -o ./bin/drawLinearity $(EXE_DIR)/drawLinearity.cpp $(LIB_DIR)/Event.o $(LIB_DIR)/LinearityLooper.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)	
