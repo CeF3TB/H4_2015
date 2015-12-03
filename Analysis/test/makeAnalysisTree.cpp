@@ -28,6 +28,7 @@
 #include "interface/Configurator.h"
 #include "interface/CeF3Configurator.h"
 #include "interface/CeF3InputTree.h"
+#include "interface/WFTree.h"
 
 void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos , int skipChannel=-1, bool isOctober2015EarlyRun=false);
 void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos );
@@ -444,7 +445,11 @@ int main( int argc, char* argv[] ) {
    }
 
 
-   for(int  iEntry=0; iEntry<nentries; ++iEntry ) {
+   WFTree outWFTree(theConfiguration_.cef3Channels.size(), 1024);
+
+    int WFoutTreeEntries=0;
+
+   for(int iEntry=0; iEntry<nentries; ++iEntry ) {
      
     tree->GetEntry( iEntry );     
     if( iEntry %  1000 == 0 ) std::cout << "Entry: " << iEntry << " / " << nentries << std::endl;
@@ -466,6 +471,8 @@ int main( int argc, char* argv[] ) {
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(inputTree->digi_frequency)));
     shiftSample=-shiftSample;
     //FIX ME move to config    if(runName=="2539")shiftSample=0;
+
+    bool fillWFoutTree=false;
 
 
     int ch=-1;
@@ -491,8 +498,6 @@ int main( int argc, char* argv[] ) {
      bool doWeWantToShift=theConfiguration_.syncChannels[ch];
 
 
-      //FIXME      bool doWeWantToShift=!(((isOctober2015LateRun || isOctober2015EarlySiPMRun) && (iChannel==1 || iChannel ==5)) || (isOctober2015EarlyMAPDRun && (iChannel==0 || iChannel ==5))) ;
-
      //     if(i==1024*iChannel)      std::cout<<doWeWantToShift<<"<-do we iChannel->"<<iChannel<<" ich"<<ch<< " shift:"<<shiftSample<<std::endl;
 
       if(inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))>10000 || inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))<0)continue;
@@ -503,6 +508,18 @@ int main( int argc, char* argv[] ) {
       }
       waveform.at(ch)->addTimeAndSample((i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency),inputTree->digi_value_bare_noise_sub->at(iSample));
 
+      if(i==0 && (iEntry % theConfiguration_.prescaleWFtree == 0) ){
+	WFoutTreeEntries++; 
+	fillWFoutTree=true;
+      }
+      if(theConfiguration_.fillWFtree && fillWFoutTree  ){
+	outWFTree.WF_ch[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = ch;
+	outWFTree.WF_time[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = (i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency);
+	outWFTree.WF_val[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = inputTree->digi_value_bare_noise_sub->at(iSample);
+	outWFTree.index[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = WFoutTreeEntries;
+	outWFTree.evtNumber[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = iEntry;
+      }
+
       //           std::cout<<"i:"<<inputTree->digi_value_ch->at(i)<<" time:"<<(i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency)<<" value"<<inputTree->digi_value_bare_noise_sub->at(iSample)<<std::endl;
       if(runName=="2539"){
 	//	std::cout<<i<<" "<<inputTree->digi_value_bare_noise_sub->at(iSample)<<" "<<(waveNoiseProfile.at(inputTree->digi_value_ch->at(i)))->GetBinContent(iSample-1024*inputTree->digi_value_ch->at(i))<<std::endl;
@@ -511,6 +528,8 @@ int main( int argc, char* argv[] ) {
       }
 
     }
+
+    if(theConfiguration_.fillWFtree && fillWFoutTree )	outWFTree.Fill();
 
 
     //mcp info    
@@ -619,6 +638,7 @@ int main( int argc, char* argv[] ) {
 
     //set the tag for calibration
     std::string theBeamEnergy = Form("%.0f",inputTree->BeamEnergy);
+    if(runName=="4076")theBeamEnergy=Form("%.0f",100);//FIX ME, error in database
     TagHelper tagHelper(tag,theBeamEnergy);
     EnergyCalibration cef3Calib(tagHelper.getCeF3FileName());
     EnergyCalibration bgoCalib(tagHelper.getBGOFileName());
@@ -821,6 +841,9 @@ int main( int argc, char* argv[] ) {
    } // for entries, end of loop
 
    outfile->cd();
+
+      if(theConfiguration_.fillWFtree)outWFTree.Write("wf", "wf_tree");
+   //  outWFTree.Write("wf", "wf_tree");
    if(runName=="2539"){//pedestal run
      for (unsigned int iCh=0; iCh<CEF3_CHANNELS; iCh++) {
        for(int jj=0;jj<1024;jj++){
@@ -1171,6 +1194,10 @@ CeF3_Config_t readConfiguration(std::string configName){
    conf.addTagFileName= Configurator::GetInt(Configurable::getElementContent(*configurator_,"addTagFileName",configurator_->root_element));
 
    conf.tagFileName=Configurable::getElementContent (*configurator_, "tagFileName",configurator_->root_element) ;
+
+   conf.fillWFtree = Configurator::GetInt(Configurable::getElementContent(*configurator_,"fillWFtree",configurator_->root_element));
+
+   conf.prescaleWFtree = Configurator::GetInt(Configurable::getElementContent(*configurator_,"prescaleWFtree",configurator_->root_element));
 
    return conf;
 
