@@ -22,5 +22,5 @@
   <pedSigmaY>1.51,1.67</pedSigmaY>
   <pedSigmaX>2.04,1.83</pedSigmaX>
   <addTagFileName>1</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
-  <tagFileName>optStart</tagFileName>
+  <tagFileName>optStart_90_85_90_85_90_85</tagFileName>
 </general>
