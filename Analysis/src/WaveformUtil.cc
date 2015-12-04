@@ -5,6 +5,7 @@
 #include <TCanvas.h>
 #include <TMath.h>
 #include <TRandom3.h>
+
 #include "RooDataHist.h"
 #include "RooRealVar.h"
 #include "RooDataSet.h"
@@ -22,6 +23,9 @@
 
 #include "interface/channelInfo.h"
 #include "interface/HodoCluster.h"
+#include "interface/TagHelper.h"
+#include "interface/EnergyCalibration.h"
+#include "interface/AlignmentOfficer.h"
 
 
 
@@ -33,7 +37,7 @@ void doHodoReconstruction( std::vector<float> values, int &nClusters, int *nFibr
 std::vector<HodoCluster*> getHodoClusters( std::vector<float> hodo, float fibreWidth, int nClusterMax, float Cut );
 void copyArray( int n, float *source, float *target );
 double funcCRRC(double *x, double *par);
-
+bool pickEvents(int evtNumber);
 
 void WaveformUtil::Loop(){
 
@@ -42,8 +46,10 @@ void WaveformUtil::Loop(){
   if (fChain == 0) return;
 
   Long64_t nentries = fChain->GetEntries();
+  if(nentries>50000)  nentries=5000;
+  //  nentries=241;
   std::cout<<"nentries"<<nentries<<std::endl;
-  nentries=50000;
+
   float  timeMinusTimeAtMax[NDIGISAMPLES];
   float  mean[NFIBERS][NDIGISAMPLES];
   float  time[NDIGISAMPLES];
@@ -66,10 +72,13 @@ void WaveformUtil::Loop(){
   Long64_t nbytes = 0, nb = 0;
 
   bool isOctober2015Run=false;
+
+  int nEffEntries=0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
+
 
     // if (Cut(ientry) < 0) continue;      
 
@@ -84,6 +93,7 @@ void WaveformUtil::Loop(){
 
 
     //    if(passesHodoSelection()==false)continue;
+      nEffEntries++;
 
     //    if(TMath::Abs(TDCreco->at(0))>2 || TMath::Abs(TDCreco->at(1))>2)continue;    //FIXME
 
@@ -101,6 +111,9 @@ void WaveformUtil::Loop(){
     int shiftSample=round(shiftTime/(1e9*timeSampleUnit(digiFreq)));
     shiftSample=-shiftSample;
     shiftSampleHisto->Fill(shiftSample);     
+
+    //    if(!pickEvents(evtNumber))continue;
+
     for (int i=0;i<(CEF3_CHANNELS+1*isOctober2015Run);++i){
       int iChannel=i;
       if(isOctober2015Run){
@@ -122,12 +135,18 @@ void WaveformUtil::Loop(){
 	iSample=i+shiftSample;
       }
       //      if(digi_value_ch->at(i)==1 )      std::cout<<"i:"<<i<<" isample:"<<iSample<<"digivalue:"<<digi_value_bare_noise_sub->at(i)<<" digivalue new:"<<digi_value_bare_noise_sub->at(iSample)<<" channel:"<<digi_value_ch->at(iSample)<<std::endl;
-      mean[iChannel][i-1024*digi_value_ch->at(i)]+=(float)(digi_value_bare_noise_sub->at(iSample)/nentries);
+
+      mean[iChannel][i-1024*digi_value_ch->at(i)]+=(float)(digi_value_bare_noise_sub->at(iSample));
       if(i<1024)time[i]=digi_value_time->at(i);
-      
+
    }
   }
 
+  for (int i=0;i<NFIBERS;++i){
+    for (int j=0;j<NDIGISAMPLES;++j){
+      mean[i][j]/=nEffEntries;
+    }
+  }
   //  exit(0);
 
   TFile* outFile = TFile::Open("outWaveFormUtil_"+runNumberString+".root","recreate");
@@ -151,7 +170,7 @@ void WaveformUtil::Loop(){
 
     meanWaveHistos[i]=new TH1F("waveform_histo_"+fiber,"",1024,0,time[1023]);
     //    meanWaveHistosForPlots[i]=new TH1F("waveform_histo_forplots_"+fiber,"",1024,-300*1e9*time[1],1e9*time[1023-300]);
-    meanTimeAtMax[i]/=nentries;
+    meanTimeAtMax[i]/=nEffEntries;
     //std::cout<<meanTimeAtMax[i]<< " unit:"<<timeSampleUnit(digiFreq)<<std::endl;
     if(runNumberString=="4054" || runNumberString=="4053")meanTimeAtMax[1]=24;//FIXME
     meanWaveHistosForPlots[i]=new TH1F("waveform_histo_forplots_"+fiber,"",1024,-meanTimeAtMax[i],1e9*time[1023-(int)(meanTimeAtMax[i]*1.e-9/timeSampleUnit(digiFreq))]);
@@ -168,12 +187,12 @@ void WaveformUtil::Loop(){
     meanWaveGraphsForPlots[i]=new TGraph(1024, timeMinusTimeAtMax, mean[i]);
     meanWaveGraphsForPlots[i]->SetName("waveform_plots_"+fiber);
 
-    meanWaveHistos[i]->Scale(nentries);
+    meanWaveHistos[i]->Scale(nEffEntries);
     meanWaveHistos[i]->Sumw2();
-    meanWaveHistos[i]->Scale(1./nentries);//this trick is just to get correct errors
-    meanWaveHistosForPlots[i]->Scale(nentries);
+    meanWaveHistos[i]->Scale(1./nEffEntries);//this trick is just to get correct errors
+    meanWaveHistosForPlots[i]->Scale(nEffEntries);
     meanWaveHistosForPlots[i]->Sumw2();
-    meanWaveHistosForPlots[i]->Scale(1./nentries);//this trick is just to get correct errors
+    meanWaveHistosForPlots[i]->Scale(1./nEffEntries);//this trick is just to get correct errors
     meanWaveHistosForPlots[i]->Scale(0.25);//we need millivolts
 
     meanWaveHistos[i]->Write();
@@ -343,20 +362,22 @@ bool WaveformUtil::passesHodoSelection(){
   int nClusters_hodoX1;
   int nFibres_hodoX1[HODOX1_CHANNELS]; 
   float pos_hodoX1[HODOX1_CHANNELS];   
+  float pos_corr_hodoX1[HODOX1_CHANNELS];
 
   int nClusters_hodoY1;
   int nFibres_hodoY1[HODOY1_CHANNELS]; 
   float pos_hodoY1[HODOY1_CHANNELS];   
+  float pos_corr_hodoY1[HODOX1_CHANNELS];
 
   int nClusters_hodoX2;
   int nFibres_hodoX2[HODOX2_CHANNELS]; 
   float pos_hodoX2[HODOX2_CHANNELS];   
-
+  float pos_corr_hodoX2[HODOX2_CHANNELS];   
 
   int nClusters_hodoY2;
   int nFibres_hodoY2[HODOY2_CHANNELS]; 
   float pos_hodoY2[HODOY2_CHANNELS];   
-
+  float pos_corr_hodoY2[HODOX2_CHANNELS];   
   
   std::vector<bool> hodoX1_values(HODOX1_CHANNELS, -1.);
   std::vector<bool> hodoY1_values(HODOY1_CHANNELS, -1.);
@@ -377,7 +398,21 @@ bool WaveformUtil::passesHodoSelection(){
   doHodoReconstructionBool( hodoX2_values    , nClusters_hodoX2    , nFibres_hodoX2    , pos_hodoX2    , 0.5, clusterMaxFibres , 0.);
   doHodoReconstructionBool( hodoY2_values    , nClusters_hodoY2    , nFibres_hodoY2    , pos_hodoY2    , 0.5, clusterMaxFibres, 0. );
   
+  copyArray( nClusters_hodoX1, pos_hodoX1, pos_corr_hodoX1 );
+  copyArray( nClusters_hodoY1, pos_hodoY1, pos_corr_hodoY1 );
+  copyArray( nClusters_hodoX2, pos_hodoX2, pos_corr_hodoX2 );
+  copyArray( nClusters_hodoY2, pos_hodoY2, pos_corr_hodoY2 );
+  
 
+  std::string theBeamEnergy = Form("%.0f",100);
+  TagHelper tagHelper("V10",theBeamEnergy);
+  AlignmentOfficer alignOfficer(tagHelper.getAlignmentFileName());
+
+  alignOfficer.fix("hodoX1", nClusters_hodoX1, pos_corr_hodoX1);
+  alignOfficer.fix("hodoY1", nClusters_hodoY1, pos_corr_hodoY1);
+  alignOfficer.fix("hodoX2", nClusters_hodoX2, pos_corr_hodoX2);
+  alignOfficer.fix("hodoY2", nClusters_hodoY2, pos_corr_hodoY2);
+     
 
   
   if(nClusters_hodoX1!=1 || nClusters_hodoX2!=1 || nClusters_hodoY1!=1 || nClusters_hodoY2!=1) {return false;
@@ -406,6 +441,12 @@ double funcCRRC(double *x, double *par)
 
   return f;
 } 
+
+bool pickEvents(int evtNumber){
+
+  if(evtNumber == 10 || evtNumber == 17 || evtNumber == 18 || evtNumber == 26 || evtNumber == 33 || evtNumber == 36 || evtNumber == 43 || evtNumber == 52 || evtNumber == 59 || evtNumber == 66 || evtNumber == 68 || evtNumber == 70 || evtNumber == 92 || evtNumber == 95 || evtNumber == 97 || evtNumber == 99 || evtNumber == 101 || evtNumber == 109 || evtNumber == 115 || evtNumber == 117 || evtNumber == 122 || evtNumber == 123 || evtNumber == 136 || evtNumber == 138 || evtNumber == 147 || evtNumber == 148 || evtNumber == 154 || evtNumber == 155 || evtNumber == 159 || evtNumber == 162 || evtNumber == 165 || evtNumber == 168 || evtNumber == 169 || evtNumber == 175 || evtNumber == 176 || evtNumber == 179 || evtNumber == 185 || evtNumber == 187 || evtNumber == 188 || evtNumber == 189 || evtNumber == 195 || evtNumber == 197 || evtNumber == 199 || evtNumber == 202 || evtNumber == 203 || evtNumber == 217 || evtNumber == 220 || evtNumber == 230 || evtNumber == 231 || evtNumber == 235 || evtNumber == 245 || evtNumber == 249 || evtNumber == 256 || evtNumber == 265 || evtNumber == 267 || evtNumber == 268 || evtNumber == 270 || evtNumber == 272 || evtNumber == 277 || evtNumber == 278 || evtNumber == 284 || evtNumber == 286 || evtNumber == 289 || evtNumber == 293 || evtNumber == 295 || evtNumber == 296 || evtNumber == 300 || evtNumber == 304 || evtNumber == 306 || evtNumber == 307 || evtNumber == 310 || evtNumber == 311 || evtNumber == 312 || evtNumber == 316 || evtNumber == 328 || evtNumber == 332 || evtNumber == 333 || evtNumber == 338 || evtNumber == 341 || evtNumber == 344 || evtNumber == 346 || evtNumber == 347 || evtNumber == 353 || evtNumber == 354 || evtNumber == 363 || evtNumber == 370 || evtNumber == 374 || evtNumber == 375 || evtNumber == 381 || evtNumber == 384 || evtNumber == 389 || evtNumber == 390 || evtNumber == 393 || evtNumber == 394 || evtNumber == 398 || evtNumber == 399 || evtNumber == 404 || evtNumber == 408 || evtNumber == 409 || evtNumber == 410 || evtNumber == 413 || evtNumber == 415 || evtNumber == 417 || evtNumber == 418 || evtNumber == 419 || evtNumber == 422 || evtNumber == 424 || evtNumber == 428 || evtNumber == 430 || evtNumber == 432 || evtNumber == 438 || evtNumber == 439 || evtNumber == 442 || evtNumber == 445 || evtNumber == 447 || evtNumber == 455 || evtNumber == 456 || evtNumber == 457 || evtNumber == 464 || evtNumber == 465 || evtNumber == 467 || evtNumber == 472 || evtNumber == 476 || evtNumber == 477 || evtNumber == 481 || evtNumber == 482 || evtNumber == 490 || evtNumber == 491 || evtNumber == 493 || evtNumber == 500 || evtNumber == 504 || evtNumber == 510 || evtNumber == 514 || evtNumber == 518 || evtNumber == 525 || evtNumber == 530 || evtNumber == 535 || evtNumber == 536 || evtNumber == 540 || evtNumber == 546 || evtNumber == 547 || evtNumber == 551 || evtNumber == 554 || evtNumber == 555 || evtNumber == 557 || evtNumber == 562 || evtNumber == 568 || evtNumber == 569 || evtNumber == 573 || evtNumber == 581 || evtNumber == 591 || evtNumber == 595 || evtNumber == 601 || evtNumber == 602 || evtNumber == 606 || evtNumber == 608 || evtNumber == 609 || evtNumber == 613 || evtNumber == 616 || evtNumber == 622 || evtNumber == 633 || evtNumber == 635 || evtNumber == 636 || evtNumber == 638 || evtNumber == 641 || evtNumber == 642 || evtNumber == 644 || evtNumber == 651 || evtNumber == 653 || evtNumber == 664 || evtNumber == 665 || evtNumber == 678 || evtNumber == 681 || evtNumber == 686 || evtNumber == 687 || evtNumber == 690 || evtNumber == 691 || evtNumber == 693 || evtNumber == 698 || evtNumber == 700 || evtNumber == 702 || evtNumber == 703 || evtNumber == 708 || evtNumber == 721 || evtNumber == 730 || evtNumber == 731 || evtNumber == 732 || evtNumber == 737 || evtNumber == 741 || evtNumber == 744 || evtNumber == 748 || evtNumber == 749 || evtNumber == 755 || evtNumber == 760 || evtNumber == 762 || evtNumber == 767 || evtNumber == 769 || evtNumber == 771 || evtNumber == 780 || evtNumber == 784 || evtNumber == 785 || evtNumber == 789 || evtNumber == 796 || evtNumber == 813 || evtNumber == 815 || evtNumber == 818 || evtNumber == 825 || evtNumber == 828 || evtNumber == 843 || evtNumber == 848 || evtNumber == 854 || evtNumber == 862 || evtNumber == 866 || evtNumber == 867 || evtNumber == 868 || evtNumber == 879 || evtNumber == 880 || evtNumber == 886 || evtNumber == 888 || evtNumber == 891 || evtNumber == 894 || evtNumber == 897 || evtNumber == 898 || evtNumber == 903 || evtNumber == 905 || evtNumber == 908 || evtNumber == 910 || evtNumber == 918 || evtNumber == 919 || evtNumber == 922 || evtNumber == 933 || evtNumber == 937 || evtNumber == 938 || evtNumber == 951 || evtNumber == 957 || evtNumber == 958 || evtNumber == 968 || evtNumber == 979 || evtNumber == 980 || evtNumber == 994 || evtNumber == 998) return true;
+  return false;
+}
 
 void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos ) {
 
