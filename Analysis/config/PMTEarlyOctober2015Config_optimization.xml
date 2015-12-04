@@ -23,4 +23,6 @@
   <pedSigmaX>2.04,1.83</pedSigmaX>
   <addTagFileName>1</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
   <tagFileName>optStart</tagFileName>
+  <fillWFtree>1</fillWFtree>
+  <prescaleWFtree>2</prescaleWFtree>
 </general>
