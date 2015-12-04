@@ -41,6 +41,7 @@ class CeF3InputTree
    std::vector<float>   *digi_time_at_frac50_bare_noise_sub;
    std::vector<float>   *digi_time_at_1000_bare_noise_sub;
    std::vector<float>   *digi_time_at_max_noise_sub;
+   std::vector<float>   *digi_time_at_max_bare_noise_sub;
    std::vector<bool>    *HODOX1;
    std::vector<bool>    *HODOX2;
    std::vector<bool>    *HODOY1;
@@ -93,6 +94,7 @@ class CeF3InputTree
    TBranch        *b_digi_time_at_frac50_bare_noise_sub;   //!
    TBranch        *b_digi_time_at_1000_bare_noise_sub;   //!
    TBranch        *b_digi_time_at_max_noise_sub;   //!
+   TBranch        *b_digi_time_at_max_bare_noise_sub;   //!
    TBranch        *b_HODOX1;   //!
    TBranch        *b_HODOX2;   //!
    TBranch        *b_HODOY1;   //!

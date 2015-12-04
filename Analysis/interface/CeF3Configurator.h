@@ -21,6 +21,8 @@ typedef struct CeF3_Config_t {
   std::vector<float> pedSigmaX;
   int addTagFileName;
   std::string tagFileName;
+  int fillWFtree;
+  int prescaleWFtree;
 
 } CeF3_Config_t ;
 
