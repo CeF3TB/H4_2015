@@ -13,7 +13,7 @@
 #include "TVectorD.h"
 #include "TH2.h"
 #include "TGraph.h"
-
+#include "TPaveText.h"
 
 #include "channelInfo.h"
 #include "interface/HodoCluster.h"
@@ -29,6 +29,8 @@
 #include "interface/CeF3Configurator.h"
 #include "interface/CeF3InputTree.h"
 #include "interface/WFTree.h"
+#include "interface/Event.h"
+#include "DrawTools.h"
 
 void assignValues( std::vector<float> &target, std::vector<float> source, unsigned int startPos , int skipChannel=-1, bool isOctober2015EarlyRun=false);
 void assignValuesBool( std::vector<bool> &target, std::vector<bool> source, unsigned int startPos );
@@ -48,6 +50,8 @@ CeF3_Config_t readConfiguration(std::string configName);
 
 
 int main( int argc, char* argv[] ) {
+
+  DrawTools::setStyle();
 
 
    if( argc<2 ) {
@@ -158,6 +162,11 @@ int main( int argc, char* argv[] ) {
    std::vector<float> cef3_time_at_thresh( CEF3_CHANNELS, -1. );
    outTree->Branch( "cef3_time_at_thresh", &cef3_time_at_thresh );
 
+
+   std::vector<float> cef3_maxAmpl_cher( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_maxAmpl_cher", &cef3_maxAmpl_cher );
+   std::vector<float> cef3_maxAmpl_wls( CEF3_CHANNELS, -1. );
+   outTree->Branch( "cef3_maxAmpl_wls", &cef3_maxAmpl_wls );
 
 
    std::vector<float> cef3_maxAmpl_fit( CEF3_CHANNELS, -1. );
@@ -349,7 +358,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   //   nentries=20000;
+   //   nentries=5000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
    if(nentries>0)tree->GetEntry(0);     
@@ -386,14 +395,17 @@ int main( int argc, char* argv[] ) {
      else waveProfile.push_back(new TProfile(name,name,1024,0,0.2e-6));
      TGraph* graph = (TGraph*)waveformFile->Get("waveform_"+istring);
      double X[graph->GetN()],Y[graph->GetN()];
+     float maxInWLSRegion=0;
      for(int iP=0;iP<graph->GetN();iP++){
        graph->GetPoint(iP,X[iP],Y[iP]);
        waveProfile.at(iChannel)->Fill(X[iP],Y[iP]);
+       if(maxInWLSRegion<Y[iP] && iP > theConfiguration_.startSample) maxInWLSRegion=Y[iP];
       }
      //     TH1F* histo = (TH1F*)waveformFile->Get("waveform_histo_"+istring);
      //     for(int i=0;i<=histo->GetNbinsX();++i) waveProfile.at(iCh)->Fill(histo->GetBinCenter(i), histo->GetBinContent(i));
-     waveProfile.at(iChannel)->Scale(1./waveProfile.at(iChannel)->GetMaximum());
-
+     //     waveProfile.at(iChannel)->Scale(1./waveProfile.at(iChannel)->GetMaximum());
+     if(iChannel!=2)    waveProfile.at(iChannel)->Scale(1./maxInWLSRegion);//in quartz fibres max could be cherenkov
+     else waveProfile.at(iChannel)->Scale(1./waveProfile.at(iChannel)->GetMaximum());
 
      waveProfileInt[iChannel]=waveProfile.at(iChannel)->Integral(theConfiguration_.startSample,theConfiguration_.endSample);
 
@@ -444,196 +456,41 @@ int main( int argc, char* argv[] ) {
      }
    }
 
-
+   
    WFTree outWFTree(theConfiguration_.cef3Channels.size(), 1024);
 
-    int WFoutTreeEntries=0;
+   float  timeMinusTimeAtMax[NDIGISAMPLES];
+   float  mean[NFIBERS][NDIGISAMPLES];
+   float  mean_tight[NFIBERS][NDIGISAMPLES];
+   float  time[NDIGISAMPLES];
+   
+   float meanTimeAtMax[NFIBERS];
+   TGraph* meanWaveGraphsForPlots[NFIBERS];  
+   TGraph* meanWaveGraphs[NFIBERS];  
+   TGraph* meanWaveGraphsForPlots_tight[NFIBERS];  
+   TGraph* meanWaveGraphs_tight[NFIBERS];  
+   
+   if(theConfiguration_.fillWFtree){
+
+     for (int i=0;i<NFIBERS;++i){
+       meanTimeAtMax[i]=0;
+       for (int j=0;j<NDIGISAMPLES;++j){
+	 mean[i][j]=0;
+	 mean_tight[i][j]=0;
+       }
+     }
+     
+
+   }
+
+
+   int WFoutTreeEntries=0;
+   int WFoutTreeTightEntries=0;
 
    for(int iEntry=0; iEntry<nentries; ++iEntry ) {
      
     tree->GetEntry( iEntry );     
     if( iEntry %  1000 == 0 ) std::cout << "Entry: " << iEntry << " / " << nentries << std::endl;
-
-    //waveform creation
-    std::vector<Waveform*> waveform;
-    waveform.clear();
-    for (unsigned int i=0; i<CEF3_CHANNELS+1*isOctober2015EarlyRun+MCP_RUN; i++) {
-      waveform.push_back(new Waveform());
-      waveform.at(i)->clear();
-    
-    }
-    
-    float timeOfTheEvent=inputTree->digi_time_at_1000_bare_noise_sub->at(theConfiguration_.triggerChannel);//synchronizing time of events with time of trigger
-    float shiftTime=0;
-    shiftTime = theConfiguration_.meanTriggerTime-timeOfTheEvent;
-
-
-    int shiftSample=round(shiftTime/(1e9*timeSampleUnit(inputTree->digi_frequency)));
-    shiftSample=-shiftSample;
-    //FIX ME move to config    if(runName=="2539")shiftSample=0;
-
-    bool fillWFoutTree=false;
-
-
-    int ch=-1;
-    for (int i=0;i<1024*(CEF3_CHANNELS+1*isOctober2015EarlyRun);++i){
-      //      if(digi_value_ch->at(i) > 5)continue; //just to avoid not useful channels
-      int iChannel=inputTree->digi_value_ch->at(i);
-     //      std::cout<<i<<" "<<inputTree->digi_value_ch->at(i)<<" ";
-
-      
-      bool skipChannel=true;
-      for (int j=0;j<theConfiguration_.cef3Channels.size();++j){
-	if(iChannel==theConfiguration_.cef3Channels[j]){
-	  skipChannel=false;
-	  if(i==1024*iChannel)ch++;
-	  break;
-	}
-      }
-      if(skipChannel) continue;
-      
-      
-
-	
-     bool doWeWantToShift=theConfiguration_.syncChannels[ch];
-
-
-     //     if(i==1024*iChannel)      std::cout<<doWeWantToShift<<"<-do we iChannel->"<<iChannel<<" ich"<<ch<< " shift:"<<shiftSample<<std::endl;
-
-      if(inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))>10000 || inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))<0)continue;
-      int iSample=i;
-      if(i+shiftSample*doWeWantToShift>1023*inputTree->digi_value_ch->at(i) && i+shiftSample*doWeWantToShift<(1023+(1024*inputTree->digi_value_ch->at(i)))){
-	iSample=i+shiftSample*doWeWantToShift;
-	//		std::cout<<inputTree->digi_value_ch->at(i)<<" "<<i<<" "<<shiftSample*doWeWantToShift<<std::endl;
-      }
-      waveform.at(ch)->addTimeAndSample((i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency),inputTree->digi_value_bare_noise_sub->at(iSample));
-
-      if(i==0 && (iEntry % theConfiguration_.prescaleWFtree == 0) ){
-	WFoutTreeEntries++; 
-	fillWFoutTree=true;
-      }
-      if(theConfiguration_.fillWFtree && fillWFoutTree  ){
-	outWFTree.WF_ch[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = ch;
-	outWFTree.WF_time[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = (i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency);
-	outWFTree.WF_val[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = inputTree->digi_value_bare_noise_sub->at(iSample);
-	outWFTree.index[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = WFoutTreeEntries;
-	outWFTree.evtNumber[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = iEntry;
-      }
-
-      //           std::cout<<"i:"<<inputTree->digi_value_ch->at(i)<<" time:"<<(i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency)<<" value"<<inputTree->digi_value_bare_noise_sub->at(iSample)<<std::endl;
-      if(runName=="2539"){
-	//	std::cout<<i<<" "<<inputTree->digi_value_bare_noise_sub->at(iSample)<<" "<<(waveNoiseProfile.at(inputTree->digi_value_ch->at(i)))->GetBinContent(iSample-1024*inputTree->digi_value_ch->at(i))<<std::endl;
-	if(i>theConfiguration_.startSample+1023*inputTree->digi_value_ch->at(i) && i<theConfiguration_.endSample+1023*inputTree->digi_value_ch->at(i))	noiseHisto[ch]->Fill(inputTree->digi_value_bare_noise_sub->at(iSample)-waveNoiseProfile.at(ch)->GetBinContent(i-1024*inputTree->digi_value_ch->at(iSample)));
-	noiseValueVsChannel[ch][i-1024*ch]+=(inputTree->digi_value_bare_noise_sub->at(iSample)-(waveNoiseProfile.at(ch))->GetBinContent(i-1024*inputTree->digi_value_ch->at(iSample)));
-      }
-
-    }
-
-    if(theConfiguration_.fillWFtree && fillWFoutTree )	outWFTree.Fill();
-
-
-    //mcp info    
-    if(MCP_RUN){
-      if(!isOctober2015LateRun){
-      timeOfTheEvent=inputTree->digi_time_at_1000_bare_noise_sub->at(theConfiguration_.mcpTriggerChannel);//synchronizing time of events with time of trigger
-      shiftTime = theConfiguration_.meanTriggerTime-timeOfTheEvent;
-      shiftSample=round(shiftTime/(1e9*timeSampleUnit(inputTree->digi_frequency)));
-      shiftSample=-shiftSample;
-
-      for (int i=1024*CEF3_CHANNELS;i<1024*(theConfiguration_.mcpChannel+1);++i){
-	if(inputTree->digi_value_ch->at(i)!=theConfiguration_.mcpChannel)continue;
-	if(inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))>10000 || inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))<0)continue;
-
-	int iSample=i;
-	if(i+shiftSample*theConfiguration_.syncMcp>1023*inputTree->digi_value_ch->at(i) && i+shiftSample*theConfiguration_.syncMcp<(1023+(1024*inputTree->digi_value_ch->at(i)))){
-	  iSample=i+shiftSample*theConfiguration_.syncMcp;
-	}
-	waveform.at(CEF3_CHANNELS)->addTimeAndSample((i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency),inputTree->digi_value_bare_noise_sub->at(iSample));
-      }
-
-      }
-
-      Waveform::max_amplitude_informations wave_max_bare = waveform.at(CEF3_CHANNELS)->max_amplitude(4,900,5);
-      std::vector<float> crossingTimes;
-      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(CEF3_CHANNELS)->time_at_threshold((const float)10.*timeSampleUnit(inputTree->digi_frequency), 100e-9,theConfiguration_.mcpTimingThresh,4);
-      if(crossingTimes.size()>0)    mcp_time_at_thresh=crossingTimes[0]*1.e9;
-      else mcp_time_at_thresh=-999;
-      
-      if(wave_max_bare.time_at_max>0)    mcp_time_frac50=waveform.at(CEF3_CHANNELS)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,4)*1.e9;
-      else mcp_time_frac50=-999;
-
-      mcp_max_amplitude=wave_max_bare.max_amplitude;
-    }
-
-
-
-
-    ///now we have all the needed waveforms, compute some quantities
-    int counterChannel=-1;
-    for (unsigned int i=0; i<CEF3_CHANNELS; i++) {      
-	int iChannel=i;
-
-	//WaveformFit using mean Waveform
-	ROOT::Math::Minimizer* minimizer;
-	int sampleIntegral=190;
-	if(iChannel==2)sampleIntegral=50;
-	Waveform::max_amplitude_informations wave_max = waveform.at(iChannel)->max_amplitude(sampleIntegral,900,5);
-	Waveform::baseline_informations wave_pedestal = waveform.at(iChannel)->baseline(5,34);
-
-	//fit for NINO in october 2015 runs
-	if(isOctober2015LateRun && iChannel==1){
-	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,1,80,120,timeSampleUnit(inputTree->digi_frequency));//window without sync
-	  nino_LEtime=timeInfo.first*1.e9;
-	  nino_LEchi2=timeInfo.second;
-	  nino_maxAmpl=inputTree->digi_max_amplitude_bare_noise_sub->at(5);
-	}
-	
-	
-	//WaveformFit on Cher using mean Waveform
-	ROOT::Math::Minimizer* minimizerCher;
-	
-	if(isOctober2015LateRun && iChannel!=2) continue;
-	if(wave_max.max_amplitude<0) continue;
-	if(iChannel!=2) {
-	    WaveformFit::fitWaveformSimple(waveform.at(iChannel),waveProfile.at(iChannel),200,200,wave_max,wave_pedestal,minimizer, true, theConfiguration_.startSample, theConfiguration_.endSample);
-	    if(CHER_RUN){
-	      int cherStart=150;
-	      if(inputTree->digi_frequency==0)cherStart=125;
-	      if(inputTree->digi_time_at_max_noise_sub->at(iChannel)<-22) WaveformFit::fitWaveformSimple(waveform.at(iChannel),waveCher.at(iChannel),200,200,wave_max,wave_pedestal,minimizerCher, true, cherStart, theConfiguration_.startSample);
-	      else  WaveformFit::fitWaveformSimplePlusTime(waveform.at(iChannel),waveCher.at(iChannel),50,100,wave_max,wave_pedestal,minimizerCher, true,cherStart, theConfiguration_.startSample);
-	    }
-	}else{ 
-	    WaveformFit::fitWaveformSimple(waveform.at(iChannel),waveProfile.at(iChannel),200,200,wave_max,wave_pedestal,minimizer);
-	}
-      
-      const double* par=minimizer->X();
-      cef3_maxAmpl_fit[iChannel]=par[0];
-      
-      if(CHER_RUN){
-      const double* parCher=minimizerCher->X();
-	cef3_maxAmpl_fit_cher[iChannel]=parCher[0];
-	cef3_maxAmpl_fit_time_cher1[iChannel]=(maxTimeCher[iChannel]+parCher[1])*1.e9;
-	cef3_maxAmpl_fit_time_cher2[iChannel]=waveform.at(iChannel)->time_at_frac(0.,(float)100.e-9,0.5,wave_max,7)*1.e9;
-	cef3_maxAmpl_fit_cher_status[iChannel]=minimizerCher->Status();	
-      }
-
-      //timing var
-      Waveform::max_amplitude_informations wave_max_bare = waveform.at(iChannel)->max_amplitude(4,900,5);
-      std::vector<float> crossingTimes;
-      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(iChannel)->time_at_threshold((const float)10.*timeSampleUnit(inputTree->digi_frequency), 100e-9,theConfiguration_.timingThresh[iChannel],4);
-      if(crossingTimes.size()>0)    cef3_time_at_thresh[iChannel]=crossingTimes[0]*1.e9;
-      else cef3_time_at_thresh[iChannel]=-999;
-
-
-
-      if(wave_max_bare.time_at_max>0) cef3_time_at_frac50[iChannel]=waveform.at(iChannel)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,4)*1.e9;
-      else cef3_time_at_frac50[iChannel]=-999;
-
-
-      }
-
-
-
 
 
     //set the tag for calibration
@@ -646,18 +503,6 @@ int main( int argc, char* argv[] ) {
     
 
 
-
-
-
-     //BACKWARDS COMPATIBILITY///
-    assignValues( cef3, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);     
-    assignValues( cef3_corr, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL ,2,isOctober2015EarlyRun);  
-
-     assignValues( cef3_maxAmpl_fit_corr, cef3_maxAmpl_fit, CEF3_START_CHANNEL );  
-     cef3Calib.applyCalibration(cef3_maxAmpl_fit_corr);
-     assignValues( cef3_maxAmpl, *inputTree->digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
-     assignValues( cef3_maxAmpl_time, *inputTree->digi_time_at_max_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
-     assignValues( cef3_chaInt, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
 
 
 //     computeCherenkov(cef3_chaInt_cher,cef3_chaInt_wls);
@@ -834,11 +679,241 @@ int main( int argc, char* argv[] ) {
 
 
 
+    //waveform creation
+    std::vector<Waveform*> waveform;
+    waveform.clear();
+    for (unsigned int i=0; i<CEF3_CHANNELS+1*isOctober2015EarlyRun+MCP_RUN; i++) {
+      waveform.push_back(new Waveform());
+      waveform.at(i)->clear();
+    
+    }
+    
+    float timeOfTheEvent=inputTree->digi_time_at_1000_bare_noise_sub->at(theConfiguration_.triggerChannel);//synchronizing time of events with time of trigger
+    float shiftTime=0;
+    shiftTime = theConfiguration_.meanTriggerTime-timeOfTheEvent;
+
+
+    int shiftSample=round(shiftTime/(1e9*timeSampleUnit(inputTree->digi_frequency)));
+    shiftSample=-shiftSample;
+    //FIX ME move to config    if(runName=="2539")shiftSample=0;
+
+    bool fillWFoutTree=false;
+    bool fillWFoutTreeTight=false;
+
+    int ch=-1;
+    for (int i=0;i<1024*(CEF3_CHANNELS+1*isOctober2015EarlyRun);++i){
+      //      if(digi_value_ch->at(i) > 5)continue; //just to avoid not useful channels
+      int iChannel=inputTree->digi_value_ch->at(i);
+     //      std::cout<<i<<" "<<inputTree->digi_value_ch->at(i)<<" ";
+
+      
+      bool skipChannel=true;
+      for (int j=0;j<theConfiguration_.cef3Channels.size();++j){
+	if(iChannel==theConfiguration_.cef3Channels[j]){
+	  skipChannel=false;
+	  if(i==1024*iChannel)ch++;
+	  break;
+	}
+      }
+      if(skipChannel) continue;
+      
+      
+
+	
+     bool doWeWantToShift=theConfiguration_.syncChannels[ch];
+
+
+     //     if(i==1024*iChannel)      std::cout<<doWeWantToShift<<"<-do we iChannel->"<<iChannel<<" ich"<<ch<< " shift:"<<shiftSample<<std::endl;
+
+      if(inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))>10000 || inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))<0)continue;
+      int iSample=i;
+      if(i+shiftSample*doWeWantToShift>1023*inputTree->digi_value_ch->at(i) && i+shiftSample*doWeWantToShift<(1023+(1024*inputTree->digi_value_ch->at(i)))){
+	iSample=i+shiftSample*doWeWantToShift;
+	//		std::cout<<inputTree->digi_value_ch->at(i)<<" "<<i<<" "<<shiftSample*doWeWantToShift<<std::endl;
+      }
+      waveform.at(ch)->addTimeAndSample((i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency),inputTree->digi_value_bare_noise_sub->at(iSample));
+
+      if(i==0 && (iEntry % theConfiguration_.prescaleWFtree == 0) ){
+	if((nClusters_hodoX1==1||pos_2FibClust_hodoX1>-999) && (nClusters_hodoX2==1||pos_2FibClust_hodoX2>-999) && (nClusters_hodoY1==1||pos_2FibClust_hodoY1>-999) && (nClusters_hodoY1==1||pos_2FibClust_hodoY1>-999)){//exactly one cluster, or, if there are multiple clusters, exactly one 2-fiber cluster
+	  if(TMath::Abs(0.5* (cluster_pos_corr_hodoX1+cluster_pos_corr_hodoX2))< 3 && TMath::Abs( 0.5* (cluster_pos_corr_hodoY1+cluster_pos_corr_hodoY2))< 3 && (wc_x_corr-cluster_pos_corr_hodoX2)<4 && (wc_y_corr-cluster_pos_corr_hodoY2)< 4  && TMath::Abs( (cluster_pos_corr_hodoX1-cluster_pos_corr_hodoX2))<1.5 &&TMath::Abs( (cluster_pos_corr_hodoY1-cluster_pos_corr_hodoY2))<1.5){
+	    WFoutTreeEntries++; 
+	    fillWFoutTree=true;
+	    if(TMath::Abs(0.5* (cluster_pos_corr_hodoX1+cluster_pos_corr_hodoX2))< 1 && TMath::Abs( 0.5* (cluster_pos_corr_hodoY1+cluster_pos_corr_hodoY2))< 1){//let's see the waveforms for events in 1x1 strip
+	      WFoutTreeTightEntries++; 
+	      fillWFoutTreeTight=true;
+	    }    
+	  }
+	}
+      }
+
+
+
+
+      if(theConfiguration_.fillWFtree && fillWFoutTree  ){
+	outWFTree.WF_ch[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = ch;
+	outWFTree.WF_time[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = (i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency);
+	outWFTree.WF_val[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = inputTree->digi_value_bare_noise_sub->at(iSample);
+	outWFTree.index[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = WFoutTreeEntries;
+	outWFTree.evtNumber[(i-1024*inputTree->digi_value_ch->at(i))+1024*ch] = iEntry;
+
+	//average waveform
+	mean[ch][i-1024*inputTree->digi_value_ch->at(i)]+=(float)(inputTree->digi_value_bare_noise_sub->at(iSample));
+	if(fillWFoutTreeTight) mean_tight[ch][i-1024*inputTree->digi_value_ch->at(i)]+=(float)(inputTree->digi_value_bare_noise_sub->at(iSample));
+   
+	  
+	if(i<1024)time[(i-1024*inputTree->digi_value_ch->at(i))]=inputTree->digi_value_time->at(i);
+	if(inputTree->digi_time_at_max_bare_noise_sub->at(inputTree->digi_value_ch->at(i))>0 && inputTree->digi_time_at_max_bare_noise_sub->at(inputTree->digi_value_ch->at(i))<400 && i==1024*iChannel){
+	  meanTimeAtMax[ch]+=inputTree->digi_time_at_max_bare_noise_sub->at(inputTree->digi_value_ch->at(i)); 
+	}
+      }
+
+      //           std::cout<<"i:"<<inputTree->digi_value_ch->at(i)<<" time:"<<(i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency)<<" value"<<inputTree->digi_value_bare_noise_sub->at(iSample)<<std::endl;
+      if(runName=="2539"){
+	//	std::cout<<i<<" "<<inputTree->digi_value_bare_noise_sub->at(iSample)<<" "<<(waveNoiseProfile.at(inputTree->digi_value_ch->at(i)))->GetBinContent(iSample-1024*inputTree->digi_value_ch->at(i))<<std::endl;
+	if(i>theConfiguration_.startSample+1023*inputTree->digi_value_ch->at(i) && i<theConfiguration_.endSample+1023*inputTree->digi_value_ch->at(i))	noiseHisto[ch]->Fill(inputTree->digi_value_bare_noise_sub->at(iSample)-waveNoiseProfile.at(ch)->GetBinContent(i-1024*inputTree->digi_value_ch->at(iSample)));
+	noiseValueVsChannel[ch][i-1024*ch]+=(inputTree->digi_value_bare_noise_sub->at(iSample)-(waveNoiseProfile.at(ch))->GetBinContent(i-1024*inputTree->digi_value_ch->at(iSample)));
+      }
+
+    }
+
+    if(theConfiguration_.fillWFtree && fillWFoutTree )	{
+      outWFTree.tree_->AutoSave("FlushBaskets");
+      outWFTree.Fill();
+
+    }
+
+
+    //mcp info    
+    if(MCP_RUN){
+      if(!isOctober2015LateRun){
+      timeOfTheEvent=inputTree->digi_time_at_1000_bare_noise_sub->at(theConfiguration_.mcpTriggerChannel);//synchronizing time of events with time of trigger
+      shiftTime = theConfiguration_.meanTriggerTime-timeOfTheEvent;
+      shiftSample=round(shiftTime/(1e9*timeSampleUnit(inputTree->digi_frequency)));
+      shiftSample=-shiftSample;
+
+      for (int i=1024*CEF3_CHANNELS;i<1024*(theConfiguration_.mcpChannel+1);++i){
+	if(inputTree->digi_value_ch->at(i)!=theConfiguration_.mcpChannel)continue;
+	if(inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))>10000 || inputTree->digi_max_amplitude->at(inputTree->digi_value_ch->at(i))<0)continue;
+
+	int iSample=i;
+	if(i+shiftSample*theConfiguration_.syncMcp>1023*inputTree->digi_value_ch->at(i) && i+shiftSample*theConfiguration_.syncMcp<(1023+(1024*inputTree->digi_value_ch->at(i)))){
+	  iSample=i+shiftSample*theConfiguration_.syncMcp;
+	}
+	waveform.at(CEF3_CHANNELS)->addTimeAndSample((i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency),inputTree->digi_value_bare_noise_sub->at(iSample));
+      }
+
+      }
+
+      Waveform::max_amplitude_informations wave_max_bare = waveform.at(CEF3_CHANNELS)->max_amplitude(4,900,5);
+      std::vector<float> crossingTimes;
+      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(CEF3_CHANNELS)->time_at_threshold((const float)10.*timeSampleUnit(inputTree->digi_frequency), 100e-9,theConfiguration_.mcpTimingThresh,4);
+      if(crossingTimes.size()>0)    mcp_time_at_thresh=crossingTimes[0]*1.e9;
+      else mcp_time_at_thresh=-999;
+      
+      if(wave_max_bare.time_at_max>0)    mcp_time_frac50=waveform.at(CEF3_CHANNELS)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,4)*1.e9;
+      else mcp_time_frac50=-999;
+
+      mcp_max_amplitude=wave_max_bare.max_amplitude;
+    }
+
+
+
+
+    ///now we have all the needed waveforms, compute some quantities
+    int counterChannel=-1;
+    for (unsigned int i=0; i<CEF3_CHANNELS; i++) {      
+	int iChannel=i;
+
+
+	Waveform::max_amplitude_informations wave_max_cher = waveform.at(iChannel)->max_amplitude(30,theConfiguration_.startSample,5);
+	if(wave_max_cher.max_amplitude>0)cef3_maxAmpl_cher[iChannel] = wave_max_cher.max_amplitude;
+
+	Waveform::max_amplitude_informations wave_max_wls = waveform.at(iChannel)->max_amplitude(theConfiguration_.startSample,900,5);
+	if(wave_max_wls.max_amplitude>0)cef3_maxAmpl_wls[iChannel] = wave_max_wls.max_amplitude;
+
+
+	//WaveformFit using mean Waveform
+	ROOT::Math::Minimizer* minimizer;
+	int sampleIntegral=theConfiguration_.startSample;
+	if(iChannel==2)sampleIntegral=50;
+	Waveform::max_amplitude_informations wave_max = waveform.at(iChannel)->max_amplitude(sampleIntegral,900,5);
+	Waveform::baseline_informations wave_pedestal = waveform.at(iChannel)->baseline(5,34);
+
+	//fit for NINO in october 2015 runs
+	if(isOctober2015LateRun && iChannel==1){
+	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,1,80,120,timeSampleUnit(inputTree->digi_frequency));//window without sync
+	  nino_LEtime=timeInfo.first*1.e9;
+	  nino_LEchi2=timeInfo.second;
+	  nino_maxAmpl=inputTree->digi_max_amplitude_bare_noise_sub->at(5);
+	}
+	
+	
+	//WaveformFit on Cher using mean Waveform
+	ROOT::Math::Minimizer* minimizerCher;
+	
+	//	if(isOctober2015LateRun && iChannel!=2) continue;
+	if(wave_max.max_amplitude<0) continue;
+	if(iChannel!=2) {
+	    WaveformFit::fitWaveformSimple(waveform.at(iChannel),waveProfile.at(iChannel),200,200,wave_max,wave_pedestal,minimizer, true, theConfiguration_.startSample, theConfiguration_.endSample);
+	    if(CHER_RUN){
+	      int cherStart=150;
+	      if(inputTree->digi_frequency==0)cherStart=125;
+	      if(inputTree->digi_time_at_max_noise_sub->at(iChannel)<-22) WaveformFit::fitWaveformSimple(waveform.at(iChannel),waveCher.at(iChannel),200,200,wave_max,wave_pedestal,minimizerCher, true, cherStart, theConfiguration_.startSample);
+	      else  WaveformFit::fitWaveformSimplePlusTime(waveform.at(iChannel),waveCher.at(iChannel),50,100,wave_max,wave_pedestal,minimizerCher, true,cherStart, theConfiguration_.startSample);
+	    }
+	}else{ 
+	    WaveformFit::fitWaveformSimple(waveform.at(iChannel),waveProfile.at(iChannel),200,200,wave_max,wave_pedestal,minimizer);
+	}
+      
+      const double* par=minimizer->X();
+      cef3_maxAmpl_fit[iChannel]=par[0];
+      
+
+
+
+      if(CHER_RUN){
+      const double* parCher=minimizerCher->X();
+	cef3_maxAmpl_fit_cher[iChannel]=parCher[0];
+	cef3_maxAmpl_fit_time_cher1[iChannel]=(maxTimeCher[iChannel]+parCher[1])*1.e9;
+	cef3_maxAmpl_fit_time_cher2[iChannel]=waveform.at(iChannel)->time_at_frac(0.,(float)100.e-9,0.5,wave_max,7)*1.e9;
+	cef3_maxAmpl_fit_cher_status[iChannel]=minimizerCher->Status();	
+      }
+
+      //timing var
+      Waveform::max_amplitude_informations wave_max_bare = waveform.at(iChannel)->max_amplitude(4,900,5);
+      std::vector<float> crossingTimes;
+      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(iChannel)->time_at_threshold((const float)10.*timeSampleUnit(inputTree->digi_frequency), 100e-9,theConfiguration_.timingThresh[iChannel],4);
+      if(crossingTimes.size()>0)    cef3_time_at_thresh[iChannel]=crossingTimes[0]*1.e9;
+      else cef3_time_at_thresh[iChannel]=-999;
+
+
+
+      if(wave_max_bare.time_at_max>0) cef3_time_at_frac50[iChannel]=waveform.at(iChannel)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,4)*1.e9;
+      else cef3_time_at_frac50[iChannel]=-999;
+
+
+      }
+
+     //BACKWARDS COMPATIBILITY///
+    assignValues( cef3, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);     
+    assignValues( cef3_corr, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL ,2,isOctober2015EarlyRun);  
+    
+    assignValues( cef3_maxAmpl_fit_corr, cef3_maxAmpl_fit, CEF3_START_CHANNEL );  
+    cef3Calib.applyCalibration(cef3_maxAmpl_fit_corr);
+    assignValues( cef3_maxAmpl, *inputTree->digi_max_amplitude_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
+    assignValues( cef3_maxAmpl_time, *inputTree->digi_time_at_max_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
+    assignValues( cef3_chaInt, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
+
+
+
+
 
      outTree->Fill();
     
    
    } // for entries, end of loop
+
+
 
    outfile->cd();
 
@@ -856,7 +931,88 @@ int main( int argc, char* argv[] ) {
 
   //  for(int j=0;j<1024;j++)  std::cout<<"j"<<j<<" "<<noiseValueVsChannel[1][j]<<std::endl;
 
- 
+   if(theConfiguration_.fillWFtree){
+
+     float max[NFIBERS]={0};
+     float max_tight[NFIBERS]={0};
+     for (int i=0;i<NFIBERS;++i){
+       meanTimeAtMax[i]/=WFoutTreeEntries;
+       for (int j=0;j<NDIGISAMPLES;++j){
+	 mean[i][j]/=WFoutTreeEntries;
+	 mean_tight[i][j]/=WFoutTreeTightEntries;
+
+	 //	 if(i==0)	 std::cout<<mean[i][j]<<std::endl;
+	 if(max[i]<mean[i][j]){
+	   max[i]=mean[i][j];
+	 }
+	 if(max_tight[i]<mean_tight[i][j]){
+	   max_tight[i]=mean_tight[i][j];
+	 }
+       }
+     }
+     
+     for (int i=0;i<NFIBERS;++i){
+       meanWaveGraphs[i]=new TGraph(1024, time, mean[i]);
+       meanWaveGraphs_tight[i]=new TGraph(1024, time, mean_tight[i]);
+       TString fiber;
+       fiber.Form("%d",i);
+       meanWaveGraphs[i]->SetName("waveform_"+fiber);
+       meanWaveGraphs_tight[i]->SetName("waveform_tight_"+fiber);
+
+       for (int j=0;j<NDIGISAMPLES;++j){  
+	 timeMinusTimeAtMax[j]=(1e9*(time[j])-meanTimeAtMax[i]);
+	 mean[i][j]*=0.25; //be careful!this is to do meanWaveGraphsForPlots in milliVolt, change it if you need to reuse it
+	 mean_tight[i][j]*=0.25; //be careful!this is to do meanWaveGraphsForPlots in milliVolt, change it if you need to reuse it
+       }
+       meanWaveGraphsForPlots[i]=new TGraph(1024, timeMinusTimeAtMax, mean[i]);
+       meanWaveGraphsForPlots[i]->SetName("waveform_plots_"+fiber);
+     
+
+       meanWaveGraphs[i]->Write();
+       meanWaveGraphsForPlots[i]->Write();
+
+       meanWaveGraphsForPlots_tight[i]=new TGraph(1024, timeMinusTimeAtMax, mean_tight[i]);
+       meanWaveGraphsForPlots_tight[i]->SetName("waveform_plots_tight_"+fiber);
+     
+
+       meanWaveGraphs_tight[i]->Write();
+       meanWaveGraphsForPlots_tight[i]->Write();
+
+     
+       TCanvas c1("c_"+fiber);
+       TH2F* axis=new TH2F("axis","axis",100,-80,290,100,0,max[i]/4*1.10);
+       TH2F* axis2=new TH2F("axis","axis",100,-80,290,100,0,max_tight[i]/4*1.10);
+       std::string energy(Form("%.0f", inputTree->BeamEnergy));
+       TPaveText* pave = DrawTools::getLabelTop(energy+" GeV Electron Beam");
+       
+       //    TH2F* axis=new TH2F("axis","axis",100,-10,190,100,0,28);
+       axis->GetXaxis()->SetTitle("Time [ns]");
+       axis->GetYaxis()->SetTitle("Signal Amplitude [mV]");
+       axis2->GetXaxis()->SetTitle("Time [ns]");
+       axis2->GetYaxis()->SetTitle("Signal Amplitude [mV]");
+
+
+
+       axis->Draw();
+       meanWaveGraphsForPlots[i]->Draw("plsame");
+       pave->Draw("same");
+       c1.Write("pulseShape"+fiber);
+       std::string name= Form("plots/pulseShape"+fiber+"_%d",inputTree->runNumber);
+       c1.SaveAs(Form("%s.png",name.c_str()));
+       c1.SaveAs(Form("%s.pdf",name.c_str()));
+
+       c1.Clear();
+       axis2->Draw();
+       meanWaveGraphsForPlots_tight[i]->Draw("plsame");
+       pave->Draw("same");
+       c1.Write("pulseShape_tight"+fiber);
+       name= Form("plots/pulseShape_tight"+fiber+"_%d",inputTree->runNumber);
+       c1.SaveAs(Form("%s.png",name.c_str()));
+       c1.SaveAs(Form("%s.pdf",name.c_str()));
+
+       
+     }
+   }
 
    outTree->Write();
    outfile->Close();
