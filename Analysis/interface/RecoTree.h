@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Fri Sep 25 17:00:23 2015 by ROOT version 5.34/18
+// Tue Dec  8 17:14:19 2015 by ROOT version 5.34/18
 // from TTree recoTree/recoTree
-// found on file: analysisTrees_V00/Reco_3076.root
+// found on file: analysisTrees_V10/Reco_4052.root
 //////////////////////////////////////////////////////////
 
 #ifndef RecoTree_h
@@ -18,6 +18,7 @@
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
+
 class RecoTree {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
@@ -30,9 +31,9 @@ public :
    std::vector<float>   *cef3;
    std::vector<float>   *cef3_corr;
    std::vector<float>   *cef3_maxAmpl;
-   std::vector<float>   *cef3_maxAmpl_cher;
-   std::vector<float>   *cef3_maxAmpl_wls;
    std::vector<float>   *cef3_maxAmpl_time;
+   std::vector<float>   *cef3_time_at_frac50;
+   std::vector<float>   *cef3_time_at_thresh;
    std::vector<float>   *cef3_maxAmpl_fit;
    std::vector<float>   *cef3_maxAmpl_fit_cher;
    std::vector<float>   *cef3_maxAmpl_fit_cher_status;
@@ -56,29 +57,29 @@ public :
    Float_t         xBeam;
    Float_t         yBeam;
    Int_t           nClusters_hodoX1;
-   Int_t           nFibres_hodoX1[30];   //[nClusters_hodoX1]
-   Float_t         pos_hodoX1[30];   //[nClusters_hodoX1]
-   Float_t         pos_corr_hodoX1[30];   //[nClusters_hodoX1]
+   Int_t           nFibres_hodoX1[16];   //[nClusters_hodoX1]
+   Float_t         pos_hodoX1[16];   //[nClusters_hodoX1]
+   Float_t         pos_corr_hodoX1[16];   //[nClusters_hodoX1]
    Int_t           nClusters_hodoY1;
-   Int_t           nFibres_hodoY1[30];   //[nClusters_hodoY1]
-   Float_t         pos_hodoY1[30];   //[nClusters_hodoY1]
-   Float_t         pos_corr_hodoY1[30];   //[nClusters_hodoY1]
+   Int_t           nFibres_hodoY1[24];   //[nClusters_hodoY1]
+   Float_t         pos_hodoY1[24];   //[nClusters_hodoY1]
+   Float_t         pos_corr_hodoY1[24];   //[nClusters_hodoY1]
    Int_t           nClusters_hodoX2;
-   Int_t           nFibres_hodoX2[30];   //[nClusters_hodoX2]
-   Float_t         pos_hodoX2[30];   //[nClusters_hodoX2]
-   Float_t         pos_corr_hodoX2[30];   //[nClusters_hodoX2]
+   Int_t           nFibres_hodoX2[17];   //[nClusters_hodoX2]
+   Float_t         pos_hodoX2[17];   //[nClusters_hodoX2]
+   Float_t         pos_corr_hodoX2[17];   //[nClusters_hodoX2]
    Int_t           nClusters_hodoY2;
-   Int_t           nFibres_hodoY2[30];   //[nClusters_hodoY2]
-   Float_t         pos_hodoY2[30];   //[nClusters_hodoY2]
-   Float_t         pos_corr_hodoY2[30];   //[nClusters_hodoY2]
+   Int_t           nFibres_hodoY2[16];   //[nClusters_hodoY2]
+   Float_t         pos_hodoY2[16];   //[nClusters_hodoY2]
+   Float_t         pos_corr_hodoY2[16];   //[nClusters_hodoY2]
    Int_t           nClusters_hodoSmallX;
-   Int_t           nFibres_hodoSmallX[4];   //[nClusters_hodoSmallX]
-   Float_t         pos_hodoSmallX[4];   //[nClusters_hodoSmallX]
-   Float_t         pos_corr_hodoSmallX[4];   //[nClusters_hodoSmallX]
+   Int_t           nFibres_hodoSmallX[1];   //[nClusters_hodoSmallX]
+   Float_t         pos_hodoSmallX[1];   //[nClusters_hodoSmallX]
+   Float_t         pos_corr_hodoSmallX[1];   //[nClusters_hodoSmallX]
    Int_t           nClusters_hodoSmallY;
-   Int_t           nFibres_hodoSmallY[4];   //[nClusters_hodoSmallY]
-   Float_t         pos_hodoSmallY[4];   //[nClusters_hodoSmallY]
-   Float_t         pos_corr_hodoSmallY[4];   //[nClusters_hodoSmallY]
+   Int_t           nFibres_hodoSmallY[1];   //[nClusters_hodoSmallY]
+   Float_t         pos_hodoSmallY[1];   //[nClusters_hodoSmallY]
+   Float_t         pos_corr_hodoSmallY[1];   //[nClusters_hodoSmallY]
    std::vector<int>     *nTDCHits;
    Float_t         pos_2FibClust_hodoX1;
    Float_t         pos_2FibClust_corr_hodoX1;
@@ -101,15 +102,11 @@ public :
    Float_t         wc_x_corr;
    Float_t         wc_y_corr;
    Float_t         mcp_time_frac50;
-   Float_t         mcp_time_at_150;
+   Float_t         mcp_time_at_thresh;
    Float_t         mcp_max_amplitude;
    Float_t         nino_LEtime;
    Float_t         nino_LEchi2;
    Float_t         nino_maxAmpl;
-
-
-
-
 
    // List of branches
    TBranch        *b_run;   //!
@@ -118,9 +115,9 @@ public :
    TBranch        *b_cef3;   //!
    TBranch        *b_cef3_corr;   //!
    TBranch        *b_cef3_maxAmpl;   //!
-   TBranch        *b_cef3_maxAmpl_cher;   //!
-   TBranch        *b_cef3_maxAmpl_wls;   //!
    TBranch        *b_cef3_maxAmpl_time;   //!
+   TBranch        *b_cef3_time_at_frac50;   //!
+   TBranch        *b_cef3_time_at_thresh;   //!
    TBranch        *b_cef3_maxAmpl_fit;   //!
    TBranch        *b_cef3_maxAmpl_fit_cher;   //!
    TBranch        *b_cef3_maxAmpl_fit_cher_status;   //!
@@ -189,13 +186,11 @@ public :
    TBranch        *b_wc_x_corr;   //!
    TBranch        *b_wc_y_corr;   //!
    TBranch        *b_mcp_time_frac50;   //!
-   TBranch        *b_mcp_time_at_150;   //!
-   TBranch        *b_mcp_max_amplitude;
-   TBranch        *b_nino_LEtime;
-   TBranch        *b_nino_LEchi2;
-   TBranch        *b_nino_maxAmpl;
-
-
+   TBranch        *b_mcp_time_at_thresh;   //!
+   TBranch        *b_mcp_max_amplitude;   //!
+   TBranch        *b_nino_LEtime;   //!
+   TBranch        *b_nino_LEchi2;   //!
+   TBranch        *b_nino_maxAmpl;   //!
 
    RecoTree(TTree *tree=0);
    virtual ~RecoTree();
@@ -215,9 +210,9 @@ RecoTree::RecoTree(TTree *tree) : fChain(0)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("analysisTrees_V00/Reco_3076.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("analysisTrees_V10/Reco_4052.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("analysisTrees_V00/Reco_3076.root");
+         f = new TFile("analysisTrees_V10/Reco_4052.root");
       }
       f->GetObject("recoTree",tree);
 
@@ -264,9 +259,9 @@ void RecoTree::Init(TTree *tree)
    cef3 = 0;
    cef3_corr = 0;
    cef3_maxAmpl = 0;
-   cef3_maxAmpl_cher = 0;
-   cef3_maxAmpl_wls = 0;
    cef3_maxAmpl_time = 0;
+   cef3_time_at_frac50 = 0;
+   cef3_time_at_thresh = 0;
    cef3_maxAmpl_fit = 0;
    cef3_maxAmpl_fit_cher = 0;
    cef3_maxAmpl_fit_cher_status = 0;
@@ -294,9 +289,9 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("cef3", &cef3, &b_cef3);
    fChain->SetBranchAddress("cef3_corr", &cef3_corr, &b_cef3_corr);
    fChain->SetBranchAddress("cef3_maxAmpl", &cef3_maxAmpl, &b_cef3_maxAmpl);
-   fChain->SetBranchAddress("cef3_maxAmpl_cher", &cef3_maxAmpl_cher, &b_cef3_maxAmpl_cher);
-   fChain->SetBranchAddress("cef3_maxAmpl_wls", &cef3_maxAmpl_wls, &b_cef3_maxAmpl_wls);
    fChain->SetBranchAddress("cef3_maxAmpl_time", &cef3_maxAmpl_time, &b_cef3_maxAmpl_time);
+   fChain->SetBranchAddress("cef3_time_at_frac50", &cef3_time_at_frac50, &b_cef3_time_at_frac50);
+   fChain->SetBranchAddress("cef3_time_at_thresh", &cef3_time_at_thresh, &b_cef3_time_at_thresh);
    fChain->SetBranchAddress("cef3_maxAmpl_fit", &cef3_maxAmpl_fit, &b_cef3_maxAmpl_fit);
    fChain->SetBranchAddress("cef3_maxAmpl_fit_cher", &cef3_maxAmpl_fit_cher, &b_cef3_maxAmpl_fit_cher);
    fChain->SetBranchAddress("cef3_maxAmpl_fit_cher_status", &cef3_maxAmpl_fit_cher_status, &b_cef3_maxAmpl_fit_cher_status);
@@ -365,12 +360,11 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("wc_x_corr", &wc_x_corr, &b_wc_x_corr);
    fChain->SetBranchAddress("wc_y_corr", &wc_y_corr, &b_wc_y_corr);
    fChain->SetBranchAddress("mcp_time_frac50", &mcp_time_frac50, &b_mcp_time_frac50);
-   fChain->SetBranchAddress("mcp_time_at_150", &mcp_time_at_150, &b_mcp_time_at_150);
-   fChain->SetBranchAddress( "mcp_max_amplitude", &mcp_max_amplitude, &b_mcp_max_amplitude);
-   fChain->SetBranchAddress( "nino_LEtime", &nino_LEtime, &b_nino_LEtime);
-   fChain->SetBranchAddress( "nino_LEchi2", &nino_LEchi2, &b_nino_LEchi2);
-   fChain->SetBranchAddress( "nino_maxAmpl", &nino_maxAmpl, &b_nino_maxAmpl);
-
+   fChain->SetBranchAddress("mcp_time_at_thresh", &mcp_time_at_thresh, &b_mcp_time_at_thresh);
+   fChain->SetBranchAddress("mcp_max_amplitude", &mcp_max_amplitude, &b_mcp_max_amplitude);
+   fChain->SetBranchAddress("nino_LEtime", &nino_LEtime, &b_nino_LEtime);
+   fChain->SetBranchAddress("nino_LEchi2", &nino_LEchi2, &b_nino_LEchi2);
+   fChain->SetBranchAddress("nino_maxAmpl", &nino_maxAmpl, &b_nino_maxAmpl);
    Notify();
 }
 
