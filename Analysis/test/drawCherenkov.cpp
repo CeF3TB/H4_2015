@@ -84,9 +84,10 @@ int main( int argc, char* argv[] ) {
   if(argc>3){
     std::ostringstream convertStart, convertEnd;
     convertStart<<startSample;
-    convertEnd<<endSample;
+    //    convertEnd<<endSample;
     fileName = "analysisTrees_"+tag+"/Reco_"+runName+".root";
-    fileName=  "analysisTrees_"+tag+ "/Reco_" + runName + "_start_"+convertStart.str()+"_end_"+convertEnd.str()+".root";
+    //    fileName=  "analysisTrees_"+tag+ "/Reco_" + runName + "_start_"+convertStart.str()+"_end_"+convertEnd.str()+".root";
+    fileName=  "analysisTrees_"+tag+ "/Reco_" + runName + "_optStart_"+convertStart.str()+".root";
   }
   TFile* file = TFile::Open(fileName.c_str());
   if( file==0 ) {
@@ -109,6 +110,7 @@ int main( int argc, char* argv[] ) {
   TH1F* wlsHistos_tight_tot;
 
   TH1F* totalHistos_tight_maxAmpl[4];
+  TH1F* totalHistos_tight_maxAmpl_cher[4];
   TH1F* totalHistos_tight_maxAmpl_fit[4];
 
   TH1F* totalHistos_tight_maxAmpl_tot;
@@ -129,6 +131,7 @@ int main( int argc, char* argv[] ) {
     wlsHistos_tight[i] = new TH1F ("wlsHisto_tight_"+fibre,"",200,0,500000);
 
     totalHistos_tight_maxAmpl[i] = new TH1F ("totalHisto_tight_maxAmpl"+fibre,"",727,0,4000);
+    totalHistos_tight_maxAmpl_cher[i] = new TH1F ("totalHisto_tight_maxAmpl_cher"+fibre,"",727,0,4000);
     totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",727,0,4000);
     //    else 	totalHistos_tight_maxAmpl_fit[i] = new TH1F ("totalHisto_tight_maxAmpl_fit"+fibre,"",1400,0,8000*4);
   }
@@ -183,7 +186,9 @@ int main( int argc, char* argv[] ) {
 	    //	    totalHistos_tight_maxAmpl_fit_tot->Fill(t.cef3_maxAmpl_fit->at(0)+t.cef3_maxAmpl_fit->at(1)+t.cef3_maxAmpl_fit->at(2)+t.cef3_maxAmpl_fit->at(3));
 	    totalHistos_tight_maxAmpl_fit_tot->Fill(t.cef3_maxAmpl_fit_corr->at(0)+t.cef3_maxAmpl_fit_corr->at(1)+t.cef3_maxAmpl_fit_corr->at(2)+t.cef3_maxAmpl_fit_corr->at(3));
 	  }
-	  totalHistos_tight_maxAmpl[i]->Fill(t.cef3_maxAmpl->at(i)); 
+	  if(i!=2)	  totalHistos_tight_maxAmpl[i]->Fill(t.cef3_maxAmpl_wls->at(i)); 
+	  else   totalHistos_tight_maxAmpl[i]->Fill(t.cef3_maxAmpl->at(i)); 
+	  totalHistos_tight_maxAmpl_cher[i]->Fill(t.cef3_maxAmpl_cher->at(i)); 
 	  totalHistos_tight_maxAmpl_fit[i]->Fill(t.cef3_maxAmpl_fit_corr->at(i));
 	  }
 	}
@@ -201,8 +206,9 @@ int main( int argc, char* argv[] ) {
   if(argc>3){
     std::ostringstream convertStart, convertEnd;
     convertStart<<startSample;
-    convertEnd<<endSample;
-    outFile = TFile::Open("CherenkovPlots_"+runNumberString+"_"+tag+"_start_"+convertStart.str()+"_end_"+convertEnd.str()+".root","recreate");
+//    convertEnd<<endSample;
+//    outFile = TFile::Open("CherenkovPlots_"+runNumberString+"_"+tag+"_start_"+convertStart.str()+"_end_"+convertEnd.str()+".root","recreate");
+  outFile = TFile::Open("CherenkovPlots_"+runNumberString+"_"+tag+"_optStart_"+convertStart.str()+".root","recreate");
   }else{
    outFile = TFile::Open("CherenkovPlots_"+runNumberString+"_"+tag+".root","recreate");
   }
@@ -336,6 +342,11 @@ int main( int argc, char* argv[] ) {
   totalHistos_tight_maxAmpl[2]->SetLineColor(kRed);
   totalHistos_tight_maxAmpl[3]->SetLineColor(kViolet);
 
+  totalHistos_tight_maxAmpl_cher[1]->SetLineColor(kBlue);
+  totalHistos_tight_maxAmpl_cher[2]->SetLineColor(kRed);
+  totalHistos_tight_maxAmpl_cher[3]->SetLineColor(kViolet);
+
+
   totalHistos_tight_maxAmpl_fit[1]->SetLineColor(kBlue);
   totalHistos_tight_maxAmpl_fit[2]->SetLineColor(kRed);
   totalHistos_tight_maxAmpl_fit[3]->SetLineColor(kViolet);
@@ -375,6 +386,13 @@ int main( int argc, char* argv[] ) {
     totalHistos_tight_maxAmpl[i]->GetYaxis()->SetRangeUser(1,max*1.1);
     totalHistos_tight_maxAmpl[i]->GetXaxis()->SetTitle("Max Amplitude");
     totalHistos_tight_maxAmpl[i]->GetYaxis()->SetTitle("Events");
+
+    totalHistos_tight_maxAmpl_cher[i]->GetXaxis()->SetRangeUser(0,4000);
+    totalHistos_tight_maxAmpl_cher[i]->GetYaxis()->SetRangeUser(1,max*1.1);
+    totalHistos_tight_maxAmpl_cher[i]->GetXaxis()->SetTitle("Max Amplitude");
+    totalHistos_tight_maxAmpl_cher[i]->GetYaxis()->SetTitle("Events");
+
+
     if (i==0)    totalHistos_tight_maxAmpl[i]->Draw();
     else totalHistos_tight_maxAmpl[i]->Draw("same");
     TString fibre;
@@ -483,6 +501,7 @@ int main( int argc, char* argv[] ) {
     cherHistos_tight[i] ->Write();
     wlsHistos_tight[i] ->Write();
     totalHistos_tight_maxAmpl[i]->Write();
+    totalHistos_tight_maxAmpl_cher[i]->Write();
     totalHistos_tight_maxAmpl_fit[i]->Write();
   }
 
@@ -516,6 +535,8 @@ int main( int argc, char* argv[] ) {
     
     fitmin = peakpos-5*sigma;
     fitmax = peakpos+5*sigma;
+
+
         
     RooRealVar x("x","ChInt", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
@@ -611,6 +632,14 @@ int main( int argc, char* argv[] ) {
   TVectorD resValuemaxAmpl_fit(5);
   TVectorD resErrValuemaxAmpl_fit(5);
 
+  TVectorD meanValuemaxAmpl_cher(5);
+  TVectorD meanErrValuemaxAmpl_cher(5);
+  TVectorD widthValuemaxAmpl_cher(5);
+  TVectorD widthErrValuemaxAmpl_cher(5);
+  TVectorD resValuemaxAmpl_cher(5);
+  TVectorD resErrValuemaxAmpl_cher(5);
+
+
     
   for(int i=0;i<4;++i){
     //    if(isOctober2015LateRun && i!=2) continue;
@@ -641,6 +670,7 @@ int main( int argc, char* argv[] ) {
 
     std::cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
 
+
     double fitmin;
     double fitmax;
     
@@ -648,8 +678,10 @@ int main( int argc, char* argv[] ) {
     fitmin = peakpos-5*sigma;
     fitmax = peakpos+5*sigma;
 
-
-
+    if(fitmin<10){
+      fitmin=10;
+      fitmax=peakpos+(peakpos-fitmin);
+    }
         
     RooRealVar x("x","MaxAmpl", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
@@ -731,6 +763,115 @@ int main( int argc, char* argv[] ) {
     //        if (i>1)exit(9);
   }
   //end max ampl
+
+
+  //maxAmpl_cher
+  for(int i=0;i<4;++i){
+    //    if(isOctober2015LateRun && i!=2) continue;
+    TH1F* histo;
+    histo=totalHistos_tight_maxAmpl_cher[i];
+
+    //    double peakpos = histo->GetMean();
+    double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
+    double sigma = histo->GetRMS();
+    
+    
+    if (5*sigma>peakpos)sigma/=2;
+    if (5*sigma>peakpos)sigma/=2;
+
+    std::cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#######################mean"<<peakpos<<" sigma"<<sigma<<std::endl;
+
+    double fitmin;
+    double fitmax;
+    
+    
+    fitmin = peakpos-5*sigma;
+    fitmax = peakpos+5*sigma;
+
+
+
+        
+    RooRealVar x("x","MaxAmpl", fitmin, fitmax);
+    RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
+
+
+    RooRealVar meanr("meanr","Mean",peakpos,peakpos-2*sigma, peakpos+2*sigma);
+    //    if(i==0)meanr.setConstant(kTRUE);
+    
+      // meanr.setRange( 30000. , 1000000.);
+      // width.setRange(500, 22000);
+    //    RooCBShape fit_fct("fit_fct","fit_fct",x,meanr,width,A,N); int ndf = 4;
+    
+
+    RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
+    RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
+    RooRealVar alphaL("alphaL","#alpha",1.08615e-02 , 0., 1.);
+    RooRealVar alphaR("alphaR","#alpha",1.08615e-02 , 0., 1.);
+
+    int ndf;
+    RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); ndf = 5;
+    fit_fct.fitTo(data);
+    RooPlot* frame;
+    frame = x.frame("Title");
+    frame->SetXTitle("Amplitude [ADC Count]");
+    float binWidth = histo->GetXaxis()->GetBinWidth(1);
+    std::string ytitle = Form("Events / %.1f",binWidth); 
+    frame->SetYTitle(ytitle.c_str());
+      
+
+
+    data.plotOn(frame);  //this will show histogram data points on canvas
+    fit_fct.plotOn(frame,RooFit::LineColor(4));//this will show fit overlay on canvas       
+
+    TString fibre;
+    fibre.Form("%d",i); 
+
+    TH1F* fittedHisto=(TH1F*)data.createHistogram("histo_fit_maxAmpl"+fibre,x);
+    fittedHisto->Write();
+        // fit_fct.paramOn(frame); //this will display the fit parameters on canvas               
+    
+    double mean = meanr.getVal();
+    double meanErr = meanr.getError();
+    double rms = (widthL.getVal()+widthR.getVal())/2;
+    double rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
+    double reso = 100.* rms/mean; //in percent                          
+    double resoErr = 100.* getRatioError( rms, mean, meanErr, rmsErr );
+    
+    
+    TCanvas* cans = new TCanvas("cans_maxAmpl_cher"+fibre, "un canvas", 600,600);
+    cans->cd();
+    frame->Draw();
+    TLegend* lego = new TLegend(0.57, 0.7, 0.8, 0.92);
+    lego->SetTextSize(0.038);
+    //    lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f #pm %.0f", meanr.getVal(), meanr.getError() ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#mu = %.0f", meanr.getVal() ), "");
+    //    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ", rms,  rmsErr), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f ", rms), "");
+    //    lego->AddEntry(  (TObject*)0 ,Form("#chi^{2} = %.2f / %d ", frame->chiSquare(ndf) , ndf ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("#sigma/#mu = %.1f #pm %.1f %s ", reso , resoErr ,"%"), "");
+    lego->SetFillColor(0);
+    lego->Draw("same");
+
+    std::string energy(Form("%.0f", t.beamEnergy));
+    TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
+    pave->Draw("same");
+
+    meanValuemaxAmpl_cher[i]=meanr.getVal();
+    meanErrValuemaxAmpl_cher[i]=meanr.getError();
+
+    widthValuemaxAmpl_cher[i]=rms;
+    widthErrValuemaxAmpl_cher[i]=rmsErr;
+
+    resValuemaxAmpl_cher[i]=reso;
+    resErrValuemaxAmpl_cher[i]=resoErr;
+
+    cans->SaveAs("plots_drawCherenkov/CBFit_maxAmpl_cher"+runNumberString+"_fibre_"+fibre+".png");
+    cans->SaveAs("plots_drawCherenkov/CBFit_maxAmpl_cher"+runNumberString+"_fibre_"+fibre+".pdf");
+    cans->Write();
+    //        if (i>1)exit(9);
+  }
+  //end max ampl
+
 
   //maxAmpl_fit
   for(int i=0;i<4;++i){
@@ -1138,6 +1279,16 @@ int main( int argc, char* argv[] ) {
 
   resValuemaxAmpl_fit.Write("resValuemaxAmpl_fit");
   resErrValuemaxAmpl_fit.Write("resErrValuemaxAmpl_fit");
+
+  //maxAmpl_cher
+  meanValuemaxAmpl_cher.Write("meanValuemaxAmpl_cher");
+  meanErrValuemaxAmpl_cher.Write("meanErrValuemaxAmpl_cher");
+  
+  widthValuemaxAmpl_cher.Write("widthValuemaxAmpl_cher");
+  widthErrValuemaxAmpl_cher.Write("widthErrValuemaxAmpl_cher");
+
+  resValuemaxAmpl_cher.Write("resValuemaxAmpl_cher");
+  resErrValuemaxAmpl_cher.Write("resErrValuemaxAmpl_cher");
    
 
   outFile->Write();
