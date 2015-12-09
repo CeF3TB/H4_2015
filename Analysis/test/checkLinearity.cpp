@@ -209,7 +209,7 @@ int main( int argc, char* argv[] ) {
       }
 
 
-      //      if(j==2)std::cout<<"-----------PMT:"<<j<<" "<<(*mean)[j]<< " "<<meanFirst[j]<< " "<<energyFirst[j]<<" "<<energies[i]<<" "<<((*mean)[j]/meanFirst[j])*(energyFirst[j]/energies[i])<<std::endl;
+      if(j==0)std::cout<<"-----------PMT:"<<j<<" "<<(*mean)[j]<< " "<<meanFirst[j]<< " "<<energyFirst[j]<<" "<<energies[i]<<" "<<((*mean)[j]/meanFirst[j])*(energyFirst[j]/energies[i])<<std::endl;
       gr_mean_vs_energyPMT[j]->SetPoint( i, energies[i], ((*mean)[j]/meanFirst[j])*(energyFirst[j]/energies[i]));
       gr_mean_vs_energyPMT[j]->SetPointError( i, 0, (energyFirst[j]/energies[i])*getRatioError((*mean)[j],meanFirst[j],(*meanErr)[j],meanFirstErr[j]));
 
