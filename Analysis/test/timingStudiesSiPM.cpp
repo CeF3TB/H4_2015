@@ -86,8 +86,12 @@ int main( int argc, char* argv[] ) {
    float reso_sigma = reso_histo->GetRMS();
 
    //   TH1F* reso_histo_corr = new TH1F("reso_histo_corr","reso_histo",200,-5*reso_sigma,5*reso_sigma);
-   int nmaxAmplCuts=20;
+   int nmaxAmplCuts=25;
    TH1F* reso_histo_corr[nmaxAmplCuts];
+   TVectorD resValueTime(nmaxAmplCuts);
+   TVectorD resErrValueTime(nmaxAmplCuts);
+   TVectorD resErrRelativeValueTime(nmaxAmplCuts);
+   TVectorD nEntriesTime(nmaxAmplCuts);  
 
    for (int i=0;i<nmaxAmplCuts;++i){
     TString icut;
@@ -121,42 +125,45 @@ int main( int argc, char* argv[] ) {
   c1.SaveAs(dir+"/reso_histo_"+runNumberString+".pdf");
 
   for (int i=0;i<nmaxAmplCuts;++i){
+    if(reso_histo_corr[i]->GetEntries()<5) continue;
+
     TString icut;
     icut.Form("%d",i); 
     
     c1.Clear();
     reso_histo_corr[i]->Fit("gaus","","",-0.5,0.3);
     //  double *par=reso_histo_corr[i]->GetFunction("gaus")->GetParameters();
-  TF1* fgaus=reso_histo_corr[i]->GetFunction("gaus");
-  fgaus->SetLineWidth(2.);
-  fgaus->SetLineColor(kBlue);
-  reso_histo_corr[i]->GetXaxis()->SetTitle("time_{Fibre}-time_{mcp} [ns]");
-  float binWidth =reso_histo_corr[i]->GetXaxis()->GetBinWidth(1);
-  //  std::string ytitle = Form("Events / %.0f ps",binWidth*1.e3); 
-  std::string ytitle = Form("Events");
-  reso_histo_corr[i]->SetYTitle(ytitle.c_str());
-  reso_histo_corr[i]->Draw();
-  std::string energy(Form("%.0f", t.beamEnergy));
-  TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
-  pave->Draw("same");
+    TF1* fgaus=reso_histo_corr[i]->GetFunction("gaus");
 
-  fgaus->Draw("same");
+    fgaus->SetLineWidth(2.);
+    fgaus->SetLineColor(kBlue);
+    reso_histo_corr[i]->GetXaxis()->SetTitle("time_{Fibre}-time_{mcp} [ns]");
+    float binWidth =reso_histo_corr[i]->GetXaxis()->GetBinWidth(1);
+    //  std::string ytitle = Form("Events / %.0f ps",binWidth*1.e3); 
+    std::string ytitle = Form("Events");
+    reso_histo_corr[i]->SetYTitle(ytitle.c_str());
+    reso_histo_corr[i]->Draw();
+    std::string energy(Form("%.0f", t.beamEnergy));
+    TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
+    pave->Draw("same");
+    
+    fgaus->Draw("same");
+    TLegend* leg_gauss = new TLegend(0.6, 0.8, 0.8, 0.92);
+    leg_gauss->SetTextSize(0.038);
+    leg_gauss->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ps", fgaus->GetParameter(2)*1.e3, fgaus->GetParError(2)*1.e3), "");
+    leg_gauss->SetFillColor(0);
+    leg_gauss->Draw("same");
+    
 
-  TLegend* leg_gauss = new TLegend(0.6, 0.8, 0.8, 0.92);
-  leg_gauss->SetTextSize(0.038);
-  leg_gauss->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ps", fgaus->GetParameter(2)*1.e3, fgaus->GetParError(2)*1.e3), "");
-  leg_gauss->SetFillColor(0);
-  leg_gauss->Draw("same");
 
-
-
-  c1.SaveAs(dir+"/reso_histo_corr_gaus_"+icut+"_"+runNumberString+".png");
-  c1.SaveAs(dir+"/reso_histo_corr_gaus_"+icut+"_"+runNumberString+".pdf");
+    c1.SaveAs(dir+"/reso_histo_corr_gaus_"+icut+"_"+runNumberString+".png");
+    c1.SaveAs(dir+"/reso_histo_corr_gaus_"+icut+"_"+runNumberString+".pdf");
 
 
   //-----------------fit with cruijff ------------------------
   TH1F* histo;
   histo=reso_histo_corr[i];
+  nEntriesTime[i]=histo->GetEntries();
   double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
   double sigma = histo->GetRMS();
 
@@ -208,8 +215,13 @@ int main( int argc, char* argv[] ) {
   cans->SaveAs(dir+"/reso_histo_cruijff_"+icut+"_"+runNumberString+".png");
   cans->SaveAs(dir+"/reso_histo_cruijff_"+icut+"_"+runNumberString+".pdf");
 
+
+  resValueTime[i]=rms*1.e3;
+  resErrValueTime[i]=rmsErr*1.e3;
+  if(rms!=0)  resErrRelativeValueTime[i]=rmsErr/rms;
+
   //////------------ fit with crystal ball-------
-  bool fitWithCB=true;
+  bool fitWithCB=false;
   if(fitWithCB){
     RooRealVar x("x","deltaT", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
@@ -254,5 +266,19 @@ int main( int argc, char* argv[] ) {
 
 
   }
+
+  std::string outFileName;
+  outFileName = dir+"/timingStudiesSiPM_"+tag+"_"+runName+".root";
+  TFile* outFile = TFile::Open(outFileName.c_str(),"recreate");
+
+  resValueTime.Write("resValueTime");
+  resErrValueTime.Write("resErrValueTime");
+  resErrRelativeValueTime.Write("resErrRelativeValueTime");
+  nEntriesTime.Write("nEntriesTime");
+
+  outFile->Write();
+  outFile->Close();
+
+  return 0;
 
 }
