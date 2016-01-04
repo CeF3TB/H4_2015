@@ -86,17 +86,21 @@ int main( int argc, char* argv[] ) {
    float reso_sigma = reso_histo->GetRMS();
 
    //   TH1F* reso_histo_corr = new TH1F("reso_histo_corr","reso_histo",200,-5*reso_sigma,5*reso_sigma);
-   int nmaxAmplCuts=25;
+   int nmaxAmplCuts=30;
    TH1F* reso_histo_corr[nmaxAmplCuts];
+   TH1F* reso_histo_corr_Amplitude[nmaxAmplCuts];//to see behaviour of resolution as a function of ampl
    TVectorD resValueTime(nmaxAmplCuts);
    TVectorD resErrValueTime(nmaxAmplCuts);
    TVectorD resErrRelativeValueTime(nmaxAmplCuts);
    TVectorD nEntriesTime(nmaxAmplCuts);  
+   TVectorD resValueAmplitude(nmaxAmplCuts);//to see behaviour of resolution as a function of ampl
+   TVectorD resErrValueAmplitude(nmaxAmplCuts);//to see behaviour of resolution as a function of ampl
 
    for (int i=0;i<nmaxAmplCuts;++i){
     TString icut;
     icut.Form("%d",i); 
     reso_histo_corr[i] = new TH1F("reso_histo_corr_"+icut,"reso_histo_corr_"+icut,200,-3*reso_sigma,3*reso_sigma);
+    reso_histo_corr_Amplitude[i] = new TH1F("reso_histo_corr_Amplitude_"+icut,"reso_histo_corr_Amplitude_"+icut,200,-3*reso_sigma,3*reso_sigma);
    }
 
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -109,6 +113,7 @@ int main( int argc, char* argv[] ) {
       for (int i=0;i<nmaxAmplCuts;++i){
 	//	std::cout<<"###################CUT#####################"<< (i>0)*(20+(i>1)*i*10)<<std::endl;
 	if(t.cef3_maxAmpl->at(1)>(i>0)*(20+(i>1)*i*10))reso_histo_corr[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean+reso_sigma/2);
+	if(t.cef3_maxAmpl->at(1)>(i>0)*(20+(i>1)*i*15) && t.cef3_maxAmpl->at(1)<(i+1>0)*(20+(i+1>1)*(i+1)*15))reso_histo_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean+reso_sigma/2);
       }
    }
 
@@ -130,6 +135,7 @@ int main( int argc, char* argv[] ) {
     TString icut;
     icut.Form("%d",i); 
     
+
     c1.Clear();
     reso_histo_corr[i]->Fit("gaus","","",-0.5,0.3);
     //  double *par=reso_histo_corr[i]->GetFunction("gaus")->GetParameters();
@@ -218,7 +224,11 @@ int main( int argc, char* argv[] ) {
 
   resValueTime[i]=rms*1.e3;
   resErrValueTime[i]=rmsErr*1.e3;
+
   if(rms!=0)  resErrRelativeValueTime[i]=rmsErr/rms;
+
+  resValueAmplitude[i]=reso_histo_corr_Amplitude[i]->GetRMS()*1.e3; 
+  resErrValueAmplitude[i]=reso_histo_corr_Amplitude[i]->GetRMSError()*1.e3; 
 
   //////------------ fit with crystal ball-------
   bool fitWithCB=false;
@@ -272,6 +282,8 @@ int main( int argc, char* argv[] ) {
   TFile* outFile = TFile::Open(outFileName.c_str(),"recreate");
 
   resValueTime.Write("resValueTime");
+  resValueAmplitude.Write("resValueAmplitude");
+  resErrValueAmplitude.Write("resErrValueAmplitude");
   resErrValueTime.Write("resErrValueTime");
   resErrRelativeValueTime.Write("resErrRelativeValueTime");
   nEntriesTime.Write("nEntriesTime");
