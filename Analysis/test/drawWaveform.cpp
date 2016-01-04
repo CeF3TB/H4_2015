@@ -22,6 +22,11 @@ int main( int argc, char* argv[] ) {
      runName = runName_str;
      
      std::string filename_str = "dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/micheli/rawData/output_run" + runName + ".root";
+     char* hostName = getenv ("HOSTNAME");
+     TString hostString(hostName);
+     bool isLxplus = hostString.Contains("lxplus");
+     if(isLxplus) filename_str = "xroot://t3se01.psi.ch:1094//store/user/micheli/rawData/output_run" + runName + ".root"; 
+
      inputFile=TFile::Open(filename_str.c_str());
     
     if( inputFile==0 ) {
