@@ -79,6 +79,12 @@ int main( int argc, char* argv[] ) {
   //TFile* file = TFile::Open("data/run_431.root"); //10 GeV
   //  TFile* file = TFile::Open("data/run_273.root");
   std::string fileName="dcap://t3se01.psi.ch:22125//pnfs/psi.ch/cms/trivcat/store/user/micheli/rawData/output_run"+runName+".root";
+  char* hostName = getenv ("HOSTNAME");
+  TString hostString(hostName);
+  bool isLxplus = hostString.Contains("lxplus");
+  if(isLxplus) fileName= "xroot://t3se01.psi.ch:1094//store/user/micheli/rawData/output_run" + runName + ".root"; 
+
+
   TFile* file = TFile::Open(fileName.c_str());
   TTree* tree = (TTree*)file->Get("outputTree");
   std::cout<<"Reading run:"<<runName<<std::endl;
