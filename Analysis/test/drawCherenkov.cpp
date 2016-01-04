@@ -766,6 +766,8 @@ int main( int argc, char* argv[] ) {
 
 
   //maxAmpl_cher
+  bool fitWLSandCher=false;
+  if(fitWLSandCher){
   for(int i=0;i<4;++i){
     //    if(isOctober2015LateRun && i!=2) continue;
     TH1F* histo;
@@ -869,6 +871,7 @@ int main( int argc, char* argv[] ) {
     cans->SaveAs("plots_drawCherenkov/CBFit_maxAmpl_cher"+runNumberString+"_fibre_"+fibre+".pdf");
     cans->Write();
     //        if (i>1)exit(9);
+  }
   }
   //end max ampl
 
