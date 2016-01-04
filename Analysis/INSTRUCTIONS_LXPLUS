@@ -1,0 +1,5 @@
+source /afs/cern.ch/sw/lcg/contrib/gcc/4.9.1/x86_64-slc6-gcc49-opt/setup.csh
+source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.32/x86_64-slc6-gcc49-opt/root/bin/thisroot.csh
+mkdir bin;
+mkdir lib;
+access a file from lxplus:root -l xroot://t3se01.psi.ch:1094//store/user/micheli/rawData/output_run4078.root
