@@ -48,17 +48,13 @@ int main( int argc, char* argv[] ) {
 
   //5% stat error
   std::vector<int> wp;
-//  wp.push_back(3);
-//  wp.push_back(5);
-//  wp.push_back(20);
-//  wp.push_back(23);
-//  wp.push_back(24);    
+  wp.push_back(3);
+  wp.push_back(6);
+  wp.push_back(12);
+  wp.push_back(18);
+  wp.push_back(24);    
 
-  wp.push_back(13);
-  wp.push_back(13);
-  wp.push_back(13);
-  wp.push_back(13);
-  wp.push_back(13);    
+
 
 
 
@@ -109,10 +105,9 @@ int main( int argc, char* argv[] ) {
     resVsEnergy->SetPoint( i, energies[i],(*resValueTime)[wp_100[i]] );
     resVsEnergy->SetPointError( i, 0, (*resErrValueTime)[wp_100[i]]);
 
-    if(i>1) {
-      resVsEnergy_opt->SetPoint( i-2, energies[i],(*resValueTime)[wp[i]] );
-      resVsEnergy_opt->SetPointError( i-2, 0, (*resErrValueTime)[wp[i]]);
-    }
+    resVsEnergy_opt->SetPoint( i, energies[i],(*resValueTime)[wp[i]] );
+    resVsEnergy_opt->SetPointError( i, 0, (*resErrValueTime)[wp[i]]);
+ 
 
 
     for (int j=0;j<resValueTime->GetNoElements();j++){
@@ -132,9 +127,12 @@ int main( int argc, char* argv[] ) {
 
   TH2D* h2_axes_2 = new TH2D( "axes_2", "", 100, (resVsAmplitude[2]->GetX())[0]-10,(resVsAmplitude[2]->GetX())[resVsAmplitude[2]->GetN()-1] +10 , 110, 0., 1.1*(resVsAmplitude[2]->GetY())[0]);
   h2_axes_1->SetXTitle("Beam Energy [GeV]");
-  h2_axes_1->SetYTitle("time_{Fibre}-time_{mcp} [ns]");
+  h2_axes_1->SetYTitle("time_{Fibre}-time_{mcp} [ps]");
 
-  TH2D* h2_axes_3 = new TH2D( "axes_1", "", 100, 80, 250. , 110, 80., 1.1*((resVsEnergy_opt->GetY())[0]+(resVsEnergy_opt->GetErrorY(0))));  
+  TH2D* h2_axes_3 = new TH2D( "axes_1", "", 100, -0.0, 250. , 110, 70., 1.1*((resVsEnergy_opt->GetY())[0]+(resVsEnergy_opt->GetErrorY(0))));  
+  h2_axes_3->SetXTitle("Beam Energy [GeV]");
+  h2_axes_3->SetYTitle("time_{Fibre}-time_{mcp} [ps]");
+
   
   h2_axes_1->Draw("");
   
