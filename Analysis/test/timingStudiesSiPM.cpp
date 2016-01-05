@@ -28,6 +28,11 @@
 #include "TVectorD.h"
 #include "TF1.h"
 
+#include "interface/Configurator.h"
+#include "timingPlotsConfigurator.h"
+
+timingPlots_Config_t readConfiguration(std::string configName);
+
 int main( int argc, char* argv[] ) {
 
   DrawTools::setStyle();
@@ -41,6 +46,7 @@ int main( int argc, char* argv[] ) {
 
    std::string runName = "";
    std::string tag = "V00";
+   std::string config = "SiPM2015Config";
 
    if( argc>1 ) {
      std::string runName_str(argv[1]);
@@ -48,10 +54,14 @@ int main( int argc, char* argv[] ) {
      if( argc>2 ) {
        std::string tag_str(argv[2]);
        tag = tag_str;
+       if(argc>3){
+	 std::string config_str(argv[3]);
+	 config=config_str;
+       }
      }
    } else {
      std::cout << "Usage:" << std::endl;
-     std::cout << "./timingStudies [runName] ([tag])" << std::endl;
+     std::cout << "./timingStudies [runName] ([tag]) ([config])" << std::endl;
      exit(12345);
    }
 
@@ -66,6 +76,8 @@ int main( int argc, char* argv[] ) {
     std::cout << "Exiting." << std::endl;
     exit(11);
   }
+
+  theConfiguration_=readConfiguration(config);
 
   TH1F* reso_histo = new TH1F("reso_histo","reso_histo",2000,-10,-3);
   
@@ -86,17 +98,17 @@ int main( int argc, char* argv[] ) {
    float reso_sigma = reso_histo->GetRMS();
 
    //   TH1F* reso_histo_corr = new TH1F("reso_histo_corr","reso_histo",200,-5*reso_sigma,5*reso_sigma);
-   int nmaxAmplCuts=30;
-   TH1F* reso_histo_corr[nmaxAmplCuts];
-   TH1F* reso_histo_corr_Amplitude[nmaxAmplCuts];//to see behaviour of resolution as a function of ampl
-   TVectorD resValueTime(nmaxAmplCuts);
-   TVectorD resErrValueTime(nmaxAmplCuts);
-   TVectorD resErrRelativeValueTime(nmaxAmplCuts);
-   TVectorD nEntriesTime(nmaxAmplCuts);  
-   TVectorD resValueAmplitude(nmaxAmplCuts);//to see behaviour of resolution as a function of ampl
-   TVectorD resErrValueAmplitude(nmaxAmplCuts);//to see behaviour of resolution as a function of ampl
+   //FIXME   int nmaxAmplCuts=30;
+   TH1F* reso_histo_corr[theConfiguration_.nMaxAmplCuts];
+   TH1F* reso_histo_corr_Amplitude[theConfiguration_.nMaxAmplCuts];//to see behaviour of resolution as a function of ampl
+   TVectorD resValueTime(theConfiguration_.nMaxAmplCuts);
+   TVectorD resErrValueTime(theConfiguration_.nMaxAmplCuts);
+   TVectorD resErrRelativeValueTime(theConfiguration_.nMaxAmplCuts);
+   TVectorD nEntriesTime(theConfiguration_.nMaxAmplCuts);  
+   TVectorD resValueAmplitude(theConfiguration_.nMaxAmplCuts);//to see behaviour of resolution as a function of ampl
+   TVectorD resErrValueAmplitude(theConfiguration_.nMaxAmplCuts);//to see behaviour of resolution as a function of ampl
 
-   for (int i=0;i<nmaxAmplCuts;++i){
+   for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
     TString icut;
     icut.Form("%d",i); 
     reso_histo_corr[i] = new TH1F("reso_histo_corr_"+icut,"reso_histo_corr_"+icut,200,-3*reso_sigma,3*reso_sigma);
@@ -110,17 +122,20 @@ int main( int argc, char* argv[] ) {
       // if (Cut(ientry) < 0) continue;
       if( t.mcp_time_frac50<0 || t.mcp_max_amplitude<200)continue;
       //      reso_histo_corr->Fill(t.mcp_time_at_150-t.nino_LEtime-reso_mean);
-      for (int i=0;i<nmaxAmplCuts;++i){
+      for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
 	//	std::cout<<"###################CUT#####################"<< (i>0)*(20+(i>1)*i*10)<<std::endl;
-	if(t.cef3_maxAmpl->at(1)>(i>0)*(20+(i>1)*i*10))reso_histo_corr[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean+reso_sigma/2);
-	if(t.cef3_maxAmpl->at(1)>(i>0)*(20+(i>1)*i*15) && t.cef3_maxAmpl->at(1)<(i+1>0)*(20+(i+1>1)*(i+1)*15))reso_histo_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean+reso_sigma/2);
+	//FIXME 	if(t.cef3_maxAmpl->at(1)>(i>0)*(20+(i>1)*i*10))reso_histo_corr[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean+reso_sigma/2);
+	if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCut+(i>1)*i*theConfiguration_.step))reso_histo_corr[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean+reso_sigma/2);
+	if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCut+(i>1)*i*theConfiguration_.stepAmpl) && t.cef3_maxAmpl->at(1)<(i+1>0)*(20+(i+1>1)*(i+1)*15))reso_histo_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean+reso_sigma/2);
       }
    }
 
 
 
    // this is the dir in which the plots will be saved:
-  std::string constDirName = "plots_timing_SiPM";
+   //FIXME  std::string constDirName = "plots_timing_SiPM";
+  std::string constDirName = "plots_timing_";
+  constDirName+=theConfiguration_.setup;
   system(Form("mkdir -p %s", constDirName.c_str()));
   TString dir(constDirName);
 
@@ -129,7 +144,7 @@ int main( int argc, char* argv[] ) {
   c1.SaveAs(dir+"/reso_histo_"+runNumberString+".png");
   c1.SaveAs(dir+"/reso_histo_"+runNumberString+".pdf");
 
-  for (int i=0;i<nmaxAmplCuts;++i){
+  for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
     if(reso_histo_corr[i]->GetEntries()<5) continue;
 
     TString icut;
@@ -292,5 +307,24 @@ int main( int argc, char* argv[] ) {
   outFile->Close();
 
   return 0;
+
+}
+
+timingPlots_Config_t readConfiguration(std::string configName){
+
+  Configurator* configurator_ = new Configurator();
+  std::string fileName = Form ("./config_timing/%s.xml",configName.c_str());
+  configurator_->xmlFileName=fileName.c_str();
+  configurator_->Init();
+
+  timingPlots_Config_t conf;
+  
+   conf.nMaxAmplCuts= Configurator::GetInt(Configurable::getElementContent(*configurator_,"nMaxAmplCuts",configurator_->root_element));
+   conf.startCut= Configurator::GetInt(Configurable::getElementContent(*configurator_,"startCut",configurator_->root_element));
+   conf.step= Configurator::GetInt(Configurable::getElementContent(*configurator_,"step",configurator_->root_element));
+   conf.stepAmpl= Configurator::GetInt(Configurable::getElementContent(*configurator_,"stepAmpl",configurator_->root_element));
+   conf.setup=Configurable::getElementContent (*configurator_, "setup",configurator_->root_element) ;
+
+   return conf;
 
 }
