@@ -988,7 +988,7 @@ int main( int argc, char* argv[] ) {
        TH2F* axis=new TH2F("axis","axis",100,-80,290,100,0,max[i]/4*1.10);
        TH2F* axis2=new TH2F("axis","axis",100,-80,290,100,0,max_tight[i]/4*1.10);
        std::string energy(Form("%.0f", inputTree->BeamEnergy));
-       TPaveText* pave = DrawTools::getLabelTop(energy+" GeV Electron Beam");
+       TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
        
        //    TH2F* axis=new TH2F("axis","axis",100,-10,190,100,0,28);
        axis->GetXaxis()->SetTitle("Time [ns]");
