@@ -65,6 +65,7 @@ TStyle* DrawTools::setStyle() {
   style->SetFrameBorderMode(0);
   style->SetPadBottomMargin(0.12);
   style->SetPadLeftMargin(0.12);
+  style->SetPalette(1,0);
   style->cd();
 
   //for the histos
