@@ -63,6 +63,9 @@ kConstantFinder:  Event.o DrawTools.o RecoTree.o RooCruijff.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/kConstantFinder $(EXE_DIR)/kConstantFinder.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
 
+dummyPlotter: DrawTools.o
+	$(CC) -Wall $(INCLUDES) -o ./bin/dummyPlotter $(EXE_DIR)/dummyPlotter.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
+
 makeAnalysisTree: RunHelper.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o Waveform.o WaveformFit.o Configurator.o CeF3InputTree.o DrawTools.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/makeAnalysisTree $(EXE_DIR)/makeAnalysisTree.cpp $(LIB_DIR)/Waveform.o  $(LIB_DIR)/WaveformFit.o $(LIB_DIR)/RunHelper.o $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/DrawTools.o $(LIB_DIR)/EnergyCalibration.o $(LIB_DIR)/AlignmentOfficer.o $(LIB_DIR)/Configurator.o $(LIB_DIR)/CeF3InputTree.o $(ROOTFLAG) $(EXTRALIBS)
 
