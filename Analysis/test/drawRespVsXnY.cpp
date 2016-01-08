@@ -201,8 +201,12 @@ int main( int argc, char* argv[] ) {
   //  for(int i = 274; i< 276 ; i++){
   //  for(int i = 274; i< 323; i++){
 
-        for(int i = 2778; i<= 2786; i++){ //100 GeV
+  //        for(int i = 2778; i<= 2786; i++){ //100 GeV
   //      for(int i = 2548; i<= 2574; i++){ //100 GeV 5Gs
+
+  //  for(int i = 4076; i<= 4082; i++){ //100 GeV
+
+  for(int i = 4080; i<= 4080; i++){ //100 GeV
 
       std::string name = Form("%d", i);
 
@@ -349,20 +353,35 @@ int main( int argc, char* argv[] ) {
 	//double deposite_tot = cef3_chaInt->at(0) + cef3_chaInt->at(1) + cef3_chaInt->at(2) + cef3_chaInt->at(3) ;
 	//double deposite = cef3_maxAmpl_corr->at(j);
 	//	double deposite_tot = cef3_maxAmpl_corr->at(0) + cef3_maxAmpl_corr->at(1) + cef3_maxAmpl_corr->at(2) + cef3_maxAmpl_corr->at(3) ;
-	double deposite_tot = cef3_chaInt_wls->at(0) + cef3_chaInt_wls->at(1) + cef3_chaInt_wls->at(2) + cef3_chaInt_wls->at(3) ;
+	double deposite_tot = cef3_maxAmpl->at(0) + cef3_maxAmpl->at(1) + cef3_maxAmpl->at(2) + cef3_maxAmpl->at(3) ;
 		
-	double xPos =  0.5 * ( cluster_pos_corr_hodoX2 + cluster_pos_corr_hodoX1) ;
-	double yPos = 0.5 * ( cluster_pos_corr_hodoY2 + cluster_pos_corr_hodoY1) ;
+//	double xPos =  0.5 * ( cluster_pos_corr_hodoX2 + cluster_pos_corr_hodoX1) ;
+//	double yPos = 0.5 * ( cluster_pos_corr_hodoY2 + cluster_pos_corr_hodoY1) ;
 	
+	double	xPos = wc_x_corr;
+	double	yPos = wc_y_corr;
+
 	// if((pos_corr_hodoX1-pos_corr_hodoX2) < 1. && (pos_corr_hodoY1 - pos_corr_hodoY2) < 1.)
-	  if(cef3_chaInt_wls->at(0) <100 || cef3_chaInt_wls->at(0)>30000000)
+//	  if(cef3_maxAmpl->at(0) <100 || cef3_maxAmpl->at(0)>30000000)
+//	     continue;
+//	  if(cef3_maxAmpl->at(1) <100 || cef3_maxAmpl->at(1)>30000000)
+//	     continue;
+//	  if(cef3_maxAmpl->at(2) <100 || cef3_maxAmpl->at(2)>30000000)
+//	     continue;
+//	  if(cef3_maxAmpl->at(3) <100 || cef3_maxAmpl->at(3)>30000000)
+//	     continue;
+
+
+	  if(cef3_maxAmpl->at(0) <0 || cef3_maxAmpl->at(0)>4000)
 	     continue;
-	  if(cef3_chaInt_wls->at(1) <100 || cef3_chaInt_wls->at(1)>30000000)
+	  if(cef3_maxAmpl->at(1) <0 || cef3_maxAmpl->at(1)>4000)
 	     continue;
-	  if(cef3_chaInt_wls->at(2) <100 || cef3_chaInt_wls->at(2)>30000000)
+	  if(cef3_maxAmpl->at(2) <0 || cef3_maxAmpl->at(2)>4000)
 	     continue;
-	  if(cef3_chaInt_wls->at(3) <100 || cef3_chaInt_wls->at(3)>30000000)
+	  if(cef3_maxAmpl->at(3) <0 || cef3_maxAmpl->at(3)>4000)
 	     continue;
+
+
        
 	if( abs(cluster_pos_corr_hodoX1)<20 &&  abs(cluster_pos_corr_hodoX2)<20 && abs(cluster_pos_corr_hodoY1)<20 && abs(cluster_pos_corr_hodoY2)<20  && ( nTDCHits->at(0)>0 && nTDCHits->at(1)>0 && nTDCHits->at(2)>0 && nTDCHits->at(3)>0 && (nTDCHits->at(0)+ nTDCHits->at(1)+ nTDCHits->at(2)+ nTDCHits->at(3)   )<7 &&   nTDCHits->at(0)<3 && nTDCHits->at(1)<3 && nTDCHits->at(2)<3 && nTDCHits->at(3)<3    ) ){
 	  
@@ -374,15 +393,15 @@ int main( int argc, char* argv[] ) {
 
        if(abs(yPos)<3){
  	 for (int j=0;j<4;++j)
-	   hprofX[j]->Fill( -xPos , cef3_chaInt_wls->at(j) );
+	   hprofX[j]->Fill( xPos , cef3_maxAmpl->at(j) );//using maxAmpl for single fibres
 	   
-	 hprofX_tot->Fill( -xPos , deposite_tot);
+	 hprofX_tot->Fill( xPos , deposite_tot);
 	 
        }
        if(abs(xPos)<3){
 	 for (int j=0;j<4;++j)
-	  hprofY[j]->Fill( -yPos , cef3_chaInt_wls->at(j) );
-	 hprofY_tot->Fill( -yPos , deposite_tot);
+	  hprofY[j]->Fill( yPos , cef3_maxAmpl->at(j) );
+	 hprofY_tot->Fill( yPos , deposite_tot);
 
        }
 	 
@@ -411,13 +430,13 @@ int main( int argc, char* argv[] ) {
  
    TLegend* leg4 = new TLegend(0.3 , 0.16, 0.7, 0.3);
  leg4->SetTextSize(0.038);
- leg4->AddEntry(hprofX[j] ,Form("Ch %d, charge Integrated",j) , "p");
+  leg4->AddEntry(hprofX[j] ,Form("Ch %d",j) , "p");
  leg4->SetFillColor(0);
- leg4->Draw("same");
+ // leg4->Draw("same");
   
    
-   c1->SaveAs( Form( "%s/chaInt_wls_Xresp_vs_pos_%d.pdf", outputdir.c_str(),j ) );
-   c1->SaveAs( Form( "%s/chaInt_wls_Xresp_vs_pos_%d.png", outputdir.c_str(),j ) );
+   c1->SaveAs( Form( "%s/cef3_maxAmpl_Xresp_vs_pos_%d.pdf", outputdir.c_str(),j ) );
+   c1->SaveAs( Form( "%s/cef3_maxAmpl_Xresp_vs_pos_%d.png", outputdir.c_str(),j ) );
    
    
    c1->Clear();
@@ -429,14 +448,14 @@ int main( int argc, char* argv[] ) {
 
    TLegend* legY = new TLegend(0.3 , 0.16, 0.7, 0.3);
  legY->SetTextSize(0.038);
- legY->AddEntry(hprofY[j] ,Form("Ch %d, charge Integrated",j) , "p");
+ legY->AddEntry(hprofY[j] ,Form("Ch %d",j) , "p");
  legY->SetFillColor(0);
- legY->Draw("same");
+ // legY->Draw("same");
    
   
    label_top2->Draw("same");
-   c1->SaveAs( Form( "%s/chaInt_wls_Yresp_vs_pos_%d.pdf", outputdir.c_str(),j ) );
-   c1->SaveAs( Form( "%s/chaInt_wls_Yresp_vs_pos_%d.png", outputdir.c_str(),j ) );
+   c1->SaveAs( Form( "%s/cef3_maxAmpl_Yresp_vs_pos_%d.pdf", outputdir.c_str(),j ) );
+   c1->SaveAs( Form( "%s/cef3_maxAmpl_Yresp_vs_pos_%d.png", outputdir.c_str(),j ) );
    
    c1->Clear();
 
@@ -455,8 +474,8 @@ int main( int argc, char* argv[] ) {
  legY_tot->Draw("same");
   
 
-   c1->SaveAs( Form( "%s/chaInt_wls_Yresp_vs_pos_tot.pdf", outputdir.c_str() ) );
-   c1->SaveAs( Form( "%s/chaInt_wls_Yresp_vs_pos_tot.png", outputdir.c_str() ) );
+   c1->SaveAs( Form( "%s/cef3_maxAmpl_Yresp_vs_pos_tot.pdf", outputdir.c_str() ) );
+   c1->SaveAs( Form( "%s/cef3_maxAmpl_Yresp_vs_pos_tot.png", outputdir.c_str() ) );
   
 
    c1->Clear();
@@ -474,8 +493,8 @@ int main( int argc, char* argv[] ) {
  legX_tot->SetFillColor(0);
  legX_tot->Draw("same");
   
-   c1->SaveAs( Form( "%s/chaInt_wls_Xresp_vs_pos_tot.pdf", outputdir.c_str() ) );
-   c1->SaveAs( Form( "%s/chaInt_wls_Xresp_vs_pos_tot.png", outputdir.c_str() ) );
+   c1->SaveAs( Form( "%s/cef3_maxAmpl_Xresp_vs_pos_tot.pdf", outputdir.c_str() ) );
+   c1->SaveAs( Form( "%s/cef3_maxAmpl_Xresp_vs_pos_tot.png", outputdir.c_str() ) );
 
    c1->Clear();
 
@@ -567,8 +586,8 @@ int main( int argc, char* argv[] ) {
  legY_sim_tot->SetFillColor(0);
  legY_sim_tot->Draw("same");
   
-   c1->SaveAs( Form( "%s/chaInt_Yresp_vs_pos_sim_tot.pdf", outputdir.c_str() ) );
-   c1->SaveAs( Form( "%s/chaInt_Yresp_vs_pos_sim_tot.png", outputdir.c_str() ) );
+   c1->SaveAs( Form( "%s/maxAmpl_Yresp_vs_pos_sim_tot.pdf", outputdir.c_str() ) );
+   c1->SaveAs( Form( "%s/maxAmpl_Yresp_vs_pos_sim_tot.png", outputdir.c_str() ) );
   
 
    c1->Clear();
@@ -583,8 +602,8 @@ int main( int argc, char* argv[] ) {
  legX_sim_tot->SetFillColor(0);
  legX_sim_tot->Draw("same");
   
-   c1->SaveAs( Form( "%s/chaInt_Xresp_vs_pos_sim_tot.pdf", outputdir.c_str() ) );
-   c1->SaveAs( Form( "%s/chaInt_Xresp_vs_pos_sim_tot.png", outputdir.c_str() ) );
+   c1->SaveAs( Form( "%s/maxAmpl_Xresp_vs_pos_sim_tot.pdf", outputdir.c_str() ) );
+   c1->SaveAs( Form( "%s/maxAmpl_Xresp_vs_pos_sim_tot.png", outputdir.c_str() ) );
 
    c1->Clear();
 
