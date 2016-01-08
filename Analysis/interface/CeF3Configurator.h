@@ -23,7 +23,7 @@ typedef struct CeF3_Config_t {
   std::string tagFileName;
   int fillWFtree;
   int prescaleWFtree;
-
+  int limitNEntries;
 } CeF3_Config_t ;
 
 CeF3_Config_t theConfiguration_;
