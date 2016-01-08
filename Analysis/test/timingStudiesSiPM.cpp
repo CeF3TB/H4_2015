@@ -79,8 +79,9 @@ int main( int argc, char* argv[] ) {
 
   theConfiguration_=readConfiguration(config);
 
-  TH1F* reso_histo = new TH1F("reso_histo","reso_histo",2000,-10,-3);
-  
+  //FIXME  TH1F* reso_histo = new TH1F("reso_histo","reso_histo",2000,-10,-3);
+  TH1F* reso_histo = new TH1F("reso_histo","reso_histo",2000,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);  
+
   TTree* recoTree=(TTree*)file->Get("recoTree");
   RecoTree t(recoTree);
   Long64_t nentries = t.fChain->GetEntries();
@@ -145,14 +146,18 @@ int main( int argc, char* argv[] ) {
   c1.SaveAs(dir+"/reso_histo_"+runNumberString+".pdf");
 
   for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
-    if(reso_histo_corr[i]->GetEntries()<5) continue;
+    std::cout<<reso_histo_corr[i]->FindBin(-0.5)<<" "<<reso_histo_corr[i]->FindBin(0.3)<<std::endl;
+    std::cout<<reso_histo_corr[i]->Integral(reso_histo_corr[i]->FindBin(-0.5),reso_histo_corr[i]->FindBin(0.3))<<std::endl;
+    if(reso_histo_corr[i]->Integral(reso_histo_corr[i]->FindBin(-0.5),reso_histo_corr[i]->FindBin(0.3))<5) continue;
 
     TString icut;
     icut.Form("%d",i); 
     
 
     c1.Clear();
+    std::cout<<"fit"<<std::endl;
     reso_histo_corr[i]->Fit("gaus","","",-0.5,0.3);
+    std::cout<<"fit done"<<std::endl;
     //  double *par=reso_histo_corr[i]->GetFunction("gaus")->GetParameters();
     TF1* fgaus=reso_histo_corr[i]->GetFunction("gaus");
 
@@ -179,7 +184,6 @@ int main( int argc, char* argv[] ) {
 
     c1.SaveAs(dir+"/reso_histo_corr_gaus_"+icut+"_"+runNumberString+".png");
     c1.SaveAs(dir+"/reso_histo_corr_gaus_"+icut+"_"+runNumberString+".pdf");
-
 
   //-----------------fit with cruijff ------------------------
   TH1F* histo;
@@ -324,7 +328,8 @@ timingPlots_Config_t readConfiguration(std::string configName){
    conf.step= Configurator::GetInt(Configurable::getElementContent(*configurator_,"step",configurator_->root_element));
    conf.stepAmpl= Configurator::GetInt(Configurable::getElementContent(*configurator_,"stepAmpl",configurator_->root_element));
    conf.setup=Configurable::getElementContent (*configurator_, "setup",configurator_->root_element) ;
-
+   conf.rangeXLow= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"rangeXLow",configurator_->root_element));
+   conf.rangeXUp= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"rangeXUp",configurator_->root_element));
    return conf;
 
 }
