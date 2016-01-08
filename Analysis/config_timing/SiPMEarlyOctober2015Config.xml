@@ -1,0 +1,9 @@
+<general>
+  <nMaxAmplCuts>30</nMaxAmplCuts>
+  <startCut>20</startCut>
+  <step>10</step>
+  <stepAmpl>15</stepAmpl>
+  <rangeXLow>-10</rangeXLow>
+  <rangeXUp>-3</rangeXUp>
+  <setup>SiPM</setup>
+</general>
