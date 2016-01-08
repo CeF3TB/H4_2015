@@ -363,6 +363,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
+   if(theConfiguration_.limitNEntries==1)nentries=10000;
    //   nentries=5000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
@@ -500,7 +501,6 @@ int main( int argc, char* argv[] ) {
 
     //set the tag for calibration
     std::string theBeamEnergy = Form("%.0f",inputTree->BeamEnergy);
-    if(runName=="4076")theBeamEnergy=Form("%.0f",100);//FIX ME, error in database
     TagHelper tagHelper(tag,theBeamEnergy);
     EnergyCalibration cef3Calib(tagHelper.getCeF3FileName());
     EnergyCalibration bgoCalib(tagHelper.getBGOFileName());
@@ -739,10 +739,11 @@ int main( int argc, char* argv[] ) {
       waveform.at(ch)->addTimeAndSample((i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency),inputTree->digi_value_bare_noise_sub->at(iSample));
 
       if(i==0 && (iEntry % theConfiguration_.prescaleWFtree == 0) ){
-	if((nClusters_hodoX1==1||pos_2FibClust_hodoX1>-999) && (nClusters_hodoX2==1||pos_2FibClust_hodoX2>-999) && (nClusters_hodoY1==1||pos_2FibClust_hodoY1>-999) && (nClusters_hodoY1==1||pos_2FibClust_hodoY1>-999)){//exactly one cluster, or, if there are multiple clusters, exactly one 2-fiber cluster
-	  if(TMath::Abs(0.5* (cluster_pos_corr_hodoX1+cluster_pos_corr_hodoX2))< 3 && TMath::Abs( 0.5* (cluster_pos_corr_hodoY1+cluster_pos_corr_hodoY2))< 3 && (wc_x_corr-cluster_pos_corr_hodoX2)<4 && (wc_y_corr-cluster_pos_corr_hodoY2)< 4  && TMath::Abs( (cluster_pos_corr_hodoX1-cluster_pos_corr_hodoX2))<1.5 &&TMath::Abs( (cluster_pos_corr_hodoY1-cluster_pos_corr_hodoY2))<1.5){
 	    WFoutTreeEntries++; 
 	    fillWFoutTree=true;
+	if((nClusters_hodoX1==1||pos_2FibClust_hodoX1>-999) && (nClusters_hodoX2==1||pos_2FibClust_hodoX2>-999) && (nClusters_hodoY1==1||pos_2FibClust_hodoY1>-999) && (nClusters_hodoY1==1||pos_2FibClust_hodoY1>-999)){//exactly one cluster, or, if there are multiple clusters, exactly one 2-fiber cluster
+	  if(TMath::Abs(0.5* (cluster_pos_corr_hodoX1+cluster_pos_corr_hodoX2))< 3 && TMath::Abs( 0.5* (cluster_pos_corr_hodoY1+cluster_pos_corr_hodoY2))< 3 && (wc_x_corr-cluster_pos_corr_hodoX2)<4 && (wc_y_corr-cluster_pos_corr_hodoY2)< 4  && TMath::Abs( (cluster_pos_corr_hodoX1-cluster_pos_corr_hodoX2))<1.5 &&TMath::Abs( (cluster_pos_corr_hodoY1-cluster_pos_corr_hodoY2))<1.5){
+
 	    if(TMath::Abs(0.5* (cluster_pos_corr_hodoX1+cluster_pos_corr_hodoX2))< 1 && TMath::Abs( 0.5* (cluster_pos_corr_hodoY1+cluster_pos_corr_hodoY2))< 1){//let's see the waveforms for events in 1x1 strip
 	      WFoutTreeTightEntries++; 
 	      fillWFoutTreeTight=true;
@@ -947,7 +948,8 @@ int main( int argc, char* argv[] ) {
 	 mean_tight[i][j]/=WFoutTreeTightEntries;
 
 	 //	 if(i==0)	 std::cout<<mean[i][j]<<std::endl;
-	 if(max[i]<mean[i][j]){
+	 if(j>800) continue;//let's avoid weard shapes at the end of the pulse
+	 if(max[i]<mean[i][j] ){
 	   max[i]=mean[i][j];
 	 }
 	 if(max_tight[i]<mean_tight[i][j]){
@@ -985,8 +987,13 @@ int main( int argc, char* argv[] ) {
 
      
        TCanvas c1("c_"+fiber);
-       TH2F* axis=new TH2F("axis","axis",100,-80,290,100,0,max[i]/4*1.10);
-       TH2F* axis2=new TH2F("axis","axis",100,-80,290,100,0,max_tight[i]/4*1.10);
+//       TH2F* axis=new TH2F("axis","axis",100,-80-20*isOctober2015EarlyMAPDRun,280,100,0,max[i]/4*1.10);
+//       TH2F* axis2=new TH2F("axis","axis",100,-80-20*isOctober2015EarlyMAPDRun,280,100,0,max_tight[i]/4*1.10);
+       TH2F* axis=new TH2F("axis","axis",100,-100,280,100,0,max[i]/4*1.10);
+       TH2F* axis2=new TH2F("axis","axis",100,-100,280,100,0,max_tight[i]/4*1.10);
+
+
+
        std::string energy(Form("%.0f", inputTree->BeamEnergy));
        TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
        
@@ -1003,6 +1010,7 @@ int main( int argc, char* argv[] ) {
        pave->Draw("same");
        c1.Write("pulseShape"+fiber);
        std::string name= Form("plots/pulseShape"+fiber+"_%d",inputTree->runNumber);
+       if(theConfiguration_.addTagFileName)name= Form("plots/pulseShape"+fiber+"_"+theConfiguration_.tagFileName+"_%d",inputTree->runNumber);
        c1.SaveAs(Form("%s.png",name.c_str()));
        c1.SaveAs(Form("%s.pdf",name.c_str()));
 
@@ -1012,6 +1020,7 @@ int main( int argc, char* argv[] ) {
        pave->Draw("same");
        c1.Write("pulseShape_tight"+fiber);
        name= Form("plots/pulseShape_tight"+fiber+"_%d",inputTree->runNumber);
+       if(theConfiguration_.addTagFileName)       name= Form("plots/pulseShape_tight"+fiber+"_"+theConfiguration_.tagFileName+"_%d",inputTree->runNumber);
        c1.SaveAs(Form("%s.png",name.c_str()));
        c1.SaveAs(Form("%s.pdf",name.c_str()));
 
@@ -1359,6 +1368,8 @@ CeF3_Config_t readConfiguration(std::string configName){
    conf.fillWFtree = Configurator::GetInt(Configurable::getElementContent(*configurator_,"fillWFtree",configurator_->root_element));
 
    conf.prescaleWFtree = Configurator::GetInt(Configurable::getElementContent(*configurator_,"prescaleWFtree",configurator_->root_element));
+
+   conf.limitNEntries= Configurator::GetInt(Configurable::getElementContent(*configurator_,"limitNEntries",configurator_->root_element));
 
    return conf;
 
