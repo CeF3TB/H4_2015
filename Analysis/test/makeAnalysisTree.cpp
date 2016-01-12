@@ -782,12 +782,6 @@ int main( int argc, char* argv[] ) {
 
     }
 
-    if(theConfiguration_.fillWFtree && fillWFoutTree )	{
-      outWFTree.tree_->AutoSave("FlushBaskets");
-      outWFTree.Fill();
-
-    }
-
 
     //mcp info    
     if(MCP_RUN){
@@ -821,7 +815,6 @@ int main( int argc, char* argv[] ) {
 
       mcp_max_amplitude=wave_max_bare.max_amplitude;
     }
-
 
 
 
@@ -911,6 +904,17 @@ int main( int argc, char* argv[] ) {
     assignValues( cef3_chaInt, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);
 
 
+
+    if(theConfiguration_.fillWFtree && fillWFoutTree )	{
+      outWFTree.maxAmpl1=inputTree->digi_max_amplitude_bare_noise_sub->at(0);
+      outWFTree.maxAmpl2=inputTree->digi_max_amplitude_bare_noise_sub->at(1);
+      outWFTree.maxAmpl3=inputTree->digi_max_amplitude_bare_noise_sub->at(2);
+      outWFTree.maxAmpl4=inputTree->digi_max_amplitude_bare_noise_sub->at(3);
+      outWFtree.deltaT=cef3_time_at_frac50-mcp_time_frac50;
+      outWFTree.tree_->AutoSave("FlushBaskets");
+      outWFTree.Fill();
+
+    }
 
 
 
