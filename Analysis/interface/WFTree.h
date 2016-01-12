@@ -36,6 +36,11 @@ class WFTree
   int*   WF_ch; 
   float* WF_time;
   float* WF_val;
+  float  maxAmpl1;
+  float  maxAmpl2;
+  float  maxAmpl3;
+  float  maxAmpl4;
+  float  deltaT;
 };
 
 WFTree::WFTree(int nCh, int nSamples)
@@ -56,6 +61,11 @@ WFTree::WFTree(int nCh, int nSamples)
   tree_->Branch(Form("evtNumber%s",suffix_.Data()), evtNumber,            Form("evtNumber%s[WF_samples%s]/I",suffix_.Data(),suffix_.Data()));
   tree_->Branch(Form("WF_time%s",suffix_.Data()), WF_time,        Form("WF_time%s[WF_samples%s]/F",suffix_.Data(),suffix_.Data()));
   tree_->Branch(Form("WF_val%s",suffix_.Data()), WF_val,          Form("WF_val%s[WF_samples%s]/F",suffix_.Data(),suffix_.Data()));
+  tree_->Branch(Form("maxAmpl1%s",suffix_.Data()), &maxAmpl1, Form("maxAmpl1%s/F",suffix_.Data()));
+  tree_->Branch(Form("maxAmpl2%s",suffix_.Data()), &maxAmpl2, Form("maxAmpl2%s/F",suffix_.Data()));
+  tree_->Branch(Form("maxAmpl3%s",suffix_.Data()), &maxAmpl3, Form("maxAmpl3%s/F",suffix_.Data()));
+  tree_->Branch(Form("maxAmpl4%s",suffix_.Data()), &maxAmpl4, Form("maxAmpl4%s/F",suffix_.Data()));
+  tree_->Branch(Form("deltaT%s",suffix_.Data()), &deltaT, Form("deltaT%s/F",suffix_.Data()));
 }
 
 WFTree::~WFTree()
