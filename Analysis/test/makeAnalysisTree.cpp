@@ -891,9 +891,9 @@ int main( int argc, char* argv[] ) {
       else cef3_time_at_frac50[iChannel]=-999;
 
 
-      }
-
-     //BACKWARDS COMPATIBILITY///
+    }
+    
+    //BACKWARDS COMPATIBILITY///
     assignValues( cef3, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL,2,isOctober2015EarlyRun);     
     assignValues( cef3_corr, *inputTree->digi_charge_integrated_bare_noise_sub, CEF3_START_CHANNEL ,2,isOctober2015EarlyRun);  
     
@@ -910,7 +910,7 @@ int main( int argc, char* argv[] ) {
       outWFTree.maxAmpl2=inputTree->digi_max_amplitude_bare_noise_sub->at(1);
       outWFTree.maxAmpl3=inputTree->digi_max_amplitude_bare_noise_sub->at(2);
       outWFTree.maxAmpl4=inputTree->digi_max_amplitude_bare_noise_sub->at(3);
-      outWFtree.deltaT=cef3_time_at_frac50-mcp_time_frac50;
+      outWFTree.deltaT=cef3_time_at_frac50[1] -mcp_time_frac50;
       outWFTree.tree_->AutoSave("FlushBaskets");
       outWFTree.Fill();
 
