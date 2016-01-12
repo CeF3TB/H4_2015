@@ -32,6 +32,8 @@
 #include "timingPlotsConfigurator.h"
 
 timingPlots_Config_t readConfiguration(std::string configName);
+bool passesFibreTopologicalSelection(RecoTree t);
+bool passesChannelTopologicalSelection(RecoTree t);
 
 int main( int argc, char* argv[] ) {
 
@@ -79,9 +81,9 @@ int main( int argc, char* argv[] ) {
 
   theConfiguration_=readConfiguration(config);
 
-  //FIXME  TH1F* reso_histo = new TH1F("reso_histo","reso_histo",2000,-10,-3);
-  TH1F* reso_histo = new TH1F("reso_histo","reso_histo",2000,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);  
-
+  TH1F* reso_histo_fibre = new TH1F("reso_histo_fibre","reso_histo_fibre",2000,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);  
+  TH1F* reso_histo_channel = new TH1F("reso_histo_channel","reso_histo_channel",2000,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);  
+  
   TTree* recoTree=(TTree*)file->Get("recoTree");
   RecoTree t(recoTree);
   Long64_t nentries = t.fChain->GetEntries();
@@ -91,29 +93,55 @@ int main( int argc, char* argv[] ) {
       if (ientry < 0) break;
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
-      if( t.mcp_max_amplitude<200)continue;
-      reso_histo->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
+      if( t.mcp_time_frac50<0 ||t.mcp_max_amplitude<200)continue;
+      if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2Cut)   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce remaining events hitting the channel
+	reso_histo_fibre->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
+      if(passesChannelTopologicalSelection(t)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2Cut)   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination
+	reso_histo_channel->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
    }
 
-   float reso_mean = reso_histo->GetMean();
-   float reso_sigma = reso_histo->GetRMS();
+   float reso_mean_fibre = reso_histo_fibre->GetMean();
+   float reso_sigma_fibre = reso_histo_fibre->GetRMS();
 
-   //   TH1F* reso_histo_corr = new TH1F("reso_histo_corr","reso_histo",200,-5*reso_sigma,5*reso_sigma);
-   //FIXME   int nmaxAmplCuts=30;
-   TH1F* reso_histo_corr[theConfiguration_.nMaxAmplCuts];
-   TH1F* reso_histo_corr_Amplitude[theConfiguration_.nMaxAmplCuts];//to see behaviour of resolution as a function of ampl
-   TVectorD resValueTime(theConfiguration_.nMaxAmplCuts);
-   TVectorD resErrValueTime(theConfiguration_.nMaxAmplCuts);
-   TVectorD resErrRelativeValueTime(theConfiguration_.nMaxAmplCuts);
-   TVectorD nEntriesTime(theConfiguration_.nMaxAmplCuts);  
-   TVectorD resValueAmplitude(theConfiguration_.nMaxAmplCuts);//to see behaviour of resolution as a function of ampl
-   TVectorD resErrValueAmplitude(theConfiguration_.nMaxAmplCuts);//to see behaviour of resolution as a function of ampl
+   float reso_mean_channel = reso_histo_channel->GetMean();
+   float reso_sigma_channel = reso_histo_channel->GetRMS();
+
+   TH1F* reso_histo_fibre_corr[theConfiguration_.nMaxAmplCuts];
+   TH1F* reso_histo_fibre_corr_Amplitude[theConfiguration_.nMaxAmplCuts];//to see behaviour of resolution as a function of ampl
+   TH1F* reso_histo_channel_corr[theConfiguration_.nMaxAmplCuts];
+   TH1F* reso_histo_channel_corr_Amplitude[theConfiguration_.nMaxAmplCuts];//to see behaviour of resolution as a function of ampl
+
+   TVectorD resValueTime_fibre(theConfiguration_.nMaxAmplCuts);
+   TVectorD resErrValueTime_fibre(theConfiguration_.nMaxAmplCuts);
+   TVectorD resErrRelativeValueTime_fibre(theConfiguration_.nMaxAmplCuts);
+   TVectorD nEntriesTime_fibre(theConfiguration_.nMaxAmplCuts);  
+   TVectorD resValueAmplitude_fibre(theConfiguration_.nMaxAmplCuts);//to see behaviour of resolution as a function of ampl
+   TVectorD resErrValueAmplitude_fibre(theConfiguration_.nMaxAmplCuts);//to see behaviour of resolution as a function of ampl
+
+   TVectorD resValueTime_channel(theConfiguration_.nMaxAmplCuts);
+   TVectorD resErrValueTime_channel(theConfiguration_.nMaxAmplCuts);
+   TVectorD resErrRelativeValueTime_channel(theConfiguration_.nMaxAmplCuts);
+   TVectorD nEntriesTime_channel(theConfiguration_.nMaxAmplCuts);  
+   TVectorD resValueAmplitude_channel(theConfiguration_.nMaxAmplCuts);//to see behaviour of resolution as a function of ampl
+   TVectorD resErrValueAmplitude_channel(theConfiguration_.nMaxAmplCuts);//to see behaviour of resolution as a function of ampl
+
 
    for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
     TString icut;
     icut.Form("%d",i); 
-    reso_histo_corr[i] = new TH1F("reso_histo_corr_"+icut,"reso_histo_corr_"+icut,200,-3*reso_sigma,3*reso_sigma);
-    reso_histo_corr_Amplitude[i] = new TH1F("reso_histo_corr_Amplitude_"+icut,"reso_histo_corr_Amplitude_"+icut,200,-3*reso_sigma,3*reso_sigma);
+    reso_histo_fibre_corr[i] = new TH1F("reso_histo_fibre_corr_"+icut,"reso_histo_fibre_corr_"+icut,200,-3*reso_sigma_fibre,3*reso_sigma_fibre);
+    reso_histo_fibre_corr_Amplitude[i] = new TH1F("reso_histo_fibre_corr_Amplitude_"+icut,"reso_histo_fibre_corr_Amplitude_"+icut,200,-3*reso_sigma_fibre,3*reso_sigma_fibre);
+
+    reso_histo_fibre_corr[i] = new TH1F("reso_histo_fibre_corr_"+icut,"reso_histo_fibre_corr_"+icut,200,-3*reso_sigma_fibre,3*reso_sigma_fibre);
+    reso_histo_fibre_corr_Amplitude[i] = new TH1F("reso_histo_fibre_corr_Amplitude_"+icut,"reso_histo_fibre_corr_Amplitude_"+icut,200,-3*reso_sigma_fibre,3*reso_sigma_fibre);
+
+    reso_histo_channel_corr[i] = new TH1F("reso_histo_channel_corr_"+icut,"reso_histo_channel_corr_"+icut,200,-3*reso_sigma_channel,3*reso_sigma_channel);
+    reso_histo_channel_corr_Amplitude[i] = new TH1F("reso_histo_channel_corr_Amplitude_"+icut,"reso_histo_channel_corr_Amplitude_"+icut,200,-3*reso_sigma_channel,3*reso_sigma_channel);
+
+    reso_histo_channel_corr[i] = new TH1F("reso_histo_channel_corr_"+icut,"reso_histo_channel_corr_"+icut,200,-3*reso_sigma_channel,3*reso_sigma_channel);
+    reso_histo_channel_corr_Amplitude[i] = new TH1F("reso_histo_channel_corr_Amplitude_"+icut,"reso_histo_channel_corr_Amplitude_"+icut,200,-3*reso_sigma_channel,3*reso_sigma_channel);
+
+
    }
 
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -122,33 +150,33 @@ int main( int argc, char* argv[] ) {
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
       if( t.mcp_time_frac50<0 || t.mcp_max_amplitude<200)continue;
-      //      reso_histo_corr->Fill(t.mcp_time_at_150-t.nino_LEtime-reso_mean);
-      for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
-	//	std::cout<<"###################CUT#####################"<< (i>0)*(20+(i>1)*i*10)<<std::endl;
-	//FIXME 	if(t.cef3_maxAmpl->at(1)>(i>0)*(20+(i>1)*i*10))reso_histo_corr[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean+reso_sigma/2);
-	if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCut+(i>1)*i*theConfiguration_.step))reso_histo_corr[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean+reso_sigma/2);
-	if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCut+(i>1)*i*theConfiguration_.stepAmpl) && t.cef3_maxAmpl->at(1)<(i+1>0)*(20+(i+1>1)*(i+1)*15))reso_histo_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean+reso_sigma/2);
+      //      reso_histo_fibre_corr->Fill(t.mcp_time_at_150-t.nino_LEtime-reso_mean_fibre);
+      if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2Cut){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce remaining events hitting the channel
+	for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
+	  //	std::cout<<"###################CUT#####################"<< (i>0)*(20+(i>1)*i*10)<<std::endl;
+	  if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCut+(i>1)*i*theConfiguration_.step))reso_histo_fibre_corr[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean_fibre+reso_sigma_fibre/2);
+	  if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCut+(i>1)*i*theConfiguration_.stepAmpl) && t.cef3_maxAmpl->at(1)<(i+1>0)*(20+(i+1>1)*(i+1)*15))reso_histo_fibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean_fibre+reso_sigma_fibre/2);
+	}
       }
    }
 
 
 
    // this is the dir in which the plots will be saved:
-   //FIXME  std::string constDirName = "plots_timing_SiPM";
   std::string constDirName = "plots_timing_";
   constDirName+=theConfiguration_.setup;
   system(Form("mkdir -p %s", constDirName.c_str()));
   TString dir(constDirName);
 
   TCanvas c1;
-  reso_histo->Draw();
-  c1.SaveAs(dir+"/reso_histo_"+runNumberString+".png");
-  c1.SaveAs(dir+"/reso_histo_"+runNumberString+".pdf");
+  reso_histo_fibre->Draw();
+  c1.SaveAs(dir+"/reso_histo_fibre_"+runNumberString+".png");
+  c1.SaveAs(dir+"/reso_histo_fibre_"+runNumberString+".pdf");
 
   for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
-    std::cout<<reso_histo_corr[i]->FindBin(-0.5)<<" "<<reso_histo_corr[i]->FindBin(0.3)<<std::endl;
-    std::cout<<reso_histo_corr[i]->Integral(reso_histo_corr[i]->FindBin(-0.5),reso_histo_corr[i]->FindBin(0.3))<<std::endl;
-    if(reso_histo_corr[i]->Integral(reso_histo_corr[i]->FindBin(-0.5),reso_histo_corr[i]->FindBin(0.3))<5) continue;
+    std::cout<<reso_histo_fibre_corr[i]->FindBin(-0.5)<<" "<<reso_histo_fibre_corr[i]->FindBin(0.3)<<std::endl;
+    std::cout<<reso_histo_fibre_corr[i]->Integral(reso_histo_fibre_corr[i]->FindBin(-0.5),reso_histo_fibre_corr[i]->FindBin(0.3))<<std::endl;
+    if(reso_histo_fibre_corr[i]->Integral(reso_histo_fibre_corr[i]->FindBin(-0.5),reso_histo_fibre_corr[i]->FindBin(0.3))<5) continue;
 
     TString icut;
     icut.Form("%d",i); 
@@ -156,19 +184,19 @@ int main( int argc, char* argv[] ) {
 
     c1.Clear();
     std::cout<<"fit"<<std::endl;
-    reso_histo_corr[i]->Fit("gaus","","",-0.5,0.3);
+    reso_histo_fibre_corr[i]->Fit("gaus","","",-0.5,0.3);
     std::cout<<"fit done"<<std::endl;
-    //  double *par=reso_histo_corr[i]->GetFunction("gaus")->GetParameters();
-    TF1* fgaus=reso_histo_corr[i]->GetFunction("gaus");
+    //  double *par=reso_histo_fibre_corr[i]->GetFunction("gaus")->GetParameters();
+    TF1* fgaus=reso_histo_fibre_corr[i]->GetFunction("gaus");
 
     fgaus->SetLineWidth(2.);
     fgaus->SetLineColor(kBlue);
-    reso_histo_corr[i]->GetXaxis()->SetTitle("time_{Fibre}-time_{mcp} [ns]");
-    float binWidth =reso_histo_corr[i]->GetXaxis()->GetBinWidth(1);
+    reso_histo_fibre_corr[i]->GetXaxis()->SetTitle("time_{Fibre}-time_{mcp} [ns]");
+    float binWidth =reso_histo_fibre_corr[i]->GetXaxis()->GetBinWidth(1);
     //  std::string ytitle = Form("Events / %.0f ps",binWidth*1.e3); 
     std::string ytitle = Form("Events");
-    reso_histo_corr[i]->SetYTitle(ytitle.c_str());
-    reso_histo_corr[i]->Draw();
+    reso_histo_fibre_corr[i]->SetYTitle(ytitle.c_str());
+    reso_histo_fibre_corr[i]->Draw();
     std::string energy(Form("%.0f", t.beamEnergy));
     TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
     pave->Draw("same");
@@ -182,13 +210,13 @@ int main( int argc, char* argv[] ) {
     
 
 
-    c1.SaveAs(dir+"/reso_histo_corr_gaus_"+icut+"_"+runNumberString+".png");
-    c1.SaveAs(dir+"/reso_histo_corr_gaus_"+icut+"_"+runNumberString+".pdf");
+    c1.SaveAs(dir+"/reso_histo_fibre_corr_gaus_"+icut+"_"+runNumberString+".png");
+    c1.SaveAs(dir+"/reso_histo_fibre_corr_gaus_"+icut+"_"+runNumberString+".pdf");
 
   //-----------------fit with cruijff ------------------------
   TH1F* histo;
-  histo=reso_histo_corr[i];
-  nEntriesTime[i]=histo->GetEntries();
+  histo=reso_histo_fibre_corr[i];
+  nEntriesTime_fibre[i]=histo->GetEntries();
   double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
   double sigma = histo->GetRMS();
 
@@ -237,17 +265,17 @@ int main( int argc, char* argv[] ) {
   
   pave->Draw("same");
 
-  cans->SaveAs(dir+"/reso_histo_cruijff_"+icut+"_"+runNumberString+".png");
-  cans->SaveAs(dir+"/reso_histo_cruijff_"+icut+"_"+runNumberString+".pdf");
+  cans->SaveAs(dir+"/reso_histo_fibre_cruijff_"+icut+"_"+runNumberString+".png");
+  cans->SaveAs(dir+"/reso_histo_fibre_cruijff_"+icut+"_"+runNumberString+".pdf");
 
 
-  resValueTime[i]=rms*1.e3;
-  resErrValueTime[i]=rmsErr*1.e3;
+  resValueTime_fibre[i]=rms*1.e3;
+  resErrValueTime_fibre[i]=rmsErr*1.e3;
 
-  if(rms!=0)  resErrRelativeValueTime[i]=rmsErr/rms;
+  if(rms!=0)  resErrRelativeValueTime_fibre[i]=rmsErr/rms;
 
-  resValueAmplitude[i]=reso_histo_corr_Amplitude[i]->GetRMS()*1.e3; 
-  resErrValueAmplitude[i]=reso_histo_corr_Amplitude[i]->GetRMSError()*1.e3; 
+  resValueAmplitude_fibre[i]=reso_histo_fibre_corr_Amplitude[i]->GetRMS()*1.e3; 
+  resErrValueAmplitude_fibre[i]=reso_histo_fibre_corr_Amplitude[i]->GetRMSError()*1.e3; 
 
   //////------------ fit with crystal ball-------
   bool fitWithCB=false;
@@ -287,8 +315,8 @@ int main( int argc, char* argv[] ) {
 
     pave->Draw("same");
 
-  cans->SaveAs(dir+"/reso_histo_cb_"+icut+"_"+runNumberString+".png");
-  cans->SaveAs(dir+"/reso_histo_cb_"+icut+"_"+runNumberString+".pdf");
+  cans->SaveAs(dir+"/reso_histo_fibre_cb_"+icut+"_"+runNumberString+".png");
+  cans->SaveAs(dir+"/reso_histo_fibre_cb_"+icut+"_"+runNumberString+".pdf");
 
 
   }
@@ -300,12 +328,12 @@ int main( int argc, char* argv[] ) {
   outFileName = dir+"/timingStudiesSiPM_"+tag+"_"+runName+".root";
   TFile* outFile = TFile::Open(outFileName.c_str(),"recreate");
 
-  resValueTime.Write("resValueTime");
-  resValueAmplitude.Write("resValueAmplitude");
-  resErrValueAmplitude.Write("resErrValueAmplitude");
-  resErrValueTime.Write("resErrValueTime");
-  resErrRelativeValueTime.Write("resErrRelativeValueTime");
-  nEntriesTime.Write("nEntriesTime");
+  resValueTime_fibre.Write("resValueTime_fibre");
+  resValueAmplitude_fibre.Write("resValueAmplitude_fibre");
+  resErrValueAmplitude_fibre.Write("resErrValueAmplitude_fibre");
+  resErrValueTime_fibre.Write("resErrValueTime_fibre");
+  resErrRelativeValueTime_fibre.Write("resErrRelativeValueTime_fibre");
+  nEntriesTime_fibre.Write("nEntriesTime_fibre");
 
   outFile->Write();
   outFile->Close();
@@ -330,6 +358,18 @@ timingPlots_Config_t readConfiguration(std::string configName){
    conf.setup=Configurable::getElementContent (*configurator_, "setup",configurator_->root_element) ;
    conf.rangeXLow= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"rangeXLow",configurator_->root_element));
    conf.rangeXUp= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"rangeXUp",configurator_->root_element));
+   conf.channel2Cut= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"channel2Cut",configurator_->root_element));
    return conf;
 
+}
+
+bool passesFibreTopologicalSelection(RecoTree t){
+  if(0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)<-2.5 && 0.5*(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)<-3 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100 && t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_y_corr<-2.5 && t.wc_y_corr>-20 && t.wc_x_corr<-3 && t.wc_x_corr>-20 ) return true;
+  return false;
+}
+
+bool passesChannelTopologicalSelection(RecoTree t){
+
+  if(0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)<-2.5 && 0.5*(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)>3 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100 && t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_y_corr>-2.5  && t.wc_x_corr>-3) return true;
+  return false;
 }

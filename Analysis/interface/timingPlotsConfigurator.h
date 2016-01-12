@@ -6,6 +6,7 @@ typedef struct timingPlots_Config_t {
   float rangeXLow;
   float rangeXUp;
   std::string setup;  
+  float channel2Cut;
 
 } timingPlots_Config_t ;
 
