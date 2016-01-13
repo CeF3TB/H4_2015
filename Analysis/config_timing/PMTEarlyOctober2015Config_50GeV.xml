@@ -1,0 +1,17 @@
+<general>
+  <nMaxAmplCuts>30</nMaxAmplCuts>
+  <startCutFibre>200</startCutFibre>
+  <stepFibre>100</stepFibre>
+  <stepAmplFibre>100</stepAmplFibre>
+  <startCutChannel>20</startCutChannel>
+  <stepChannel>10</stepChannel>
+  <stepAmplChannel>20</stepAmplChannel>
+  <rangeXLow>2</rangeXLow>
+  <rangeXUp>15</rangeXUp>
+  <setup>PMT</setup>
+  <channel2CutFibre>70</channel2CutFibre>
+  <channel1CutChannel>1000</channel1CutChannel>
+  <channel2CutChannel>75</channel2CutChannel>
+  <nBinsFibre>80</nBinsFibre>
+  <nBinsChannel>160</nBinsChannel>
+</general>

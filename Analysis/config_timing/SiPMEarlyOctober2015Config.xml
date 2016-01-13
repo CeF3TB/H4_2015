@@ -6,4 +6,5 @@
   <rangeXLow>-10</rangeXLow>
   <rangeXUp>-3</rangeXUp>
   <setup>SiPM</setup>
+  <channel2Cut>100</channel2Cut>
 </general>
