@@ -1,0 +1,17 @@
+<general>
+  <nMaxAmplCuts>30</nMaxAmplCuts>
+  <startCutFibre>20</startCutFibre>
+  <stepFibre>10</stepFibre>
+  <stepAmplFibre>15</stepAmplFibre>
+  <startCutChannel>20</startCutChannel>
+  <stepChannel>10</stepChannel>
+  <stepAmplChannel>15</stepAmplChannel>
+  <rangeXLow>-8</rangeXLow>
+  <rangeXUp>-1</rangeXUp>
+  <setup>SiPM</setup>
+  <channel2CutFibre>500</channel2CutFibre>
+  <channel1CutChannel>1000</channel1CutChannel>
+  <channel2CutChannel>75</channel2CutChannel>
+  <nBinsFibre>80</nBinsFibre>
+  <nBinsChannel>160</nBinsChannel>
+</general>
