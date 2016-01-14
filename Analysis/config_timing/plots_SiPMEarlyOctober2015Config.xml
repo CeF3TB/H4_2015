@@ -1,0 +1,7 @@
+<general>
+  <energies>20,50,100,150,200</energies>
+  <wp>3,6,12,18,24</wp>
+  <runs>4055,4051,4052,4053,4054</runs>
+  <setup>SiPM</setup>
+</general>
+
