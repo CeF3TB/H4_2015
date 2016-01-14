@@ -51,8 +51,8 @@ timingStudies:  Event.o DrawTools.o RecoTree.o RooCruijff.o
 timingStudiesSiPM:  Event.o DrawTools.o RecoTree.o RooCruijff.o Configurator.o
 	$(CC) -Wall $(INCLUDES) -o ./bin/timingStudiesSiPM $(EXE_DIR)/timingStudiesSiPM.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o $(LIB_DIR)/Configurator.o $(ROOTFLAG) $(EXTRALIBS)
 
-plotTimingResolution:  DrawTools.o 
-	$(CC) -Wall $(INCLUDES) -o ./bin/plotTimingResolution $(EXE_DIR)/plotTimingResolution.cpp $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
+plotTimingResolution:  DrawTools.o Configurator.o
+	$(CC) -Wall $(INCLUDES) -o ./bin/plotTimingResolution $(EXE_DIR)/plotTimingResolution.cpp $(LIB_DIR)/DrawTools.o  $(LIB_DIR)/Configurator.o $(ROOTFLAG) $(EXTRALIBS)
 
 
 drawTiming:  DrawTools.o RecoTree.o 
