@@ -103,6 +103,7 @@ int main( int argc, char* argv[] ) {
 	reso_histo_channel->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
    }
 
+
    float reso_mean_fibre = reso_histo_fibre->GetMean();
    float reso_sigma_fibre = reso_histo_fibre->GetRMS();
 
@@ -137,7 +138,7 @@ int main( int argc, char* argv[] ) {
 
 
     reso_histo_channel_corr[i] = new TH1F("reso_histo_channel_corr_"+icut,"reso_histo_channel_corr_"+icut,theConfiguration_.nBinsChannel,-3*reso_sigma_channel,3*reso_sigma_channel);
-    reso_histo_channel_corr_Amplitude[i] = new TH1F("reso_histo_channel_corr_Amplitude_"+icut,"reso_histo_channel_corr_Amplitude_"+icut,200,-3*reso_sigma_channel,3*reso_sigma_channel);
+    reso_histo_channel_corr_Amplitude[i] = new TH1F("reso_histo_channel_corr_Amplitude_"+icut,"reso_histo_channel_corr_Amplitude_"+icut,200,-2*reso_sigma_channel,2*reso_sigma_channel);
 
 
    }
@@ -190,34 +191,42 @@ int main( int argc, char* argv[] ) {
 
     c1.Clear();
     std::cout<<"fit"<<std::endl;
-    reso_histo_fibre_corr[i]->Fit("gaus","","",-0.5,0.3);
-    std::cout<<"fit done"<<std::endl;
-    //  double *par=reso_histo_fibre_corr[i]->GetFunction("gaus")->GetParameters();
-    TF1* fgaus=reso_histo_fibre_corr[i]->GetFunction("gaus");
+    bool fitWithGaussian = false;
 
-    fgaus->SetLineWidth(2.);
-    fgaus->SetLineColor(kBlue);
-    reso_histo_fibre_corr[i]->GetXaxis()->SetTitle("time_{Fibre}-time_{mcp} [ns]");
-    float binWidth =reso_histo_fibre_corr[i]->GetXaxis()->GetBinWidth(1);
-    //  std::string ytitle = Form("Events / %.0f ps",binWidth*1.e3); 
     std::string ytitle = Form("Events");
-    reso_histo_fibre_corr[i]->SetYTitle(ytitle.c_str());
-    reso_histo_fibre_corr[i]->Draw();
-    std::string energy(Form("%.0f", t.beamEnergy));
+      std::string energy(Form("%.0f", t.beamEnergy));
     TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
-    pave->Draw("same");
-    
-    fgaus->Draw("same");
-    TLegend* leg_gauss = new TLegend(0.6, 0.8, 0.8, 0.9);
-    leg_gauss->SetTextSize(0.036);
-    leg_gauss->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ps", fgaus->GetParameter(2)*1.e3, fgaus->GetParError(2)*1.e3), "");
-    leg_gauss->SetFillColor(0);
-    leg_gauss->Draw("same");
-    
+
+    if(fitWithGaussian){
+      reso_histo_fibre_corr[i]->Fit("gaus","","",-0.5,0.3);
+      std::cout<<"fit done"<<std::endl;
+      //  double *par=reso_histo_fibre_corr[i]->GetFunction("gaus")->GetParameters();
+      TF1* fgaus=reso_histo_fibre_corr[i]->GetFunction("gaus");
+      
+      fgaus->SetLineWidth(2.);
+      fgaus->SetLineColor(kBlue);
+      reso_histo_fibre_corr[i]->GetXaxis()->SetTitle("time_{Fibre}-time_{mcp} [ns]");
+      float binWidth =reso_histo_fibre_corr[i]->GetXaxis()->GetBinWidth(1);
+      //  std::string ytitle = Form("Events / %.0f ps",binWidth*1.e3); 
+
+      reso_histo_fibre_corr[i]->SetYTitle(ytitle.c_str());
+      reso_histo_fibre_corr[i]->Draw();
 
 
-    c1.SaveAs(dir+"/reso_histo_fibre_corr_gaus_"+icut+"_"+runNumberString+".png");
-    c1.SaveAs(dir+"/reso_histo_fibre_corr_gaus_"+icut+"_"+runNumberString+".pdf");
+      pave->Draw("same");
+      
+      fgaus->Draw("same");
+      TLegend* leg_gauss = new TLegend(0.6, 0.8, 0.8, 0.9);
+      leg_gauss->SetTextSize(0.036);
+      leg_gauss->AddEntry(  (TObject*)0 ,Form("#sigma = %.0f #pm %.0f ps", fgaus->GetParameter(2)*1.e3, fgaus->GetParError(2)*1.e3), "");
+      leg_gauss->SetFillColor(0);
+      leg_gauss->Draw("same");
+      
+
+      
+      c1.SaveAs(dir+"/reso_histo_fibre_corr_gaus_"+icut+"_"+runNumberString+".png");
+      c1.SaveAs(dir+"/reso_histo_fibre_corr_gaus_"+icut+"_"+runNumberString+".pdf");
+    }
 
   //-----------------fit with cruijff ------------------------
   TH1F* histo;
