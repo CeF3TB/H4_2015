@@ -5,7 +5,7 @@
   <stepAmplFibre>15</stepAmplFibre>
   <startCutChannel>20</startCutChannel>
   <stepChannel>10</stepChannel>
-  <stepAmplChannel>15</stepAmplChannel>
+  <stepAmplChannel>20</stepAmplChannel>
   <rangeXLow>-8</rangeXLow>
   <rangeXUp>-1</rangeXUp>
   <setup>SiPM</setup>

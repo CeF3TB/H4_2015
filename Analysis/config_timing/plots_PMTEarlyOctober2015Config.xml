@@ -1,6 +1,7 @@
 <general>
   <energies>50,100,150</energies>
-  <wp>0,0,0</wp>
+  <wp_channel>5,10,15</wp_channel>
+  <wp_fibre>1,1,1</wp_fibre>
   <runs>4093,4080,4067</runs>
   <setup>PMT</setup>
 </general>
