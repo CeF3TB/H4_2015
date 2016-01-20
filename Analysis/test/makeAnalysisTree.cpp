@@ -361,9 +361,15 @@ int main( int argc, char* argv[] ) {
    float nino_maxAmpl;
    outTree->Branch( "nino_maxAmpl", &nino_maxAmpl, "nino_maxAmpl/F");
 
+   float nino_chInt;
+   outTree->Branch( "nino_chInt", &nino_chInt, "nino_chInt/F");
+        
+   float nino_timeLength;
+   outTree->Branch( "nino_timeLength", &nino_timeLength, "nino_timeLength/F");
+
 
    int nentries = tree->GetEntries();
-   if(theConfiguration_.limitNEntries==1)nentries=10000;
+   if(nentries>theConfiguration_.limitNEntries)nentries=theConfiguration_.limitNEntries;
    //   nentries=5000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
@@ -739,10 +745,13 @@ int main( int argc, char* argv[] ) {
       waveform.at(ch)->addTimeAndSample((i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency),inputTree->digi_value_bare_noise_sub->at(iSample));
 
       if(i==0 && (iEntry % theConfiguration_.prescaleWFtree == 0) ){
-	    WFoutTreeEntries++; 
-	    fillWFoutTree=true;
 	if((nClusters_hodoX1==1||pos_2FibClust_hodoX1>-999) && (nClusters_hodoX2==1||pos_2FibClust_hodoX2>-999) && (nClusters_hodoY1==1||pos_2FibClust_hodoY1>-999) && (nClusters_hodoY1==1||pos_2FibClust_hodoY1>-999)){//exactly one cluster, or, if there are multiple clusters, exactly one 2-fiber cluster
+	  
+
 	  if(TMath::Abs(0.5* (cluster_pos_corr_hodoX1+cluster_pos_corr_hodoX2))< 3 && TMath::Abs( 0.5* (cluster_pos_corr_hodoY1+cluster_pos_corr_hodoY2))< 3 && (wc_x_corr-cluster_pos_corr_hodoX2)<4 && (wc_y_corr-cluster_pos_corr_hodoY2)< 4  && TMath::Abs( (cluster_pos_corr_hodoX1-cluster_pos_corr_hodoX2))<1.5 &&TMath::Abs( (cluster_pos_corr_hodoY1-cluster_pos_corr_hodoY2))<1.5){
+	  WFoutTreeEntries++; 
+	  fillWFoutTree=true;
+
 
 	    if(TMath::Abs(0.5* (cluster_pos_corr_hodoX1+cluster_pos_corr_hodoX2))< 1 && TMath::Abs( 0.5* (cluster_pos_corr_hodoY1+cluster_pos_corr_hodoY2))< 1){//let's see the waveforms for events in 1x1 strip
 	      WFoutTreeTightEntries++; 
@@ -785,7 +794,6 @@ int main( int argc, char* argv[] ) {
 
     //mcp info    
     if(MCP_RUN){
-      if(!isOctober2015LateRun){
       timeOfTheEvent=inputTree->digi_time_at_1000_bare_noise_sub->at(theConfiguration_.mcpTriggerChannel);//synchronizing time of events with time of trigger
       shiftTime = theConfiguration_.meanTriggerTime-timeOfTheEvent;
       shiftSample=round(shiftTime/(1e9*timeSampleUnit(inputTree->digi_frequency)));
@@ -802,7 +810,7 @@ int main( int argc, char* argv[] ) {
 	waveform.at(CEF3_CHANNELS)->addTimeAndSample((i-1024*inputTree->digi_value_ch->at(i))*timeSampleUnit(inputTree->digi_frequency),inputTree->digi_value_bare_noise_sub->at(iSample));
       }
 
-      }
+      
 
       Waveform::max_amplitude_informations wave_max_bare = waveform.at(CEF3_CHANNELS)->max_amplitude(4,900,5);
       std::vector<float> crossingTimes;
@@ -840,10 +848,21 @@ int main( int argc, char* argv[] ) {
 
 	//fit for NINO in october 2015 runs
 	if(isOctober2015LateRun && iChannel==1){
-	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,250,1,1,80,120,timeSampleUnit(inputTree->digi_frequency));//window without sync
+	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,300,1,1,80,120,timeSampleUnit(inputTree->digi_frequency));//window without sync
 	  nino_LEtime=timeInfo.first*1.e9;
 	  nino_LEchi2=timeInfo.second;
-	  nino_maxAmpl=inputTree->digi_max_amplitude_bare_noise_sub->at(5);
+	  nino_maxAmpl=inputTree->digi_max_amplitude_bare_noise_sub->at(6);//FIXME move to config!
+	  if(nino_LEtime>0){
+	    //	    std::cout<<(int)(timeInfo.first/timeSampleUnit(inputTree->digi_frequency))-5<<std::endl; 
+	    //	    nino_chInt=waveform.at(iChannel)->charge_integrated(80,120);
+	    //	    nino_chInt=waveform.at(iChannel)->charge_integrated((int)(timeInfo.first/timeSampleUnit(inputTree->digi_frequency))-5,(int)(timeInfo.first/timeSampleUnit(inputTree->digi_frequency))+25);
+	    std::pair<float,float> integralInfo = WaveformFit::GetSignalIntegral(waveform.at(iChannel),200,70);
+	    nino_chInt= integralInfo.first;
+	    nino_timeLength=integralInfo.second*timeSampleUnit(inputTree->digi_frequency)*1.e9;
+	  } else {
+	    nino_chInt=-999;
+	    nino_timeLength=-999;
+	  }
 	}
 	
 	
@@ -881,7 +900,7 @@ int main( int argc, char* argv[] ) {
       //timing var
       Waveform::max_amplitude_informations wave_max_bare = waveform.at(iChannel)->max_amplitude(4,900,5);
       std::vector<float> crossingTimes;
-      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(iChannel)->time_at_threshold((const float)10.*timeSampleUnit(inputTree->digi_frequency), 100e-9,theConfiguration_.timingThresh[iChannel],4);
+      if(wave_max_bare.time_at_max>0)    crossingTimes  = waveform.at(iChannel)->time_at_threshold((const float)10.*timeSampleUnit(inputTree->digi_frequency), 100e-9,theConfiguration_.timingThresh[iChannel],2);
       if(crossingTimes.size()>0)    cef3_time_at_thresh[iChannel]=crossingTimes[0]*1.e9;
       else cef3_time_at_thresh[iChannel]=-999;
 
@@ -906,10 +925,10 @@ int main( int argc, char* argv[] ) {
 
 
     if(theConfiguration_.fillWFtree && fillWFoutTree )	{
-      outWFTree.maxAmpl1=inputTree->digi_max_amplitude_bare_noise_sub->at(0);
-      outWFTree.maxAmpl2=inputTree->digi_max_amplitude_bare_noise_sub->at(1);
-      outWFTree.maxAmpl3=inputTree->digi_max_amplitude_bare_noise_sub->at(2);
-      outWFTree.maxAmpl4=inputTree->digi_max_amplitude_bare_noise_sub->at(3);
+      outWFTree.maxAmpl0=inputTree->digi_max_amplitude_bare_noise_sub->at(0);
+      outWFTree.maxAmpl1=inputTree->digi_max_amplitude_bare_noise_sub->at(1);
+      outWFTree.maxAmpl2=inputTree->digi_max_amplitude_bare_noise_sub->at(2);
+      outWFTree.maxAmpl3=inputTree->digi_max_amplitude_bare_noise_sub->at(3);
       outWFTree.deltaT=cef3_time_at_frac50[1] -mcp_time_frac50;
       outWFTree.tree_->AutoSave("FlushBaskets");
       outWFTree.Fill();
