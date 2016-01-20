@@ -118,7 +118,7 @@ int main( int argc, char* argv[] ) {
 
     TLegend* leg_neat = new TLegend(0.42, 0.92-0.06*5 , 0.9, 0.92);
     leg_neat->SetTextSize(0.038);
-    string ene="Data fibre ";
+    std::string ene="Data fibre ";
     //  ene+=Form("%.0f",energies[i]);
     //    ene+=" GeV";
     ene+=fibre;
@@ -171,7 +171,7 @@ int main( int argc, char* argv[] ) {
 
     TLegend* leg_neat = new TLegend(0.42, 0.92-0.06*5 , 0.9, 0.92);
     leg_neat->SetTextSize(0.038);
-    string ene="Data fibre ";
+    std::string ene="Data fibre ";
     //  ene+=Form("%.0f",energies[i]);
     //    ene+=" GeV";
     ene+=fibre;
@@ -224,7 +224,7 @@ int main( int argc, char* argv[] ) {
 
     TLegend* leg_neat = new TLegend(0.42, 0.92-0.06*5 , 0.9, 0.92);
     leg_neat->SetTextSize(0.038);
-    string ene="Data fibre ";
+    std::string ene="Data fibre ";
     //  ene+=Form("%.0f",energies[i]);
     //    ene+=" GeV";
     ene+=fibre;
@@ -276,7 +276,7 @@ int main( int argc, char* argv[] ) {
 
     TLegend* leg_neat = new TLegend(0.42, 0.92-0.06*5 , 0.9, 0.92);
     leg_neat->SetTextSize(0.038);
-    string ene="Data fibre ";
+    std::string ene="Data fibre ";
     //  ene+=Form("%.0f",energies[i]);
     //    ene+=" GeV";
     ene+=fibre;

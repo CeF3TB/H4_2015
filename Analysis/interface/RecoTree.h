@@ -31,6 +31,8 @@ public :
    std::vector<float>   *cef3;
    std::vector<float>   *cef3_corr;
    std::vector<float>   *cef3_maxAmpl;
+   std::vector<float>   *cef3_maxAmpl_wls;
+   std::vector<float>   *cef3_maxAmpl_cher;
    std::vector<float>   *cef3_maxAmpl_time;
    std::vector<float>   *cef3_time_at_frac50;
    std::vector<float>   *cef3_time_at_thresh;
@@ -115,6 +117,8 @@ public :
    TBranch        *b_cef3;   //!
    TBranch        *b_cef3_corr;   //!
    TBranch        *b_cef3_maxAmpl;   //!
+   TBranch        *b_cef3_maxAmpl_wls;   //!
+   TBranch        *b_cef3_maxAmpl_cher;   //!
    TBranch        *b_cef3_maxAmpl_time;   //!
    TBranch        *b_cef3_time_at_frac50;   //!
    TBranch        *b_cef3_time_at_thresh;   //!
@@ -289,6 +293,8 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("cef3", &cef3, &b_cef3);
    fChain->SetBranchAddress("cef3_corr", &cef3_corr, &b_cef3_corr);
    fChain->SetBranchAddress("cef3_maxAmpl", &cef3_maxAmpl, &b_cef3_maxAmpl);
+   fChain->SetBranchAddress("cef3_maxAmpl_wls", &cef3_maxAmpl_wls, &b_cef3_maxAmpl_wls);
+   fChain->SetBranchAddress("cef3_maxAmpl_cher", &cef3_maxAmpl_cher, &b_cef3_maxAmpl_cher);
    fChain->SetBranchAddress("cef3_maxAmpl_time", &cef3_maxAmpl_time, &b_cef3_maxAmpl_time);
    fChain->SetBranchAddress("cef3_time_at_frac50", &cef3_time_at_frac50, &b_cef3_time_at_frac50);
    fChain->SetBranchAddress("cef3_time_at_thresh", &cef3_time_at_thresh, &b_cef3_time_at_thresh);

@@ -85,11 +85,11 @@ int main( int argc, char* argv[] ) {
       if(t.cef3_maxAmpl_fit_cher_status->at(1)!=0)continue;
       maxAmpl_fit_time_cher1->Fill(t.cef3_maxAmpl_fit_time_cher1->at(1));
       maxAmpl_fit_time_cher2->Fill(t.cef3_maxAmpl_fit_time_cher2->at(1));
-      maxAmpl_fit_time_cher1VsMcp150->Fill(t.mcp_time_at_150, t.cef3_maxAmpl_fit_time_cher1->at(1));
-      maxAmpl_fit_time_cher1VsMcp150_zoom->Fill(t.mcp_time_at_150, t.cef3_maxAmpl_fit_time_cher1->at(1));
-      maxAmpl_fit_time_cher2VsMcp150->Fill(t.mcp_time_at_150, t.cef3_maxAmpl_fit_time_cher2->at(1));
-      deltaT1VsRatio->Fill(t.cef3_maxAmpl_fit_cher->at(1)/t.cef3_maxAmpl_fit->at(1),t.cef3_maxAmpl_fit_time_cher1->at(1)-t.mcp_time_at_150);
-      deltaT2VsRatio->Fill(t.cef3_maxAmpl_fit_cher->at(1)/t.cef3_maxAmpl_fit->at(1),t.cef3_maxAmpl_fit_time_cher2->at(1)-t.mcp_time_at_150);
+      maxAmpl_fit_time_cher1VsMcp150->Fill(t.mcp_time_at_thresh, t.cef3_maxAmpl_fit_time_cher1->at(1));
+      maxAmpl_fit_time_cher1VsMcp150_zoom->Fill(t.mcp_time_at_thresh, t.cef3_maxAmpl_fit_time_cher1->at(1));
+      maxAmpl_fit_time_cher2VsMcp150->Fill(t.mcp_time_at_thresh, t.cef3_maxAmpl_fit_time_cher2->at(1));
+      deltaT1VsRatio->Fill(t.cef3_maxAmpl_fit_cher->at(1)/t.cef3_maxAmpl_fit->at(1),t.cef3_maxAmpl_fit_time_cher1->at(1)-t.mcp_time_at_thresh);
+      deltaT2VsRatio->Fill(t.cef3_maxAmpl_fit_cher->at(1)/t.cef3_maxAmpl_fit->at(1),t.cef3_maxAmpl_fit_time_cher2->at(1)-t.mcp_time_at_thresh);
    }
 
 

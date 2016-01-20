@@ -79,7 +79,7 @@ int main( int argc, char* argv[] ) {
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
       if( t.nino_LEtime<30 || t.nino_LEtime > 50 || t.mcp_max_amplitude<200)continue;
-      reso_histo->Fill(t.mcp_time_at_150-t.nino_LEtime);
+      reso_histo->Fill(t.mcp_time_at_thresh-t.nino_LEtime);
    }
 
    float reso_mean = reso_histo->GetMean();
@@ -101,9 +101,9 @@ int main( int argc, char* argv[] ) {
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
       if( t.nino_LEtime<30 || t.nino_LEtime > 50 || t.mcp_max_amplitude<200)continue;
-      //      reso_histo_corr->Fill(t.mcp_time_at_150-t.nino_LEtime-reso_mean);
+      //      reso_histo_corr->Fill(t.mcp_time_at_thresh-t.nino_LEtime-reso_mean);
       for (int i=0;i<nNinoCuts;++i){
-	if(t.nino_maxAmpl>(i>0)*(15+(i>1)*i*5))reso_histo_corr[i]->Fill(t.mcp_time_at_150-t.nino_LEtime-reso_mean);
+	if(t.nino_maxAmpl>(i>0)*(15+(i>1)*i*5))reso_histo_corr[i]->Fill(t.mcp_time_at_thresh-t.nino_LEtime-reso_mean);
       }
    }
 

@@ -2,11 +2,15 @@ CC = g++
 CFLAGS = -Wall -c -g 
 
 
-INCLUDES = -I. -I$(ROOTSYS)/include -I../ -I./interface -I../CommonTools/interface
+SRCDIR   = src
+OBJDIR   = lib
+BINDIR   = bin
 
-EXE_DIR = ./test/
+SOURCES  := $(wildcard $(SRCDIR)/*.cc)
+BASE_INCLUDES := $(wildcard $(SRCDIR)/*.h)
+OBJECTS  := $(SOURCES:$(SRCDIR)/%.cc=$(OBJDIR)/%.o)
 
-LIB_DIR= ./lib/
+INCLUDES = -I. -I$(ROOTSYS)/include -I../ -I./interface -I../CommonTools/interface 
 
 ROOTSYS ?= ERROR_RootSysIsNotDefined
 
@@ -15,129 +19,35 @@ ROOTFLAG = `${ROOTSYS}/bin/root-config --cflags --libs`
 EXTRALIBS := -L$(ROOTSYS)/lib -Wl,--no-as-needed $(ROOTGLIBS) -lHtml -lMathCore -lGenVector -lMinuit -lTMVA -lRooFit `xml2-config --cflags` `xml2-config --libs`
 
 
-
-all: drawCherenkov drawAlignmentCorrVsRun  makeAnalysisTree alignTracking fastPlotter drawLinearity drawWaveform drawRespVsXnY drawResolution
-
-
-
-drawHVEnergyScan: DrawTools.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/drawHVEnergyScan $(EXE_DIR)/drawHVEnergyScan.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
-
-checkLinearity: DrawTools.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/checkLinearity $(EXE_DIR)/checkLinearity.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
+CPP =  $(wildcard test/*.cpp)
+CPPOBJ = $(patsubst test/%,%,$(CPP))
+BINOBJ	=$(patsubst %.cpp,bin/%,$(CPPOBJ))
+COMMONTOOLS =$(wildcard ../CommonTools/src/*.cc)
+COMMONTOOLSOBJ =$(patsubst ../CommonTools/src/%.cc,lib/%.o,$(COMMONTOOLS))
 
 
+all: $(BINOBJ)
 
-drawResolution: DrawTools.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/drawResolution $(EXE_DIR)/drawResolution.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
+$(BINOBJ) :  $(OBJECTS) $(COMMONTOOLSOBJ) 
+	@echo $(BINOBJ) 	
+	@echo 	@$(CC) $(INCLUDES) -o $@ $(patsubst bin/%,test/%.cpp,$@)  $(ROOTFLAG) $(EXTRALIBS) $(OBJECTS) $(COMMONTOOLSOBJ)
+	@$(CC) $(INCLUDES) -o $@ $(patsubst bin/%,test/%.cpp,$@)  $(ROOTFLAG) $(EXTRALIBS) $(OBJECTS) $(COMMONTOOLSOBJ)	
+	@echo "Linking complete!"
 
+$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.cc
+	@echo $(OBJECTS)
+	@echo $(CC) $(CFLAGS) $(INCLUDES) -o $@  -c $< $(ROOTFLAG) $(EXTRALIBS) 
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@  -c $< $(ROOTFLAG) $(EXTRALIBS)	
+	@echo "Compiled "$<" successfully!"
 
-
-drawRespVsXnY: DrawTools.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/drawRespVsXnY $(EXE_DIR)/drawRespVsXnY.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
-
-drawCherenkov:  Event.o DrawTools.o RecoTree.o RooCruijff.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/drawCherenkov $(EXE_DIR)/drawCherenkov.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
-
-WFPlotter:  Event.o DrawTools.o RecoTree.o 
-	$(CC) -Wall $(INCLUDES) -o ./bin/WFPlotter $(EXE_DIR)/WFPlotter.cpp $(LIB_DIR)/RecoTree.o  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
-
-pickEvents:  Event.o DrawTools.o RecoTree.o 
-	$(CC) -Wall $(INCLUDES) -o ./bin/pickEvents $(EXE_DIR)/pickEvents.cpp $(LIB_DIR)/RecoTree.o  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
-
-timingStudies:  Event.o DrawTools.o RecoTree.o RooCruijff.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/timingStudies $(EXE_DIR)/timingStudies.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
-
-timingStudiesSiPM:  Event.o DrawTools.o RecoTree.o RooCruijff.o Configurator.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/timingStudiesSiPM $(EXE_DIR)/timingStudiesSiPM.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o $(LIB_DIR)/Configurator.o $(ROOTFLAG) $(EXTRALIBS)
-
-plotTimingResolution:  DrawTools.o Configurator.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/plotTimingResolution $(EXE_DIR)/plotTimingResolution.cpp $(LIB_DIR)/DrawTools.o  $(LIB_DIR)/Configurator.o $(ROOTFLAG) $(EXTRALIBS)
+$(COMMONTOOLSOBJ): 
+	@echo $(COMMONTOOLSOBJ)
+	@echo $(CC) $(CFLAGS)  -o $@  -c $(patsubst lib/%.o,../CommonTools/src/%.cc,$@) $(ROOTFLAG) $(EXTRALIBS)
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@  -c $(patsubst lib/%.o,../CommonTools/src/%.cc,$@) $(ROOTFLAG) $(EXTRALIBS)	
+	@echo "Compiled "$<" successfully!"
 
 
-drawTiming:  DrawTools.o RecoTree.o 
-	$(CC) -Wall $(INCLUDES) -o ./bin/drawTiming $(EXE_DIR)/drawTiming.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
 
-
-kConstantFinder:  Event.o DrawTools.o RecoTree.o RooCruijff.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/kConstantFinder $(EXE_DIR)/kConstantFinder.cpp $(LIB_DIR)/RecoTree.o $(LIB_DIR)/RooCruijff.o $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
-
-
-dummyPlotter: DrawTools.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/dummyPlotter $(EXE_DIR)/dummyPlotter.cpp  $(LIB_DIR)/DrawTools.o  $(ROOTFLAG) $(EXTRALIBS)
-
-makeAnalysisTree: RunHelper.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o Waveform.o WaveformFit.o Configurator.o CeF3InputTree.o DrawTools.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/makeAnalysisTree $(EXE_DIR)/makeAnalysisTree.cpp $(LIB_DIR)/Waveform.o  $(LIB_DIR)/WaveformFit.o $(LIB_DIR)/RunHelper.o $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/DrawTools.o $(LIB_DIR)/EnergyCalibration.o $(LIB_DIR)/AlignmentOfficer.o $(LIB_DIR)/Configurator.o $(LIB_DIR)/CeF3InputTree.o $(ROOTFLAG) $(EXTRALIBS)
-
-alignTracking:  HodoCluster.o AlignmentOfficer.o TagHelper.o DrawTools.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/alignTracking $(EXE_DIR)/alignTracking.cpp $(LIB_DIR)/HodoCluster.o $(LIB_DIR)/AlignmentOfficer.o $(LIB_DIR)/TagHelper.o $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
-
-drawAlignmentCorrVsRun:	DrawTools.o
-	$(CC) -Wall $(INCLUDES) -o ./bin/drawAlignmentCorrVsRun $(EXE_DIR)/drawAlignmentCorrVsRun.cpp $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
-#analyzeCherenkov: Event.o CherenkovAnalyzer.o DrawTools.o
-#	 $(CC) -Wall $(INCLUDES) -o ./bin/analyzeCherenkov $(EXE_DIR)/analyzeCherenkov.cpp  $(LIB_DIR)/Event.o $(LIB_DIR)/CherenkovAnalyzer.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
-
-
-drawWaveform: Event.o WaveformUtil.o DrawTools.o HodoCluster.o TagHelper.o EnergyCalibration.o AlignmentOfficer.o
-	 $(CC) -Wall $(INCLUDES) -o ./bin/drawWaveform $(EXE_DIR)/drawWaveform.cpp  $(LIB_DIR)/TagHelper.o $(LIB_DIR)/EnergyCalibration.o $(LIB_DIR)/AlignmentOfficer.o $(LIB_DIR)/Event.o $(LIB_DIR)/WaveformUtil.o  $(LIB_DIR)/DrawTools.o  $(LIB_DIR)/HodoCluster.o $(ROOTFLAG) $(EXTRALIBS)
-
-drawLinearity: Event.o LinearityLooper.o DrawTools.o
-	 $(CC) -Wall $(INCLUDES) -o ./bin/drawLinearity $(EXE_DIR)/drawLinearity.cpp $(LIB_DIR)/Event.o $(LIB_DIR)/LinearityLooper.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)	
-
-fastPlotter: fastPlotter.o DrawTools.o
-	 $(CC) -Wall $(INCLUDES) -o ./bin/fastPlotter $(EXE_DIR)/fastPlotter.cpp $(LIB_DIR)/fastPlotter.o  $(LIB_DIR)/DrawTools.o $(ROOTFLAG) $(EXTRALIBS)
-
-DrawTools.o: ../CommonTools/src/DrawTools.cc
-	$(CC) $(CFLAGS) -o  $(LIB_DIR)/DrawTools.o -c ../CommonTools/src/DrawTools.cc $(ROOTFLAG) $(EXTRALIBS)
-
-fastPlotter.o: ./src/fastPlotter.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/fastPlotter.o -c ./src/fastPlotter.cc $(ROOTFLAG) $(EXTRALIBS)
-
-Event.o: ./src/Event.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/Event.o -c ./src/Event.cc $(ROOTFLAG) $(EXTRALIBS)
-
-RecoTree.o: ./src/RecoTree.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/RecoTree.o -c ./src/RecoTree.cc $(ROOTFLAG) $(EXTRALIBS)
-
-
-LinearityLooper.o: ./src/LinearityLooper.cc Event.o
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/LinearityLooper.o -c ./src/LinearityLooper.cc $(ROOTFLAG) $(EXTRALIBS)
-
-WaveformUtil.o: ./src/WaveformUtil.cc Event.o HodoCluster.o Waveform.o
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/WaveformUtil.o $(LIB_DIR)/WaveformUtil.o -c ./src/WaveformUtil.cc $(ROOTFLAG) $(EXTRALIBS)
-
-#CherenkovAnalyzer.o: Event.o
-#	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/CherenkovAnalyzer.o -c ./src/CherenkovAnalyzer.cc $(ROOTFLAG) $(EXTRALIBS)
-
-HodoCluster.o: ./src/HodoCluster.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/HodoCluster.o -c src/HodoCluster.cc $(ROOTFLAG) $(EXTRALIBS)
-
-AlignmentOfficer.o: ./src/AlignmentOfficer.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/AlignmentOfficer.o -c src/AlignmentOfficer.cc $(ROOTFLAG) $(EXTRALIBS)
-
-TagHelper.o: ./src/TagHelper.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/TagHelper.o -c src/TagHelper.cc $(ROOTFLAG) $(EXTRALIBS)
-
-EnergyCalibration.o: ./src/EnergyCalibration.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/EnergyCalibration.o -c src/EnergyCalibration.cc $(ROOTFLAG) $(EXTRALIBS)
-
-RunHelper.o: ../CommonTools/src/RunHelper.cc
-	$(CC) $(CFLAGS) -o  $(LIB_DIR)/RunHelper.o -c ../CommonTools/src/RunHelper.cc $(ROOTFLAG) $(EXTRALIBS)
-
-Waveform.o: ./src/Waveform.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/Waveform.o -c ./src/Waveform.cc $(ROOTFLAG) $(EXTRALIBS)
-
-WaveformFit.o: ./src/WaveformFit.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/WaveformFit.o -c ./src/WaveformFit.cc $(ROOTFLAG) $(EXTRALIBS)
-
-RooCruijff.o: ./src/RooCruijff.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/RooCruijff.o -c ./src/RooCruijff.cc $(ROOTFLAG) $(EXTRALIBS)
-
-Configurator.o: ./src/Configurator.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/Configurator.o -c ./src/Configurator.cc $(ROOTFLAG) $(EXTRALIBS)
-
-CeF3InputTree.o: ./src/CeF3InputTree.cc
-	$(CC) $(CFLAGS) $(INCLUDES) -o  $(LIB_DIR)/CeF3InputTree.o -c ./src/CeF3InputTree.cc $(ROOTFLAG) $(EXTRALIBS)
 
 
 clean:
