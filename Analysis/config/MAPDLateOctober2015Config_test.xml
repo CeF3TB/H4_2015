@@ -1,8 +1,8 @@
 <general>
-o  <cef3Channels>0,1,2,3</cef3Channels> <!-- fibre channels -->
+  <cef3Channels>0,1,2,3</cef3Channels> <!-- fibre channels -->
   <!-- cef3DigiGroup>0</cef3DigiGroup-->
-  <syncChannels>1,0,0,0</syncChannels> <!-- 1 if you want to shift wavefor for time of trigger-->
-  <timingThresh>15,15,15,15</timingThresh> <!-- thresh for timing,in general 40% of max ampl,FIXME optimize thresh-->
+  <syncChannels>0,0,0,0</syncChannels> <!-- 1 if you want to shift wavefor for time of trigger-->
+  <timingThresh>15,300,1,15</timingThresh> <!-- thresh for timing,in general 40% of max ampl,FIXME optimize thresh-->
   <triggerChannel>8</triggerChannel> <!-- channel used for sync-->
   <meanTriggerTime>156.6</meanTriggerTime> <!-- mean of distribution of trigger time-->
   <mcpRun>1</mcpRun>
@@ -21,9 +21,9 @@ o  <cef3Channels>0,1,2,3</cef3Channels> <!-- fibre channels -->
   <pedMeanX>218.6,208.0</pedMeanX>
   <pedSigmaY>1.51,1.67</pedSigmaY>
   <pedSigmaX>2.04,1.83</pedSigmaX>
-  <addTagFileName>0</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
+  <addTagFileName>1</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
   <tagFileName>dummy</tagFileName>
   <fillWFtree>1</fillWFtree>
-  <prescaleWFtree>1</prescaleWFtree>
-  <limitNEntries>1</limitNEntries>
+  <prescaleWFtree>100</prescaleWFtree>
+  <limitNEntries>80000</limitNEntries>
 </general>

@@ -25,4 +25,5 @@
   <tagFileName>dummy</tagFileName>
   <fillWFtree>1</fillWFtree>
   <prescaleWFtree>8</prescaleWFtree>
+  <limitNEntries>0</limitNEntries>
 </general>
