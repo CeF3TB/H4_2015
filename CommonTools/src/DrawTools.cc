@@ -3,7 +3,6 @@
 
 
 
-
 TPaveText* DrawTools::getLabelTop( const std::string& text ) {
 
   TPaveText* label_top = new TPaveText(0.4,0.953,0.975,0.975, "brNDC");
