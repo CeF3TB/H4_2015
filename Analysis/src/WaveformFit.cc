@@ -369,6 +369,44 @@ namespace WaveformFit
   }
 
 
+  //----------Get the signal integral around the the max-------------------------------------
+  std::pair<float,float> GetSignalIntegral(Waveform* wave,int thr, int min=-1)
+  {
+    //---compute position of the max
+    if(min==-1)
+      min = 1;
+
+    //---find pulse borders
+    int begin=-1, end=-1;
+    for(int iSample=min; iSample<(*wave)._samples.size(); ++iSample)
+      {
+        if(begin==-1 && (*wave)._samples[iSample]>thr)
+	  begin = iSample;
+        else if(begin!=-1 && (*wave)._samples[iSample]<thr)
+	  {
+            end = iSample;
+            break;
+	  }
+      }            
+            
+    //---compute integral
+
+    if(end<0) return make_pair(-10.,-10.);
+    float integral=0;
+    for(int iSample=begin; iSample<end; ++iSample)
+      {
+        //---if signal window goes out of bound return a bad value
+        if(iSample > (*wave)._samples.size() || iSample < 0)
+	  return make_pair(-10.,-10.); ;        
+        integral += (*wave)._samples[iSample];
+      }
+
+    return make_pair(integral,end-begin);
+  }
+
+
+
+
   //----------Linear interpolation util-----------------------------------------------------
   float LinearInterpolation(Waveform* wave,const Waveform::baseline_informations& waveRms, float& A, float& B, const int& min, const int& max, float timeUnit)
   {
