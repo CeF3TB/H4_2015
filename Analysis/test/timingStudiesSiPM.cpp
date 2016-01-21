@@ -158,8 +158,8 @@ int main( int argc, char* argv[] ) {
       // if (Cut(ientry) < 0) continue;
       if( t.mcp_time_frac50<0 || t.mcp_time_frac50>400 || t.cef3_time_at_frac50->at(1)<0 || t.cef3_time_at_frac50->at(1) > 400 || t.mcp_max_amplitude<200)continue;
       //map_fibre of timing vs x and y
-      float deltaT=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50;
-      if(deltaT>theConfiguration_.rangeXLow && deltaT<theConfiguration_.rangeXUp){
+      float deltaT=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean_channel+reso_sigma_channel/2;
+      if(deltaT>-2 && deltaT<2){
 	  timing_map_fibre_norm->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.);
 	  timing_map_fibre->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,deltaT);
 	  amplitude_map_fibre->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,t.cef3_maxAmpl->at(1));
@@ -182,7 +182,8 @@ int main( int argc, char* argv[] ) {
    }
 
    timing_map_fibre->Divide(timing_map_fibre_norm);
-   timing_map_fibre->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z");
+   //   timing_map_fibre->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z")
+   timing_map_fibre->SetAxisRange(-2,2,"Z");
    timing_map_fibre->GetYaxis()->SetTitle("Y [mm]");
    timing_map_fibre->GetXaxis()->SetTitle("X [mm]");
    amplitude_map_fibre->Divide(timing_map_fibre_norm);
@@ -190,7 +191,8 @@ int main( int argc, char* argv[] ) {
    amplitude_map_fibre->GetXaxis()->SetTitle("X [mm]");
 
    timing_map_channel->Divide(timing_map_channel_norm);
-   timing_map_channel->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z");
+   //   timing_map_channel->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z");
+   timing_map_channel->SetAxisRange(-2,2,"Z");
    timing_map_channel->GetYaxis()->SetTitle("Y [mm]");
    timing_map_channel->GetXaxis()->SetTitle("X [mm]");
    amplitude_map_channel->Divide(timing_map_channel_norm);
@@ -214,14 +216,12 @@ int main( int argc, char* argv[] ) {
   for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
     if(reso_histo_fibre_corr[i]->Integral(reso_histo_fibre_corr[i]->FindBin(-0.5),reso_histo_fibre_corr[i]->FindBin(0.3))<5) continue;
 
-	    std::cout<<i<<" ";
 
     TString icut;
     icut.Form("%d",i); 
     
 
     c1.Clear();
-    std::cout<<"fit"<<std::endl;
     bool fitWithGaussian = false;
 
     std::string ytitle = Form("Events");
@@ -530,12 +530,31 @@ timingPlots_Config_t readConfiguration(std::string configName, float beamEnergy)
 }
 
 bool passesFibreTopologicalSelection(RecoTree &t){
-  if(0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)<-2.5 && 0.5*(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)<-3 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100 && t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_y_corr<-2.5 && t.wc_y_corr>-20 && t.wc_x_corr<-3 && t.wc_x_corr>-20 ) return true;
+  //  if(0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)<-2.5 && 0.5*(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)<-3 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100 && t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_y_corr<-2.5 && t.wc_y_corr>-20 && t.wc_x_corr<-3 && t.wc_x_corr>-20 ) return true;
+  //  if(0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)<-0.5 && 0.5*(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)<-3 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100 && t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_y_corr<-0.5 && t.wc_y_corr>-20 && t.wc_x_corr<-3 && t.wc_x_corr>-20 && 0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)>-3 && t.wc_y_corr>-3) return true;
+  float  X=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_x_corr)/3.;
+  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.;
+
+  if(Y>-3.5 && Y<-0.5 && X<-2.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
+    if(0.66*X+4.16+Y<0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
+      return true; 
+    }
+}
+
   return false;
 }
 
 bool passesChannelTopologicalSelection(RecoTree &t){
+  //  if(0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)>-2.5 && 0.5*(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)>-4.5 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100 && t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_y_corr>-2.5  && t.wc_x_corr>-4.5) return true;
+  float  X=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_x_corr)/3.;
+  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.;
 
-  if(0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)>-2.5 && 0.5*(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)>-4.5 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100 && t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_y_corr>-2.5  && t.wc_x_corr>-4.5) return true;
+  if(Y>-3 && Y<5.5 && X<5.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
+    if(0.66*X+4.16+Y>0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
+    return true; 
+  }
+}
+
+
   return false;
 }
