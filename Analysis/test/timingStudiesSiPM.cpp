@@ -88,7 +88,15 @@ int main( int argc, char* argv[] ) {
 
   TH1F* reso_histo_fibre = new TH1F("reso_histo_fibre","reso_histo_fibre",2000,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);  
   TH1F* reso_histo_channel = new TH1F("reso_histo_channel","reso_histo_channel",2000,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);  
-  
+  //maps
+  TH2F* timing_map_fibre = new TH2F("timing_map_fibre","timing_map_fibre",16,-5.5,0,16,-5.5,0);
+  TH2F* amplitude_map_fibre = new TH2F("amplitude_map_fibre","amplitude_map_fibre",16,-5.5,0,16,-5.5,0);
+  TH2F* timing_map_fibre_norm = new TH2F("timing_map_fibre_norm","timing_map_fibre_norm",16,-5.5,0,16,-5.5,0);
+
+  TH2F* timing_map_channel = new TH2F("timing_map_channel","timing_map_channel",22,-5.5,5,22,-5.5,5);
+  TH2F* amplitude_map_channel = new TH2F("amplitude_map_channel","amplitude_map_channel",22,-5.5,5,22,-5.5,5);
+  TH2F* timing_map_channel_norm = new TH2F("timing_map_channel_norm","timing_map_channel_norm",22,-5.5,5,22,-5.5,5);
+
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -148,11 +156,20 @@ int main( int argc, char* argv[] ) {
       if (ientry < 0) break;
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
-      if( t.mcp_time_frac50<0 || t.mcp_max_amplitude<200)continue;
-      //      reso_histo_fibre_corr->Fill(t.mcp_time_at_150-t.nino_LEtime-reso_mean_fibre);
+      if( t.mcp_time_frac50<0 || t.mcp_time_frac50>400 || t.cef3_time_at_frac50->at(1)<0 || t.cef3_time_at_frac50->at(1) > 400 || t.mcp_max_amplitude<200)continue;
+      //map_fibre of timing vs x and y
+      float deltaT=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50;
+      if(deltaT>theConfiguration_.rangeXLow && deltaT<theConfiguration_.rangeXUp){
+	  timing_map_fibre_norm->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.);
+	  timing_map_fibre->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,deltaT);
+	  amplitude_map_fibre->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,t.cef3_maxAmpl->at(1));
+	  timing_map_channel_norm->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.);
+	  timing_map_channel->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,deltaT);
+	  amplitude_map_channel->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,t.cef3_maxAmpl->at(1));
+      }
+
       if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce remaining events hitting the channel
 	for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
-	  //std::cout<<"###################CUT#####################"<< (i>0)*(20+(i>1)*i*10)<<std::endl;
 	  if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCutFibre+(i>1)*i*theConfiguration_.stepFibre))	    reso_histo_fibre_corr[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean_fibre+reso_sigma_fibre/2);
 	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<(theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre)) reso_histo_fibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean_fibre+reso_sigma_fibre/2);
 	}
@@ -164,7 +181,21 @@ int main( int argc, char* argv[] ) {
       }
    }
 
+   timing_map_fibre->Divide(timing_map_fibre_norm);
+   timing_map_fibre->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z");
+   timing_map_fibre->GetYaxis()->SetTitle("Y [mm]");
+   timing_map_fibre->GetXaxis()->SetTitle("X [mm]");
+   amplitude_map_fibre->Divide(timing_map_fibre_norm);
+   amplitude_map_fibre->GetYaxis()->SetTitle("Y [mm]");
+   amplitude_map_fibre->GetXaxis()->SetTitle("X [mm]");
 
+   timing_map_channel->Divide(timing_map_channel_norm);
+   timing_map_channel->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z");
+   timing_map_channel->GetYaxis()->SetTitle("Y [mm]");
+   timing_map_channel->GetXaxis()->SetTitle("X [mm]");
+   amplitude_map_channel->Divide(timing_map_channel_norm);
+   amplitude_map_channel->GetYaxis()->SetTitle("Y [mm]");
+   amplitude_map_channel->GetXaxis()->SetTitle("X [mm]");
 
    // this is the dir in which the plots will be saved:
   std::string constDirName = "plots_timing_";
@@ -433,6 +464,14 @@ int main( int argc, char* argv[] ) {
   std::string outFileName;
   outFileName = dir+"/timingStudiesSiPM_"+tag+"_"+runName+".root";
   TFile* outFile = TFile::Open(outFileName.c_str(),"recreate");
+
+  timing_map_fibre->Write();
+  amplitude_map_fibre->Write();
+  timing_map_fibre_norm->Write();
+
+  timing_map_channel->Write();
+  amplitude_map_channel->Write();
+  timing_map_channel_norm->Write();
 
   resValueTime_fibre.Write("resValueTime_fibre");
   resValueAmplitude_fibre.Write("resValueAmplitude_fibre");
