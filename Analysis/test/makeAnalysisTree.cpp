@@ -818,7 +818,7 @@ int main( int argc, char* argv[] ) {
       if(crossingTimes.size()>0)    mcp_time_at_thresh=crossingTimes[0]*1.e9;
       else mcp_time_at_thresh=-999;
       
-      if(wave_max_bare.time_at_max>0)    mcp_time_frac50=waveform.at(CEF3_CHANNELS)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,4)*1.e9;
+      if(wave_max_bare.time_at_max>0)    mcp_time_frac50=waveform.at(CEF3_CHANNELS)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,5)*1.e9;
       else mcp_time_frac50=-999;
 
       mcp_max_amplitude=wave_max_bare.max_amplitude;
@@ -906,7 +906,7 @@ int main( int argc, char* argv[] ) {
 
 
 
-      if(wave_max_bare.time_at_max>0) cef3_time_at_frac50[iChannel]=waveform.at(iChannel)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,4)*1.e9;
+      if(wave_max_bare.time_at_max>0) cef3_time_at_frac50[iChannel]=waveform.at(iChannel)->time_at_frac(0.,(float)100.e-9,0.5,wave_max_bare,5)*1.e9;
       else cef3_time_at_frac50[iChannel]=-999;
 
 
