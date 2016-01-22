@@ -15,6 +15,7 @@
 // Header file for the classes stored in the TTree if any.
 #include <vector>
 #include <vector>
+#include <iostream>
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
@@ -59,21 +60,21 @@ public :
    Float_t         xBeam;
    Float_t         yBeam;
    Int_t           nClusters_hodoX1;
-   Int_t           nFibres_hodoX1[16];   //[nClusters_hodoX1]
-   Float_t         pos_hodoX1[16];   //[nClusters_hodoX1]
-   Float_t         pos_corr_hodoX1[16];   //[nClusters_hodoX1]
+   Int_t           nFibres_hodoX1[50];   //[nClusters_hodoX1]
+   Float_t         pos_hodoX1[50];   //[nClusters_hodoX1]
+   Float_t         pos_corr_hodoX1[50];   //[nClusters_hodoX1]
    Int_t           nClusters_hodoY1;
-   Int_t           nFibres_hodoY1[24];   //[nClusters_hodoY1]
-   Float_t         pos_hodoY1[24];   //[nClusters_hodoY1]
-   Float_t         pos_corr_hodoY1[24];   //[nClusters_hodoY1]
+   Int_t           nFibres_hodoY1[50];   //[nClusters_hodoY1]
+   Float_t         pos_hodoY1[50];   //[nClusters_hodoY1]
+   Float_t         pos_corr_hodoY1[50];   //[nClusters_hodoY1]
    Int_t           nClusters_hodoX2;
-   Int_t           nFibres_hodoX2[17];   //[nClusters_hodoX2]
-   Float_t         pos_hodoX2[17];   //[nClusters_hodoX2]
-   Float_t         pos_corr_hodoX2[17];   //[nClusters_hodoX2]
+   Int_t           nFibres_hodoX2[50];   //[nClusters_hodoX2]
+   Float_t         pos_hodoX2[50];   //[nClusters_hodoX2]
+   Float_t         pos_corr_hodoX2[50];   //[nClusters_hodoX2]
    Int_t           nClusters_hodoY2;
-   Int_t           nFibres_hodoY2[16];   //[nClusters_hodoY2]
-   Float_t         pos_hodoY2[16];   //[nClusters_hodoY2]
-   Float_t         pos_corr_hodoY2[16];   //[nClusters_hodoY2]
+   Int_t           nFibres_hodoY2[50];   //[nClusters_hodoY2]
+   Float_t         pos_hodoY2[50];   //[nClusters_hodoY2]
+   Float_t         pos_corr_hodoY2[50];   //[nClusters_hodoY2]
    Int_t           nClusters_hodoSmallX;
    Int_t           nFibres_hodoSmallX[1];   //[nClusters_hodoSmallX]
    Float_t         pos_hodoSmallX[1];   //[nClusters_hodoSmallX]
@@ -109,6 +110,8 @@ public :
    Float_t         nino_LEtime;
    Float_t         nino_LEchi2;
    Float_t         nino_maxAmpl;
+   Float_t         nino_chInt;
+   Float_t         nino_timeOverThresh;
 
    // List of branches
    TBranch        *b_run;   //!
@@ -195,6 +198,9 @@ public :
    TBranch        *b_nino_LEtime;   //!
    TBranch        *b_nino_LEchi2;   //!
    TBranch        *b_nino_maxAmpl;   //!
+   TBranch        *b_nino_chInt;   //!
+   TBranch        *b_nino_timeOverThresh;   //!
+
 
    RecoTree(TTree *tree=0);
    virtual ~RecoTree();
@@ -247,6 +253,7 @@ Long64_t RecoTree::LoadTree(Long64_t entry)
       Notify();
    }
    return centry;
+
 }
 
 void RecoTree::Init(TTree *tree)
@@ -371,6 +378,8 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("nino_LEtime", &nino_LEtime, &b_nino_LEtime);
    fChain->SetBranchAddress("nino_LEchi2", &nino_LEchi2, &b_nino_LEchi2);
    fChain->SetBranchAddress("nino_maxAmpl", &nino_maxAmpl, &b_nino_maxAmpl);
+   fChain->SetBranchAddress("nino_chInt", &nino_chInt, &b_nino_chInt);
+   fChain->SetBranchAddress("nino_timeOverThresh", &nino_timeOverThresh, &b_nino_timeOverThresh);
    Notify();
 }
 
