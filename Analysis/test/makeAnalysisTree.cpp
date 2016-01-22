@@ -365,8 +365,8 @@ int main( int argc, char* argv[] ) {
    float nino_chInt;
    outTree->Branch( "nino_chInt", &nino_chInt, "nino_chInt/F");
         
-   float nino_timeLength;
-   outTree->Branch( "nino_timeLength", &nino_timeLength, "nino_timeLength/F");
+   float nino_timeOverThresh;
+   outTree->Branch( "nino_timeOverThresh", &nino_timeOverThresh, "nino_timeOverThresh/F");
 
 
    int nentries = tree->GetEntries();
@@ -859,10 +859,10 @@ int main( int argc, char* argv[] ) {
 	    //	    nino_chInt=waveform.at(iChannel)->charge_integrated((int)(timeInfo.first/timeSampleUnit(inputTree->digi_frequency))-5,(int)(timeInfo.first/timeSampleUnit(inputTree->digi_frequency))+25);
 	    std::pair<float,float> integralInfo = WaveformFit::GetSignalIntegral(waveform.at(iChannel),200,70);
 	    nino_chInt= integralInfo.first;
-	    nino_timeLength=integralInfo.second*timeSampleUnit(inputTree->digi_frequency)*1.e9;
+	    nino_timeOverThresh=integralInfo.second*timeSampleUnit(inputTree->digi_frequency)*1.e9;
 	  } else {
 	    nino_chInt=-999;
-	    nino_timeLength=-999;
+	    nino_timeOverThresh=-999;
 	  }
 	}
 	
