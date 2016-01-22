@@ -1,0 +1,14 @@
+<general>
+  <runs>4055,4051,4052,4053,4054</runs> 
+  <setup>SiPM</setup>
+  <nMaxAmplCuts>25</nMaxAmplCuts>
+  <stepAmplFibre>25</stepAmplFibre>
+  <stepAmplChannel>15</stepAmplChannel>
+  <rangeXLow>-8</rangeXLow>
+  <rangeXUp>-1</rangeXUp>
+  <channel2CutFibre>500</channel2CutFibre>
+  <channel1CutChannel>1000</channel1CutChannel>
+  <channel2CutChannel>75</channel2CutChannel>
+
+</general>
+
