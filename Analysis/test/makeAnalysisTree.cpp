@@ -91,6 +91,7 @@ int main( int argc, char* argv[] ) {
    TString hostString(hostName);
    bool isLxplus = hostString.Contains("lxplus");
    if(isLxplus) fileName = "xroot://t3se01.psi.ch:1094//store/user/micheli/rawData/output_run" + runName + ".root"; 
+   std::cout<<"Reading file "<<fileName<<std::endl;
 
    TFile* file = TFile::Open(fileName.c_str());
    if( file==0 ) {
@@ -369,7 +370,7 @@ int main( int argc, char* argv[] ) {
 
 
    int nentries = tree->GetEntries();
-   if(nentries>theConfiguration_.limitNEntries)nentries=theConfiguration_.limitNEntries;
+   if(nentries>theConfiguration_.limitNEntries && theConfiguration_.limitNEntries>0)nentries=theConfiguration_.limitNEntries;
    //   nentries=5000;
    RunHelper::getBeamPosition( runName, xBeam, yBeam );
 
