@@ -28,6 +28,7 @@
 #include "TGaxis.h"
 #include "TVectorD.h"
 #include "TF1.h"
+#include "TGraphErrors.h"
 
 #include "interface/Configurator.h"
 #include "plotOverallPerformancesConfigurator.h"
@@ -267,6 +268,54 @@ int main( int argc, char* argv[] ) {
 
    }
 	  
+
+   //plot res vs amplitude
+   TGraphErrors*   resVsAmplitude_fibre = new TGraphErrors(0);
+   TGraphErrors*   resVsAmplitude_channel = new TGraphErrors(0);
+   
+   for(int i=0;i<resValueAmplitude_channel.GetNoElements();i++){
+       resVsAmplitude_channel->SetPoint(i,(i+1)*theConfiguration_.stepAmplChannel/2.,resValueAmplitude_channel[i]);
+       resVsAmplitude_channel->SetPointError(i,0,resErrValueAmplitude_channel[i]);
+     }
+	 
+	 
+   
+   
+   TCanvas* c1 = new TCanvas( "c1", "", 600, 600 );
+   float yup=1.1*(resVsAmplitude_channel->GetY()[0]);
+   float xup=(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1]+10; 
+   TH2D* h2_axes_2 = new TH2D( "axes_2", "", 100, 0,xup , 110, 0., yup);
+   
+   h2_axes_2->SetYTitle("#sigma_{t} [ps]");
+   h2_axes_2->GetXaxis()->SetTitle("Amplitude [ADC]");
+   h2_axes_2->Draw(""); 
+
+   TF1* f= new TF1("fun","[1]/x+[0]",(resVsAmplitude_channel->GetX())[0]-10,(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1] +10);
+    resVsAmplitude_channel->Fit("fun");
+
+    resVsAmplitude_channel->SetName("resVsAmplitude");
+    resVsAmplitude_channel->SetMarkerStyle(20);
+    resVsAmplitude_channel->SetMarkerSize(1.6);
+    resVsAmplitude_channel->SetMarkerColor(kBlue);
+    resVsAmplitude_channel->Draw("p same");
+
+
+    TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+    pave->Draw("same");
+
+
+
+    TLegend* lego = new TLegend(0.47, 0.7, 0.8, 0.92);
+    lego->SetTextSize(0.038);
+    lego->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
+    lego->AddEntry(  (TObject*)0 ,Form("p0 = %.0f #pm %.0f", f->GetParameter(0), f->GetParError(0) ), "");
+    lego->AddEntry(  (TObject*)0 ,Form("p1 = %.0f #pm %.0f", f->GetParameter(1), f->GetParError(1) ), "");
+    lego->SetFillColor(0);
+    lego->Draw("same");
+
+    c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channel.png");
+    c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channel.pdf");  
+
 
 
   return 0;
