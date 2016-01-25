@@ -1,0 +1,13 @@
+<general>
+  <runs>4093,4080,4067</runs> 
+  <setup>PMT</setup>
+  <nMaxAmplCuts>30</nMaxAmplCuts>
+  <stepAmplFibre>50</stepAmplFibre>
+  <stepAmplChannel>60</stepAmplChannel>
+  <rangeXLow>2</rangeXLow>
+  <rangeXUp>15</rangeXUp>
+  <channel2CutFibre>70</channel2CutFibre>
+  <channel1CutChannel>900</channel1CutChannel>
+  <channel2CutChannel>120</channel2CutChannel>
+</general>
+
