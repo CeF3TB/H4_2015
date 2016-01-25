@@ -137,6 +137,7 @@ int main( int argc, char* argv[] ) {
    //fit histos
    for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
      //fibre
+     std::cout<<"#####################################"<<i<<" "<<reso_histo_fibre_corr_Amplitude[i]->GetEntries()<<std::endl;
      if(reso_histo_fibre_corr_Amplitude[i]->GetEntries()>=20){
      TH1F* histo;
      histo=reso_histo_fibre_corr_Amplitude[i];
@@ -153,7 +154,7 @@ int main( int argc, char* argv[] ) {
      RooRealVar x("x","deltaT", fitmin, fitmax);
      RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
 
-     RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-3*sigma, peakpos+3*sigma);
+     RooRealVar meanr("meanr","Mean",peakpos,peakpos-3*sigma, peakpos+3*sigma);
      RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
      RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
      RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
@@ -199,10 +200,11 @@ int main( int argc, char* argv[] ) {
 
      cans->SaveAs(dir+"/reso_histo_fibre_cruijff_"+icut+".png");
      cans->SaveAs(dir+"/reso_histo_fibre_cruijff_"+icut+".pdf");
+
      }
 
      //channel
-     if(reso_histo_channel_corr_Amplitude[i]->GetEntries()>15){
+     if(reso_histo_channel_corr_Amplitude[i]->GetEntries()>20){
        TH1F* histo;
        histo=reso_histo_channel_corr_Amplitude[i];
        double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
@@ -218,7 +220,7 @@ int main( int argc, char* argv[] ) {
        RooRealVar x("x","deltaT", fitmin, fitmax);
        RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
 
-       RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-3*sigma, peakpos+3*sigma);
+       RooRealVar meanr("meanr","Mean",peakpos,peakpos-3*sigma, peakpos+3*sigma);
        RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
        RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
        RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
@@ -274,24 +276,33 @@ int main( int argc, char* argv[] ) {
    TGraphErrors*   resVsAmplitude_channel = new TGraphErrors(0);
    
    for(int i=0;i<resValueAmplitude_channel.GetNoElements();i++){
-       resVsAmplitude_channel->SetPoint(i,(i+1)*theConfiguration_.stepAmplChannel/2.,resValueAmplitude_channel[i]);
-       resVsAmplitude_channel->SetPointError(i,0,resErrValueAmplitude_channel[i]);
+     if(resValueAmplitude_channel[i]!=0){ 
+     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.<<" "<<resValueAmplitude_channel[i]<<std::endl;
+     resVsAmplitude_channel->SetPoint(i,(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.,resValueAmplitude_channel[i]);       resVsAmplitude_channel->SetPointError(i,0,resErrValueAmplitude_channel[i]);
      }
+     if(resValueAmplitude_fibre[i]!=0){
+       //     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplFibre/2.<<" "<<resValueAmplitude_fibre[i]<<std::endl;
+       resVsAmplitude_fibre->SetPoint(i,(i+1)*theConfiguration_.stepAmplFibre/2.,resValueAmplitude_fibre[i]);
+       resVsAmplitude_fibre->SetPointError(i,0,resErrValueAmplitude_fibre[i]);
+     }
+   }
 	 
 	 
    
    
    TCanvas* c1 = new TCanvas( "c1", "", 600, 600 );
-   float yup=1.1*(resVsAmplitude_channel->GetY()[0]);
+   float yup=1.1*(resVsAmplitude_channel->GetY()[0]+resVsAmplitude_channel->GetEY()[0]);
    float xup=(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1]+10; 
-   TH2D* h2_axes_2 = new TH2D( "axes_2", "", 100, 0,xup , 110, 0., yup);
-   
-   h2_axes_2->SetYTitle("#sigma_{t} [ps]");
-   h2_axes_2->GetXaxis()->SetTitle("Amplitude [ADC]");
-   h2_axes_2->Draw(""); 
+   TH2D* h2_axes = new TH2D( "axes", "", 100, 0,xup , 110, 0., yup);
+
+
+   //channel   
+   h2_axes->SetYTitle("#sigma_{t} [ps]");
+   h2_axes->GetXaxis()->SetTitle("Amplitude [ADC]");
+   h2_axes->Draw(""); 
 
    TF1* f= new TF1("fun","[1]/x+[0]",(resVsAmplitude_channel->GetX())[0]-10,(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1] +10);
-    resVsAmplitude_channel->Fit("fun");
+   resVsAmplitude_channel->Fit("fun");
 
     resVsAmplitude_channel->SetName("resVsAmplitude");
     resVsAmplitude_channel->SetMarkerStyle(20);
@@ -316,6 +327,42 @@ int main( int argc, char* argv[] ) {
     c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channel.png");
     c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channel.pdf");  
 
+    //fibre
+    c1->Clear();
+    yup=1.1*(resVsAmplitude_fibre->GetY()[0]+resVsAmplitude_fibre->GetEY()[0]);
+    xup=(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1]+10; 
+   TH2D* h2_axes_2 = new TH2D( "axes_2", "", 100, 0,xup , 110, 0., yup);
+
+
+   //fibre   
+   h2_axes_2->SetYTitle("#sigma_{t} [ps]");
+   h2_axes_2->GetXaxis()->SetTitle("Amplitude [ADC]");
+   h2_axes_2->Draw(""); 
+
+   resVsAmplitude_fibre->Fit("fun");
+
+   resVsAmplitude_fibre->SetName("resVsAmplitude");
+   resVsAmplitude_fibre->SetMarkerStyle(20);
+   resVsAmplitude_fibre->SetMarkerSize(1.6);
+   resVsAmplitude_fibre->SetMarkerColor(kBlue);
+   resVsAmplitude_fibre->Draw("p same");
+   
+
+   pave->Draw("same");
+   
+   
+   
+   TLegend* lego_2 = new TLegend(0.47, 0.7, 0.8, 0.92);
+   lego_2->SetTextSize(0.038);
+   lego_2->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
+   lego_2->AddEntry(  (TObject*)0 ,Form("p0 = %.0f #pm %.0f", f->GetParameter(0), f->GetParError(0) ), "");
+   lego_2->AddEntry(  (TObject*)0 ,Form("p1 = %.0f #pm %.0f", f->GetParameter(1), f->GetParError(1) ), "");
+   lego_2->SetFillColor(0);
+   lego_2->Draw("same");
+   
+   c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_fibre.png");
+   c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_fibre.pdf");  
+   
 
 
   return 0;
@@ -360,7 +407,7 @@ plotOverallPerformances_Config_t readConfiguration(std::string configName){
 }
 
 bool passesFibreTopologicalSelection(dummyRecoTree &t){
-  float  X=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_x_corr)/3.;
+  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.;
   float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.;
 
   if(Y>-3.5 && Y<-0.5 && X<-2.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
@@ -373,7 +420,7 @@ bool passesFibreTopologicalSelection(dummyRecoTree &t){
 }
 
 bool passesChannelTopologicalSelection(dummyRecoTree &t){
-  float  X=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_x_corr)/3.;
+  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.;
   float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.;
 
   if(Y>-3 && Y<5.5 && X<5.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
