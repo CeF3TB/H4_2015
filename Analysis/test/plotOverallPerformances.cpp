@@ -104,6 +104,7 @@ int main( int argc, char* argv[] ) {
   dummyRecoTree t(recoTree);
   Long64_t nentries = t.fChain->GetEntries();
 
+  int dummyCounter=0;
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
       Long64_t ientry = t.LoadTree(jentry);
@@ -111,13 +112,19 @@ int main( int argc, char* argv[] ) {
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
       if( t.mcp_time_frac50<0 ||t.mcp_max_amplitude<200)continue;
       for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
-      if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre){ 
+      if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/20.){ 
 	  if(t.cef3_maxAmpl->at(1)>i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<(i+1)*theConfiguration_.stepAmplFibre){
+	    //	    std::cout<<" "<<theConfiguration_.channel2CutFibre*t.beamEnergy/20.<<" "<<i<<" "<<i*theConfiguration_.stepAmplFibre<<" "<<(i+1)*theConfiguration_.stepAmplFibre<<std::endl;
+//	    if(t.cef3_maxAmpl->at(1)>320 && t.cef3_maxAmpl->at(1)<360){
+//		dummyCounter++;
+//		std::cout<<"DAKEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE "<<dummyCounter<<std::endl;
+//		std::cout<<" "<<theConfiguration_.channel2CutFibre*t.beamEnergy/20.<<" "<<i<<" "<<i*theConfiguration_.stepAmplFibre<<" "<<(i+1)*theConfiguration_.stepAmplFibre<<std::endl;
+//	      }
 	    reso_histo_fibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
 	    break;
 	  }
       }
-	  if(passesChannelTopologicalSelection(t)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
+	  if(passesChannelTopologicalSelection(t)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel*t.beamEnergy/20. && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
 	    if(t.cef3_maxAmpl->at(1)>i*theConfiguration_.stepAmplChannel && t.cef3_maxAmpl->at(1)<(i+1)*theConfiguration_.stepAmplChannel){
 	    reso_histo_channel_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
 	    break;
@@ -277,12 +284,12 @@ int main( int argc, char* argv[] ) {
    
    for(int i=0;i<resValueAmplitude_channel.GetNoElements();i++){
      if(resValueAmplitude_channel[i]!=0){ 
-     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.<<" "<<resValueAmplitude_channel[i]<<std::endl;
+       //     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.<<" "<<resValueAmplitude_channel[i]<<std::endl;
      resVsAmplitude_channel->SetPoint(i,(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.,resValueAmplitude_channel[i]);       resVsAmplitude_channel->SetPointError(i,0,resErrValueAmplitude_channel[i]);
      }
      if(resValueAmplitude_fibre[i]!=0){
        //     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplFibre/2.<<" "<<resValueAmplitude_fibre[i]<<std::endl;
-       resVsAmplitude_fibre->SetPoint(i,(i+1)*theConfiguration_.stepAmplFibre/2.,resValueAmplitude_fibre[i]);
+       resVsAmplitude_fibre->SetPoint(i,(i+1)*theConfiguration_.stepAmplFibre-theConfiguration_.stepAmplFibre/2.,resValueAmplitude_fibre[i]);
        resVsAmplitude_fibre->SetPointError(i,0,resErrValueAmplitude_fibre[i]);
      }
    }
