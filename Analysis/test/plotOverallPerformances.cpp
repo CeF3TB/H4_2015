@@ -105,26 +105,29 @@ int main( int argc, char* argv[] ) {
   Long64_t nentries = t.fChain->GetEntries();
 
   int dummyCounter=0;
+  float lowerBeamEnergy=0.;//cuts are sliding in energy
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
       Long64_t ientry = t.LoadTree(jentry);
       if (ientry < 0) break;
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
+      if(jentry==0)lowerBeamEnergy=t.beamEnergy;
       if( t.mcp_time_frac50<0 ||t.mcp_max_amplitude<200)continue;
       for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
-      if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/20.){ 
-	  if(t.cef3_maxAmpl->at(1)>i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<(i+1)*theConfiguration_.stepAmplFibre){
-	    //	    std::cout<<" "<<theConfiguration_.channel2CutFibre*t.beamEnergy/20.<<" "<<i<<" "<<i*theConfiguration_.stepAmplFibre<<" "<<(i+1)*theConfiguration_.stepAmplFibre<<std::endl;
-//	    if(t.cef3_maxAmpl->at(1)>320 && t.cef3_maxAmpl->at(1)<360){
-//		dummyCounter++;
-//		std::cout<<"DAKEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE "<<dummyCounter<<std::endl;
-//		std::cout<<" "<<theConfiguration_.channel2CutFibre*t.beamEnergy/20.<<" "<<i<<" "<<i*theConfiguration_.stepAmplFibre<<" "<<(i+1)*theConfiguration_.stepAmplFibre<<std::endl;
-//	      }
+      if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy){ 
+	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre){
+	   //	    std::cout<<" "<<theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy<<" "<<i<<" "<<i*theConfiguration_.stepAmplFibre<<" "<<(i+1)*theConfiguration_.stepAmplFibre<<std::endl;
+	    // if(t.cef3_maxAmpl->at(1)>600 && t.cef3_maxAmpl->at(1)<660){
+	    //   std::cout<<theConfiguration_.startCutFibre<<std::endl;
+	    // 	dummyCounter++;
+	    // 	std::cout<<"DAKEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE "<<dummyCounter<<std::endl;
+	    // 	std::cout<<" "<<theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy<<" "<<i<<" "<<i*theConfiguration_.stepAmplFibre<<" "<<(i+1)*theConfiguration_.stepAmplFibre<<std::endl;
+	    //	      }
 	    reso_histo_fibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
 	    break;
 	  }
       }
-	  if(passesChannelTopologicalSelection(t)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel*t.beamEnergy/20. && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
+	  if(passesChannelTopologicalSelection(t)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel*t.beamEnergy/lowerBeamEnergy && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
 	    if(t.cef3_maxAmpl->at(1)>i*theConfiguration_.stepAmplChannel && t.cef3_maxAmpl->at(1)<(i+1)*theConfiguration_.stepAmplChannel){
 	    reso_histo_channel_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
 	    break;
@@ -289,7 +292,7 @@ int main( int argc, char* argv[] ) {
      }
      if(resValueAmplitude_fibre[i]!=0){
        //     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplFibre/2.<<" "<<resValueAmplitude_fibre[i]<<std::endl;
-       resVsAmplitude_fibre->SetPoint(i,(i+1)*theConfiguration_.stepAmplFibre-theConfiguration_.stepAmplFibre/2.,resValueAmplitude_fibre[i]);
+       resVsAmplitude_fibre->SetPoint(i,theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre-theConfiguration_.stepAmplFibre/2.,resValueAmplitude_fibre[i]);
        resVsAmplitude_fibre->SetPointError(i,0,resErrValueAmplitude_fibre[i]);
      }
    }
@@ -300,7 +303,7 @@ int main( int argc, char* argv[] ) {
    TCanvas* c1 = new TCanvas( "c1", "", 600, 600 );
    float yup=1.1*(resVsAmplitude_channel->GetY()[0]+resVsAmplitude_channel->GetEY()[0]);
    float xup=(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1]+10; 
-   TH2D* h2_axes = new TH2D( "axes", "", 100, 0,xup , 110, 0., yup);
+   TH2D* h2_axes = new TH2D( "axes", "", 100,0 ,xup , 110, 0., yup);
 
 
    //channel   
@@ -338,7 +341,7 @@ int main( int argc, char* argv[] ) {
     c1->Clear();
     yup=1.1*(resVsAmplitude_fibre->GetY()[0]+resVsAmplitude_fibre->GetEY()[0]);
     xup=(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1]+10; 
-   TH2D* h2_axes_2 = new TH2D( "axes_2", "", 100, 0,xup , 110, 0., yup);
+   TH2D* h2_axes_2 = new TH2D( "axes_2", "", 100, theConfiguration_.startCutFibre,xup , 110, 0., yup);
 
 
    //fibre   
@@ -405,8 +408,7 @@ plotOverallPerformances_Config_t readConfiguration(std::string configName){
    conf.channel2CutChannel= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"channel2CutChannel",configurator_->root_element));
    conf.channel1CutChannel= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"channel1CutChannel",configurator_->root_element));
 
-   conf.nBinsFibre= Configurator::GetInt(Configurable::getElementContent(*configurator_,"nBinsFibre",configurator_->root_element));
-   conf.nBinsChannel= Configurator::GetInt(Configurable::getElementContent(*configurator_,"nBinsChannel",configurator_->root_element));
+   conf.startCutFibre= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"startCutFibre",configurator_->root_element));
 
 
    return conf;
