@@ -97,6 +97,7 @@ int main( int argc, char* argv[] ) {
   TH2F* amplitude_map_channel = new TH2F("amplitude_map_channel","amplitude_map_channel",22,-5.5,5,22,-5.5,5);
   TH2F* timing_map_channel_norm = new TH2F("timing_map_channel_norm","timing_map_channel_norm",22,-5.5,5,22,-5.5,5);
 
+  TH2F* amplitude_map_fibre2 = new TH2F("amplitude_map_fibre2","amplitude_map_fibre2",22,-5.5,5,22,-5.5,5);
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -166,6 +167,8 @@ int main( int argc, char* argv[] ) {
 	  timing_map_channel_norm->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.);
 	  timing_map_channel->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,deltaT);
 	  amplitude_map_channel->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,t.cef3_maxAmpl->at(1));
+	  if(t.cef3_maxAmpl->at(1)>500)std::cout<<"daje"<<" ";
+	  amplitude_map_fibre2->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,t.cef3_maxAmpl->at(2));
       }
 
       if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce remaining events hitting the channel
@@ -189,6 +192,10 @@ int main( int argc, char* argv[] ) {
    amplitude_map_fibre->Divide(timing_map_fibre_norm);
    amplitude_map_fibre->GetYaxis()->SetTitle("Y [mm]");
    amplitude_map_fibre->GetXaxis()->SetTitle("X [mm]");
+
+   amplitude_map_fibre2->Divide(timing_map_channel_norm);
+   amplitude_map_fibre2->GetYaxis()->SetTitle("Y [mm]");
+   amplitude_map_fibre2->GetXaxis()->SetTitle("X [mm]");
 
    timing_map_channel->Divide(timing_map_channel_norm);
    //   timing_map_channel->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z");
@@ -467,6 +474,7 @@ int main( int argc, char* argv[] ) {
 
   timing_map_fibre->Write();
   amplitude_map_fibre->Write();
+  amplitude_map_fibre2->Write();
   timing_map_fibre_norm->Write();
 
   timing_map_channel->Write();
