@@ -104,6 +104,51 @@ int main( int argc, char* argv[] ) {
     TCanvas c1;
     amplitude_map_total->Draw("colz");
     c1.SaveAs(dir+"/amplitude_map_"+runString+".pdf");
+    c1.SaveAs(dir+"/amplitude_map_"+runString+".png");
+
+    c1.Clear();
+    amplitude_map_fibre2->Draw("colz");
+    c1.SaveAs(dir+"/amplitude_map_fibre2_"+runString+".pdf");
+    c1.SaveAs(dir+"/amplitude_map_fibre2_"+runString+".png");
+
+
+    c1.Clear();
+    timing_map_total->Draw("colz");
+    c1.SaveAs(dir+"/timing_map_"+runString+".pdf");
+    c1.SaveAs(dir+"/timing_map_"+runString+".png");
+
+    c1.Clear();
+    amplitude_map_sel_channel->Draw("colz");
+    c1.SaveAs(dir+"/amplitude_map_sel_channel"+runString+".pdf");
+    c1.SaveAs(dir+"/amplitude_map_sel_channel"+runString+".png");
+
+    c1.Clear();
+    timing_map_sel_channel->Draw("colz");
+    c1.SaveAs(dir+"/timing_map_sel_channel"+runString+".pdf");
+    c1.SaveAs(dir+"/timing_map_sel_channel"+runString+".png");
+
+    c1.Clear();
+    amplitude_map_sel_fibre->Draw("colz");
+    c1.SaveAs(dir+"/amplitude_map_sel_fibre"+runString+".pdf");
+    c1.SaveAs(dir+"/amplitude_map_sel_fibre"+runString+".png");
+
+    c1.Clear();
+    timing_map_sel_fibre->Draw("colz");
+    c1.SaveAs(dir+"/timing_map_sel_fibre"+runString+".pdf");
+    c1.SaveAs(dir+"/timing_map_sel_fibre"+runString+".png");
+
+    c1.Clear();
+    maxAmpl_sel_channel->GetXaxis()->SetRangeUser(0,800.);
+    maxAmpl_sel_channel->SetLineWidth(2);
+    maxAmpl_sel_fibre->SetLineWidth(2);
+    maxAmpl_sel_channel->DrawNormalized();
+    maxAmpl_sel_fibre->DrawNormalized("same");
+
+    std::string energy(Form("%.0f",energies[i]));
+    TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
+    pave->Draw("same");
+
+    c1.SaveAs(dir+"/maxAmpl_comparison_"+runString+".pdf");
 
   }
 
