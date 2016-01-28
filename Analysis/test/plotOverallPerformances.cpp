@@ -64,12 +64,12 @@ int main( int argc, char* argv[] ) {
   theConfiguration_=readConfiguration(config);
   
   TH1F* reso_histo_fibre_corr_Amplitude[theConfiguration_.nMaxAmplCuts];//to see behaviour of resolution as a function of ampl
-   TH1F* reso_histo_channel_corr_Amplitude[theConfiguration_.nMaxAmplCuts];
-   TVectorD resValueAmplitude_fibre(theConfiguration_.nMaxAmplCuts);
-   TVectorD resErrValueAmplitude_fibre(theConfiguration_.nMaxAmplCuts);
-
-   TVectorD resValueAmplitude_channel(theConfiguration_.nMaxAmplCuts);
-   TVectorD resErrValueAmplitude_channel(theConfiguration_.nMaxAmplCuts);
+  TH1F* reso_histo_channel_corr_Amplitude[theConfiguration_.nMaxAmplCuts];
+  TVectorD resValueAmplitude_fibre(theConfiguration_.nMaxAmplCuts);
+  TVectorD resErrValueAmplitude_fibre(theConfiguration_.nMaxAmplCuts);
+  
+  TVectorD resValueAmplitude_channel(theConfiguration_.nMaxAmplCuts);
+  TVectorD resErrValueAmplitude_channel(theConfiguration_.nMaxAmplCuts);
 
 
    for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
@@ -86,7 +86,15 @@ int main( int argc, char* argv[] ) {
 
   TString haddFile = "analysisTrees_"+tag+"/"+theConfiguration_.setup+"_runs.root";
 
+  if(theConfiguration_.addTagFileName){
+    haddFile = "analysisTrees_"+tag+"/"+theConfiguration_.setup+"_"+theConfiguration_.tagFileName+"_runs.root";
+  }
+
   TString haddString = "hadd analysisTrees_"+tag+"/"+theConfiguration_.setup+"_runs.root ";
+
+  if(theConfiguration_.addTagFileName){
+    haddString = "hadd analysisTrees_"+tag+"/"+theConfiguration_.setup+"_"+theConfiguration_.tagFileName+"_runs.root ";
+  }
 
   for (int i=0;i<theConfiguration_.runs.size();++i){
     TString fileNameString = "analysisTrees_"+tag+"/Reco_";
@@ -116,13 +124,7 @@ int main( int argc, char* argv[] ) {
       for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
       if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy){ 
 	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre){
-	   //	    std::cout<<" "<<theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy<<" "<<i<<" "<<i*theConfiguration_.stepAmplFibre<<" "<<(i+1)*theConfiguration_.stepAmplFibre<<std::endl;
-	    // if(t.cef3_maxAmpl->at(1)>600 && t.cef3_maxAmpl->at(1)<660){
-	    //   std::cout<<theConfiguration_.startCutFibre<<std::endl;
-	    // 	dummyCounter++;
-	    // 	std::cout<<"DAKEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE "<<dummyCounter<<std::endl;
-	    // 	std::cout<<" "<<theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy<<" "<<i<<" "<<i*theConfiguration_.stepAmplFibre<<" "<<(i+1)*theConfiguration_.stepAmplFibre<<std::endl;
-	    //	      }
+
 	    reso_histo_fibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
 	    break;
 	  }
@@ -141,6 +143,10 @@ int main( int argc, char* argv[] ) {
    // this is the dir in which the plots will be saved:
    std::string constDirName = "plots_timingPerformance_";
    constDirName+=theConfiguration_.setup;
+   if(theConfiguration_.addTagFileName){
+     constDirName+="_";
+     constDirName+=theConfiguration_.tagFileName;
+   }
    system(Form("mkdir -p %s", constDirName.c_str()));
    TString dir(constDirName);
    
@@ -410,17 +416,23 @@ plotOverallPerformances_Config_t readConfiguration(std::string configName){
 
    conf.startCutFibre= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"startCutFibre",configurator_->root_element));
 
+   conf.addTagFileName= Configurator::GetInt(Configurable::getElementContent(*configurator_,"addTagFileName",configurator_->root_element));
+
+   conf.tagFileName=Configurable::getElementContent (*configurator_, "tagFileName",configurator_->root_element) ;
+
 
    return conf;
 
 }
 
 bool passesFibreTopologicalSelection(dummyRecoTree &t){
-  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.;
-  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.;
+  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)/2.;
+  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)/2.;
 
-  if(Y>-3.5 && Y<-0.5 && X<-2.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-    if(0.66*X+4.16+Y<0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
+  //  if(Y>-3.5 && Y<-0.5 && X<-2.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
+  if(Y>-3 && Y<0. && X<-2.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
+    //    if(0.66*X+4.16+Y<0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
+    if(X+5.5+1.5*Y<0){//line passing through (-5.5,-0.) and (-2.5,2)
       return true; 
     }
 }
@@ -429,12 +441,13 @@ bool passesFibreTopologicalSelection(dummyRecoTree &t){
 }
 
 bool passesChannelTopologicalSelection(dummyRecoTree &t){
-  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.;
-  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.;
+  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)/2.;
+  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)/2.;
 
-  if(Y>-3 && Y<5.5 && X<5.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-    if(0.66*X+4.16+Y>0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
-    return true; 
+  if(Y>-2 && Y<5.5 && X<5.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
+    //    if(0.66*X+4.16+Y>0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
+    if(X+5.5+1.5*Y>0){//line passing through (-5.5,-0.) and (-2.5,2)
+      return true; 
+    }
   }
-}
 }
