@@ -86,18 +86,44 @@ int main( int argc, char* argv[] ) {
   t.fChain->GetEntry(0);
   theConfiguration_=readConfiguration(config,t.beamEnergy);
 
+  float xLowChannel=-5.5, xUpChannel=4.5, yLowChannel=-2, yUpChannel=5;
+  float xLowFibre=-5.5,xUpFibre=-2.5, yLowFibre=-3, yUpFibre=0;
+
+
   TH1F* reso_histo_fibre = new TH1F("reso_histo_fibre","reso_histo_fibre",2000,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);  
   TH1F* reso_histo_channel = new TH1F("reso_histo_channel","reso_histo_channel",2000,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);  
   //maps
-  TH2F* timing_map_fibre = new TH2F("timing_map_fibre","timing_map_fibre",16,-5.5,0,16,-5.5,0);
-  TH2F* amplitude_map_fibre = new TH2F("amplitude_map_fibre","amplitude_map_fibre",16,-5.5,0,16,-5.5,0);
-  TH2F* timing_map_fibre_norm = new TH2F("timing_map_fibre_norm","timing_map_fibre_norm",16,-5.5,0,16,-5.5,0);
+  TH2F* timing_map_fibre = new TH2F("timing_map_fibre","timing_map_fibre",16,xLowFibre,xUpFibre,16,yLowFibre,yUpFibre);
+  TH2F* amplitude_map_fibre = new TH2F("amplitude_map_fibre","amplitude_map_fibre",16,xLowFibre,xUpFibre,16,yLowFibre,yUpFibre);
+  TH2F* timing_map_fibre_norm = new TH2F("timing_map_fibre_norm","timing_map_fibre_norm",16,xLowFibre,xUpFibre,16,yLowFibre,yUpFibre);
 
-  TH2F* timing_map_channel = new TH2F("timing_map_channel","timing_map_channel",22,-5.5,5,22,-5.5,5);
-  TH2F* amplitude_map_channel = new TH2F("amplitude_map_channel","amplitude_map_channel",22,-5.5,5,22,-5.5,5);
-  TH2F* timing_map_channel_norm = new TH2F("timing_map_channel_norm","timing_map_channel_norm",22,-5.5,5,22,-5.5,5);
+  TH2F* timing_map_channel = new TH2F("timing_map_channel","timing_map_channel",22,xLowChannel,xUpChannel,22,-5.5,5);
+  TH2F* amplitude_map_channel = new TH2F("amplitude_map_channel","amplitude_map_channel",22,xLowChannel,xUpChannel,22,-5.5,5);
+  TH2F* timing_map_channel_norm = new TH2F("timing_map_channel_norm","timing_map_channel_norm",22,xLowChannel,xUpChannel,22,-5.5,5);
 
-  TH2F* amplitude_map_fibre2 = new TH2F("amplitude_map_fibre2","amplitude_map_fibre2",22,-5.5,5,22,-5.5,5);
+  TH2F* amplitude_map_fibre2 = new TH2F("amplitude_map_fibre2","amplitude_map_fibre2",22,xLowChannel,xUpChannel,22,-5.5,5);
+  TH2F* amplitude_map_fibre0 = new TH2F("amplitude_map_fibre0","amplitude_map_fibre0",22,xLowChannel,xUpChannel,22,-5.5,5);
+  TH2F* amplitude_map_fibre0and2 = new TH2F("amplitude_map_fibre0and2","amplitude_map_fibre0and2",22,xLowChannel,xUpChannel,22,-5.5,5);
+  
+  //plots with all the selection applied
+  TH1F* maxAmpl_sel_fibre = new TH1F("maxAmpl_sel_fibre","maxAmpl_sel_fibre",500,0,4000);
+  TH1F* maxAmpl_sel_channel = new TH1F("maxAmpl_sel_channel","maxAmpl_sel_channel",500,0,4000);
+
+  int nBinsChannel=30, nBinsFibre=12;
+
+  TH2F* amplitude_map_sel_channel = new TH2F("amplitude_map_sel_channel","amplitude_map_sel_channel",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);//FIXME UNIFORMARE BINNING CON NORM
+  TH2F* amplitude_map_sel_fibre = new TH2F("amplitude_map_sel_fibre","amplitude_map_sel_fibre",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
+
+  TH2F* timing_map_sel_channel = new TH2F("timing_map_sel_channel","timing_map_sel_channel",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
+  TH2F* timing_map_sel_fibre = new TH2F("timing_map_sel_fibre","timing_map_sel_fibre",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
+
+  TH2F* sel_channel_norm = new TH2F("sel_channel_norm","sel_channel_norm",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
+  TH2F* sel_fibre_norm = new TH2F("sel_fibre_norm","sel_fibre_norm",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
+
+  if(theConfiguration_.setup=="Nino"){
+    std::cout<<"using NINO"<<std::endl;
+  }
+
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -106,10 +132,12 @@ int main( int argc, char* argv[] ) {
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
       if( t.mcp_time_frac50<0 ||t.mcp_max_amplitude<200)continue;
+      float deltaT=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50;
+      if(theConfiguration_.setup=="Nino")deltaT=t.nino_LEtime-t.mcp_time_frac50;
       if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre)   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce remaining events hitting the channel
-	reso_histo_fibre->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
+	reso_histo_fibre->Fill(deltaT);
       if(passesChannelTopologicalSelection(t)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel)   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
-	reso_histo_channel->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
+	reso_histo_channel->Fill(deltaT);
    }
 
 
@@ -149,7 +177,6 @@ int main( int argc, char* argv[] ) {
     reso_histo_channel_corr[i] = new TH1F("reso_histo_channel_corr_"+icut,"reso_histo_channel_corr_"+icut,theConfiguration_.nBinsChannel,-3*reso_sigma_channel,3*reso_sigma_channel);
     reso_histo_channel_corr_Amplitude[i] = new TH1F("reso_histo_channel_corr_Amplitude_"+icut,"reso_histo_channel_corr_Amplitude_"+icut,200,-2*reso_sigma_channel,2*reso_sigma_channel);
 
-
    }
 
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -159,30 +186,68 @@ int main( int argc, char* argv[] ) {
       // if (Cut(ientry) < 0) continue;
       if( t.mcp_time_frac50<0 || t.mcp_time_frac50>400 || t.cef3_time_at_frac50->at(1)<0 || t.cef3_time_at_frac50->at(1) > 400 || t.mcp_max_amplitude<200)continue;
       //map_fibre of timing vs x and y
-      float deltaT=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean_channel+reso_sigma_channel/2;
-      if(deltaT>-2 && deltaT<2){
-	  timing_map_fibre_norm->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.);
-	  timing_map_fibre->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,deltaT);
-	  amplitude_map_fibre->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,t.cef3_maxAmpl->at(1));
-	  timing_map_channel_norm->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.);
-	  timing_map_channel->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,deltaT);
-	  amplitude_map_channel->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,t.cef3_maxAmpl->at(1));
-	  if(t.cef3_maxAmpl->at(1)>500)std::cout<<"daje"<<" ";
-	  amplitude_map_fibre2->Fill((t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2+t.wc_x_corr)/3.,(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.,t.cef3_maxAmpl->at(2));
-      }
+      float deltaTNoCorr=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50;
+      if(theConfiguration_.setup=="Nino")deltaTNoCorr=t.nino_LEtime-t.mcp_time_frac50;
+      float deltaT=deltaTNoCorr-(reso_mean_channel+reso_mean_fibre)/2.+reso_sigma_channel/2;//for total maps we do an average of mean time of channel and fibre
 
-      if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce remaining events hitting the channel
-	for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
-	  if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCutFibre+(i>1)*i*theConfiguration_.stepFibre))	    reso_histo_fibre_corr[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean_fibre+reso_sigma_fibre/2);
-	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<(theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre)) reso_histo_fibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean_fibre+reso_sigma_fibre/2);
+
+      float X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)/2.;
+      float Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)/2.;
+      float ampl=t.cef3_maxAmpl->at(1);
+      if(theConfiguration_.setup=="Nino")ampl=t.nino_maxAmpl;
+
+
+	if(deltaT>-2 && deltaT<2 && ampl>0 && ampl<4000){
+	   timing_map_fibre_norm->Fill(X,Y);
+	   timing_map_fibre->Fill(X,Y,deltaT);
+	   amplitude_map_fibre->Fill(X,Y,ampl);
+	   timing_map_channel_norm->Fill(X,Y);
+	   timing_map_channel->Fill(X,Y,deltaT);
+	   amplitude_map_channel->Fill(X,Y,ampl);
+	   //	  std::cout<<deltaT<<std::endl;
+	   amplitude_map_fibre2->Fill(X,Y,t.cef3_maxAmpl->at(2));
+	   amplitude_map_fibre0->Fill(X,Y,t.cef3_maxAmpl->at(0));
+	   amplitude_map_fibre0and2->Fill(X,Y,t.cef3_maxAmpl->at(0)+t.cef3_maxAmpl->at(2));
 	}
-      }else if(passesChannelTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){ //cuts on channel position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination
-	for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
-	  if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCutChannel+(i>1)*i*theConfiguration_.stepChannel))reso_histo_channel_corr[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean_channel+reso_sigma_channel/2);
-	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutChannel+i*theConfiguration_.stepAmplChannel && t.cef3_maxAmpl->at(1)<(theConfiguration_.startCutChannel+(i+1)*theConfiguration_.stepAmplChannel)) reso_histo_channel_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50-reso_mean_channel+reso_sigma_channel/2);
+
+
+      if(passesFibreTopologicalSelection(t)){
+	float deltaTCorr=deltaTNoCorr-reso_mean_fibre+reso_sigma_fibre/2;
+
+
+	if(t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce remaining events hitting the channel
+
+	if(deltaTCorr>-2 && deltaTCorr<2 && ampl>0 && ampl<4000){
+	  amplitude_map_sel_fibre->Fill(X,Y,ampl);
+	  timing_map_sel_fibre->Fill(X,Y,deltaTCorr);
+	  sel_fibre_norm->Fill(X,Y);
+	  maxAmpl_sel_fibre->Fill(ampl);
 	}
+	
+	for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
+	  if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCutFibre+(i>1)*i*theConfiguration_.stepFibre))	    reso_histo_fibre_corr[i]->Fill(deltaTCorr);
+	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<(theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre)) reso_histo_fibre_corr_Amplitude[i]->Fill(deltaTCorr);
+	}
+	}
+      }else if(passesChannelTopologicalSelection(t)){
+	float deltaTCorr=deltaTNoCorr-reso_mean_channel+reso_sigma_channel/2;
+	if(t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){ //cuts on channel position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination
+	if(deltaTCorr>-2 && deltaTCorr<2 && ampl>0 && ampl<4000){
+	  amplitude_map_sel_channel->Fill(X,Y,ampl);  
+	  timing_map_sel_channel->Fill(X,Y,deltaTCorr);
+	  sel_channel_norm->Fill(X,Y);
+	  maxAmpl_sel_channel->Fill(ampl);
+	}
+
+	for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
+	  if(t.cef3_maxAmpl->at(1)>(i>0)*(theConfiguration_.startCutChannel+(i>1)*i*theConfiguration_.stepChannel))reso_histo_channel_corr[i]->Fill(deltaTNoCorr-reso_mean_channel+reso_sigma_channel/2);
+	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutChannel+i*theConfiguration_.stepAmplChannel && t.cef3_maxAmpl->at(1)<(theConfiguration_.startCutChannel+(i+1)*theConfiguration_.stepAmplChannel)) reso_histo_channel_corr_Amplitude[i]->Fill(deltaTNoCorr-reso_mean_channel+reso_sigma_channel/2);
+	}
+
       }
-   }
+      }
+      
+   }//nentries
 
    timing_map_fibre->Divide(timing_map_fibre_norm);
    //   timing_map_fibre->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z")
@@ -193,9 +258,36 @@ int main( int argc, char* argv[] ) {
    amplitude_map_fibre->GetYaxis()->SetTitle("Y [mm]");
    amplitude_map_fibre->GetXaxis()->SetTitle("X [mm]");
 
+   amplitude_map_sel_fibre->Divide(sel_fibre_norm);
+   amplitude_map_sel_fibre->GetYaxis()->SetTitle("Y [mm]");
+   amplitude_map_sel_fibre->GetXaxis()->SetTitle("X [mm]");
+
+   timing_map_sel_fibre->Divide(sel_fibre_norm);
+   timing_map_sel_fibre->GetYaxis()->SetTitle("Y [mm]");
+   timing_map_sel_fibre->GetXaxis()->SetTitle("X [mm]");
+
+
+   amplitude_map_sel_channel->Divide(sel_channel_norm);
+   amplitude_map_sel_channel->GetYaxis()->SetTitle("Y [mm]");
+   amplitude_map_sel_channel->GetXaxis()->SetTitle("X [mm]");
+
+   timing_map_sel_channel->Divide(sel_channel_norm);
+   timing_map_sel_channel->GetYaxis()->SetTitle("Y [mm]");
+   timing_map_sel_channel->GetXaxis()->SetTitle("X [mm]");
+
+
    amplitude_map_fibre2->Divide(timing_map_channel_norm);
    amplitude_map_fibre2->GetYaxis()->SetTitle("Y [mm]");
    amplitude_map_fibre2->GetXaxis()->SetTitle("X [mm]");
+
+   amplitude_map_fibre0->Divide(timing_map_channel_norm);
+   amplitude_map_fibre0->GetYaxis()->SetTitle("Y [mm]");
+   amplitude_map_fibre0->GetXaxis()->SetTitle("X [mm]");
+
+   amplitude_map_fibre0and2->Divide(timing_map_channel_norm);
+   amplitude_map_fibre0and2->GetYaxis()->SetTitle("Y [mm]");
+   amplitude_map_fibre0and2->GetXaxis()->SetTitle("X [mm]");
+
 
    timing_map_channel->Divide(timing_map_channel_norm);
    //   timing_map_channel->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z");
@@ -205,6 +297,14 @@ int main( int argc, char* argv[] ) {
    amplitude_map_channel->Divide(timing_map_channel_norm);
    amplitude_map_channel->GetYaxis()->SetTitle("Y [mm]");
    amplitude_map_channel->GetXaxis()->SetTitle("X [mm]");
+
+   maxAmpl_sel_channel->SetLineWidth(2);
+   maxAmpl_sel_channel->GetXaxis()->SetTitle("Signal Amplitude [ADC channel]");
+
+   maxAmpl_sel_channel->SetLineWidth(2);
+   maxAmpl_sel_channel->SetLineColor(kRed);
+   maxAmpl_sel_channel->GetXaxis()->SetTitle("Signal Amplitude [ADC channel]");
+
 
    // this is the dir in which the plots will be saved:
   std::string constDirName = "plots_timing_";
@@ -221,6 +321,7 @@ int main( int argc, char* argv[] ) {
   c1.SaveAs(dir+"/reso_histo_fibre_"+runNumberString+".pdf");
 
   for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
+    std::cout<<i<<" "<<reso_histo_fibre_corr[i]->GetEntries()<<" "<<reso_histo_fibre_corr[i]->Integral(reso_histo_fibre_corr[i]->FindBin(-0.5),reso_histo_fibre_corr[i]->FindBin(0.3))<<std::endl;
     if(reso_histo_fibre_corr[i]->Integral(reso_histo_fibre_corr[i]->FindBin(-0.5),reso_histo_fibre_corr[i]->FindBin(0.3))<5) continue;
 
 
@@ -284,7 +385,7 @@ int main( int argc, char* argv[] ) {
   RooRealVar x("x","deltaT", fitmin, fitmax);
   RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
 
-  RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-3*sigma, peakpos+3*sigma);
+  RooRealVar meanr("meanr","Mean",peakpos,peakpos-3*sigma, peakpos+3*sigma);
   RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
   RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
   RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
@@ -337,7 +438,7 @@ int main( int argc, char* argv[] ) {
     RooRealVar x("x","deltaT", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
     
-    RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-3*sigma, peakpos+3*sigma);
+    RooRealVar meanr("meanr","Mean",peakpos,peakpos-3*sigma, peakpos+3*sigma);
     RooRealVar width("width","#sigma",sigma , 0, 5.*sigma);
     RooRealVar A("A","Dist",2., 0.0, 7.0);
     RooRealVar N("N","Deg",5, 0.0, 10);
@@ -412,7 +513,7 @@ int main( int argc, char* argv[] ) {
     RooRealVar x("x","deltaT", fitmin, fitmax);
     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
 
-    RooRealVar meanr("meanr","Mean",peakpos-sigma,peakpos-3*sigma, peakpos+3*sigma);
+    RooRealVar meanr("meanr","Mean",peakpos,peakpos-3*sigma, peakpos+3*sigma);
     RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
     RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
     RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
@@ -475,11 +576,25 @@ int main( int argc, char* argv[] ) {
   timing_map_fibre->Write();
   amplitude_map_fibre->Write();
   amplitude_map_fibre2->Write();
+  amplitude_map_fibre0->Write();
+  amplitude_map_fibre0and2->Write();
   timing_map_fibre_norm->Write();
 
   timing_map_channel->Write();
   amplitude_map_channel->Write();
   timing_map_channel_norm->Write();
+
+  amplitude_map_sel_fibre->Write();
+  amplitude_map_sel_channel->Write();
+
+  sel_fibre_norm->Write();
+  sel_channel_norm->Write();
+
+  timing_map_sel_fibre->Write();
+  timing_map_sel_channel->Write();
+
+  maxAmpl_sel_fibre->Write();
+  maxAmpl_sel_channel->Write();
 
   resValueTime_fibre.Write("resValueTime_fibre");
   resValueAmplitude_fibre.Write("resValueAmplitude_fibre");
@@ -538,31 +653,34 @@ timingPlots_Config_t readConfiguration(std::string configName, float beamEnergy)
 }
 
 bool passesFibreTopologicalSelection(RecoTree &t){
-  //  if(0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)<-2.5 && 0.5*(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)<-3 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100 && t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_y_corr<-2.5 && t.wc_y_corr>-20 && t.wc_x_corr<-3 && t.wc_x_corr>-20 ) return true;
-  //  if(0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)<-0.5 && 0.5*(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)<-3 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100 && t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_y_corr<-0.5 && t.wc_y_corr>-20 && t.wc_x_corr<-3 && t.wc_x_corr>-20 && 0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)>-3 && t.wc_y_corr>-3) return true;
-  float  X=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_x_corr)/3.;
-  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.;
+  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)/2.;
+  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)/2.;
 
-  if(Y>-3.5 && Y<-0.5 && X<-2.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-    if(0.66*X+4.16+Y<0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
+  if(Y>-3 && Y<0.5 && X<-2.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
+    //    if(0.66*X+4.16+Y<0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
+    if(X+5.5+1.5*Y<0){//line passing through (-5.5,-0.) and (-2.5,2)
       return true; 
     }
 }
 
   return false;
+
 }
+
+
 
 bool passesChannelTopologicalSelection(RecoTree &t){
-  //  if(0.5*(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)>-2.5 && 0.5*(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)>-4.5 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100 && t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_y_corr>-2.5  && t.wc_x_corr>-4.5) return true;
-  float  X=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_x_corr)/3.;
-  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2+t.wc_y_corr)/3.;
+  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)/2.;
+  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)/2.;
 
-  if(Y>-3 && Y<5.5 && X<5.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-    if(0.66*X+4.16+Y>0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
-    return true; 
+  if(Y>-2 && Y<5.5 && X<5.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
+    //    if(0.66*X+4.16+Y>0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
+    if(X+5.5+1.5*Y>0){//line passing through (-5.5,-0.) and (-2.5,2)
+      return true; 
+    }
   }
-}
-
 
   return false;
 }
+
+//  LocalWords:  maxAmpl
