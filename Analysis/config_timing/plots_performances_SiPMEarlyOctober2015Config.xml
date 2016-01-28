@@ -10,5 +10,6 @@
   <channel1CutChannel>2000</channel1CutChannel>
   <channel2CutChannel>100</channel2CutChannel>
   <startCutFibre>0</startCutFibre>
+  <energies>20,50,100,150,200</energies>
 </general>
 
