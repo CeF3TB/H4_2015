@@ -75,12 +75,19 @@ int main( int argc, char* argv[] ) {
 
   std::vector<int> runs;
   std::vector<float> energies;
-  for (int i=0;i<theConfiguration_.runs.size();++i){
-    runs.push_back(theConfiguration_.runs[i]);
-    energies.push_back(theConfiguration_.energies[i]);
+  for (int i=0;i<theConfiguration_.runs.size()+1;++i){//+1 for all the run together
+    if(i<theConfiguration_.runs.size()){
+      runs.push_back(theConfiguration_.runs[i]);
+      energies.push_back(theConfiguration_.energies[i]);
+    }
 
     TString filename= "plots_timing_SiPM/timingStudies"+theConfiguration_.setup+"_"+tag+"_";
-    filename+=runs[i];
+
+    if(i<theConfiguration_.runs.size()){
+      filename+=runs[i];
+    }else{
+      filename+="total";
+    }
     filename+=".root";
 
     TFile* file = TFile::Open(filename.Data());
@@ -100,7 +107,13 @@ int main( int argc, char* argv[] ) {
 
 
     TString runString;
-    runString+=runs[i];
+    if(i<theConfiguration_.runs.size()){
+      runString+=runs[i];
+    }else{
+      runString+="total";
+    }
+
+    gStyle->SetPadRightMargin(0.17);//for the palette
     TCanvas c1;
     amplitude_map_total->Draw("colz");
     c1.SaveAs(dir+"/amplitude_map_"+runString+".pdf");
@@ -137,18 +150,28 @@ int main( int argc, char* argv[] ) {
     c1.SaveAs(dir+"/timing_map_sel_fibre"+runString+".pdf");
     c1.SaveAs(dir+"/timing_map_sel_fibre"+runString+".png");
 
-    c1.Clear();
+    gStyle->SetPadRightMargin(0.10);
+    TCanvas c2;
     maxAmpl_sel_channel->GetXaxis()->SetRangeUser(0,800.);
     maxAmpl_sel_channel->SetLineWidth(2);
     maxAmpl_sel_fibre->SetLineWidth(2);
     maxAmpl_sel_channel->DrawNormalized();
     maxAmpl_sel_fibre->DrawNormalized("same");
 
-    std::string energy(Form("%.0f",energies[i]));
-    TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
-    pave->Draw("same");
 
-    c1.SaveAs(dir+"/maxAmpl_comparison_"+runString+".pdf");
+
+    if(i<theConfiguration_.runs.size()){
+      std::string energy(Form("%.0f",energies[i]));
+      TPaveText* pave = DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
+      pave->Draw("same");
+    }else{
+      std::string energy(Form("%.0f",energies[i]));
+      TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+      pave->Draw("same");
+    }
+
+    c2.SaveAs(dir+"/maxAmpl_comparison_"+runString+".pdf");
+    c2.SaveAs(dir+"/maxAmpl_comparison_"+runString+".png");
 
   }
 
