@@ -111,7 +111,36 @@ int main( int argc, char* argv[] ) {
       runString+=runs[i];
     }else{
       runString+="total";
+
+      //for total we do normalized plots
+      float max= amplitude_map_total->GetMaximum();
+      amplitude_map_total->Scale(1./max);
+      amplitude_map_total->SetAxisRange(0,1,"Z");
+      
+      max= amplitude_map_fibre2->GetMaximum();
+      amplitude_map_fibre2->Scale(1./max);
+      amplitude_map_fibre2->SetAxisRange(0,1,"Z");
+      
+      max= amplitude_map_sel_channel->GetMaximum();
+      amplitude_map_sel_channel->Scale(1./max);
+      amplitude_map_sel_channel->SetAxisRange(0,1,"Z");
+     
+      max= amplitude_map_sel_fibre->GetMaximum();
+      amplitude_map_sel_fibre->Scale(1./max);
+      amplitude_map_sel_fibre->SetAxisRange(0,1,"Z");
+
+      //timing should be scaled for number of files after hadd      
+      timing_map_total->Scale(1./runs.size());
+      timing_map_total->SetAxisRange(-0.1,0.9,"Z");
+
+      timing_map_sel_channel->Scale(1./runs.size());
+      timing_map_sel_channel->SetAxisRange(-0.1,0.9,"Z");
+
+      timing_map_sel_fibre->Scale(1./runs.size());
+      timing_map_sel_fibre->SetAxisRange(-0.1,0.9,"Z");
+
     }
+
 
     gStyle->SetPadRightMargin(0.17);//for the palette
     TCanvas c1;
