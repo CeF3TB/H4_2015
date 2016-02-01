@@ -86,7 +86,7 @@ int main( int argc, char* argv[] ) {
   t.fChain->GetEntry(0);
   theConfiguration_=readConfiguration(config,t.beamEnergy);
 
-  float xLowChannel=-5.5, xUpChannel=4.5, yLowChannel=-2, yUpChannel=5;
+  float xLowChannel=-5.5, xUpChannel=4, yLowChannel=-2, yUpChannel=4.5;
   float xLowFibre=-5.5,xUpFibre=-2.5, yLowFibre=-3, yUpFibre=0;
 
 
@@ -97,13 +97,13 @@ int main( int argc, char* argv[] ) {
   TH2F* amplitude_map_fibre = new TH2F("amplitude_map_fibre","amplitude_map_fibre",16,xLowFibre,xUpFibre,16,yLowFibre,yUpFibre);
   TH2F* timing_map_fibre_norm = new TH2F("timing_map_fibre_norm","timing_map_fibre_norm",16,xLowFibre,xUpFibre,16,yLowFibre,yUpFibre);
 
-  TH2F* timing_map_channel = new TH2F("timing_map_channel","timing_map_channel",22,xLowChannel,xUpChannel,22,-5.5,5);
-  TH2F* amplitude_map_channel = new TH2F("amplitude_map_channel","amplitude_map_channel",22,xLowChannel,xUpChannel,22,-5.5,5);
-  TH2F* timing_map_channel_norm = new TH2F("timing_map_channel_norm","timing_map_channel_norm",22,xLowChannel,xUpChannel,22,-5.5,5);
+  TH2F* timing_map_channel = new TH2F("timing_map_channel","timing_map_channel",22,xLowChannel,xUpChannel,22,-5.5,4.5);
+  TH2F* amplitude_map_channel = new TH2F("amplitude_map_channel","amplitude_map_channel",22,xLowChannel,xUpChannel,22,-5.5,4.5);
+  TH2F* timing_map_channel_norm = new TH2F("timing_map_channel_norm","timing_map_channel_norm",22,xLowChannel,xUpChannel,22,-5.5,4.5);
 
-  TH2F* amplitude_map_fibre2 = new TH2F("amplitude_map_fibre2","amplitude_map_fibre2",22,xLowChannel,xUpChannel,22,-5.5,5);
-  TH2F* amplitude_map_fibre0 = new TH2F("amplitude_map_fibre0","amplitude_map_fibre0",22,xLowChannel,xUpChannel,22,-5.5,5);
-  TH2F* amplitude_map_fibre0and2 = new TH2F("amplitude_map_fibre0and2","amplitude_map_fibre0and2",22,xLowChannel,xUpChannel,22,-5.5,5);
+  TH2F* amplitude_map_fibre2 = new TH2F("amplitude_map_fibre2","amplitude_map_fibre2",22,xLowChannel,xUpChannel,22,-5.5,4.5);
+  TH2F* amplitude_map_fibre0 = new TH2F("amplitude_map_fibre0","amplitude_map_fibre0",22,xLowChannel,xUpChannel,22,-5.5,4.5);
+  TH2F* amplitude_map_fibre0and2 = new TH2F("amplitude_map_fibre0and2","amplitude_map_fibre0and2",22,xLowChannel,xUpChannel,22,-5.5,4.5);
   
   //plots with all the selection applied
   TH1F* maxAmpl_sel_fibre = new TH1F("maxAmpl_sel_fibre","maxAmpl_sel_fibre",500,0,4000);
@@ -251,7 +251,7 @@ int main( int argc, char* argv[] ) {
 
    timing_map_fibre->Divide(timing_map_fibre_norm);
    //   timing_map_fibre->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z")
-   timing_map_fibre->SetAxisRange(-2,2,"Z");
+   //   timing_map_fibre->SetAxisRange(-2,2,"Z");
    timing_map_fibre->GetYaxis()->SetTitle("Y [mm]");
    timing_map_fibre->GetXaxis()->SetTitle("X [mm]");
    amplitude_map_fibre->Divide(timing_map_fibre_norm);
@@ -291,7 +291,7 @@ int main( int argc, char* argv[] ) {
 
    timing_map_channel->Divide(timing_map_channel_norm);
    //   timing_map_channel->SetAxisRange(theConfiguration_.rangeXLow+1.5,theConfiguration_.rangeXUp-1,"Z");
-   timing_map_channel->SetAxisRange(-2,2,"Z");
+   //   timing_map_channel->SetAxisRange(-2,2,"Z");
    timing_map_channel->GetYaxis()->SetTitle("Y [mm]");
    timing_map_channel->GetXaxis()->SetTitle("X [mm]");
    amplitude_map_channel->Divide(timing_map_channel_norm);
