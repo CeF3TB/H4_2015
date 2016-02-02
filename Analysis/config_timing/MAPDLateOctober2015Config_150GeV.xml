@@ -9,9 +9,9 @@
   <rangeXLow>-12</rangeXLow>
   <rangeXUp>5</rangeXUp>
   <setup>Nino</setup>
-  <channel2CutFibre>500</channel2CutFibre>
+  <channel2CutFibre>900</channel2CutFibre>
   <channel1CutChannel>1000</channel1CutChannel>
-  <channel2CutChannel>75</channel2CutChannel>
+  <channel2CutChannel>900</channel2CutChannel>
   <nBinsFibre>80</nBinsFibre>
   <nBinsChannel>160</nBinsChannel>
 </general>

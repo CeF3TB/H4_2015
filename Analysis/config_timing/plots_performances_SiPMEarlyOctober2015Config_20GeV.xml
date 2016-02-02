@@ -1,5 +1,5 @@
 <general>
-  <runs>4055,4051,4052,4053,4054</runs> 
+  <runs>4055</runs> 
   <setup>SiPM</setup>
   <nMaxAmplCuts>30</nMaxAmplCuts>
   <stepAmplFibre>35</stepAmplFibre>
@@ -10,6 +10,7 @@
   <channel1CutChannel>2000</channel1CutChannel>
   <channel2CutChannel>140</channel2CutChannel>
   <startCutFibre>0</startCutFibre>
-  <energies>20,50,100,150,200</energies>
+  <addTagFileName>1</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
+  <tagFileName>20GeV</tagFileName>
 </general>
 
