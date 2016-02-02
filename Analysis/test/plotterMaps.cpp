@@ -81,7 +81,7 @@ int main( int argc, char* argv[] ) {
       energies.push_back(theConfiguration_.energies[i]);
     }
 
-    TString filename= "plots_timing_SiPM/timingStudies"+theConfiguration_.setup+"_"+tag+"_";
+    TString filename= "plots_timing_"+theConfiguration_.setup+"/timingStudiesSiPM_"+tag+"_";
 
     if(i<theConfiguration_.runs.size()){
       filename+=runs[i];
@@ -137,7 +137,7 @@ int main( int argc, char* argv[] ) {
       timing_map_sel_channel->SetAxisRange(-0.1,0.9,"Z");
 
       timing_map_sel_fibre->Scale(1./runs.size());
-      timing_map_sel_fibre->SetAxisRange(-0.1,0.9,"Z");
+      timing_map_sel_fibre->SetAxisRange(-0.1,0.6,"Z");
 
     }
 
