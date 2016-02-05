@@ -103,6 +103,7 @@ int main( int argc, char* argv[] ) {
   }
 
 
+
   //maps
   TH2F* timing_map_fibre = new TH2F("timing_map_fibre","timing_map_fibre",16,xLowFibre,xUpFibre,16,yLowFibre,yUpFibre);
   TH2F* amplitude_map_fibre = new TH2F("amplitude_map_fibre","amplitude_map_fibre",16,xLowFibre,xUpFibre,16,yLowFibre,yUpFibre);
@@ -121,7 +122,7 @@ int main( int argc, char* argv[] ) {
   TH1F* maxAmpl_sel_fibre = new TH1F("maxAmpl_sel_fibre","maxAmpl_sel_fibre",500,0,4000);
   TH1F* maxAmpl_sel_channel = new TH1F("maxAmpl_sel_channel","maxAmpl_sel_channel",500,0,4000);
 
-  int nBinsChannel=30, nBinsFibre=12;
+  int nBinsChannel=30, nBinsFibre=20;
 
   TH2F* amplitude_map_sel_channel = new TH2F("amplitude_map_sel_channel","amplitude_map_sel_channel",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
   TH2F* amplitude_map_sel_channel_ampl_cut = new TH2F("amplitude_map_sel_channel_ampl_cut","amplitude_map_sel_channel_ampl_cut",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
@@ -130,19 +131,41 @@ int main( int argc, char* argv[] ) {
 
   TH2F* timing_map_sel_channel = new TH2F("timing_map_sel_channel","timing_map_sel_channel",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
   TH2F* timing_map_sel_channel_ampl_cut = new TH2F("timing_map_sel_channel_ampl_cut","timing_map_sel_channel_ampl_cut",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
+  TH2F* timing_map_sel_channel_ampl_and_time_cut = new TH2F("timing_map_sel_channel_ampl_and_time_cut","timing_map_sel_channel_ampl_and_time_cut",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
   TH2F* timing_map_sel_fibre = new TH2F("timing_map_sel_fibre","timing_map_sel_fibre",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
+  TH2F* timing_map_sel_fibre_ampl_cut = new TH2F("timing_map_sel_fibre_ampl_cut","timing_map_sel_fibre_ampl_cut",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
+        
+  TH2F* timing_map_sel_fibre_ampl_and_time_cut = new TH2F("timing_map_sel_fibre_ampl_and_time_cut","timing_map_sel_fibre_ampl_and_time_cut",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
+  TH2F* sel_fibre_ampl_cut_norm = new TH2F("sel_fibre_ampl_cut_norm","sel_fibre_ampl_cut_norm",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
+  TH2F* sel_fibre_ampl_and_time_cut_norm = new TH2F("sel_fibre_ampl_cut_norm","sel_fibre_ampl_cut_norm",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
 
   TH2F* sel_channel_norm = new TH2F("sel_channel_norm","sel_channel_norm",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
   TH2F* sel_channel_ampl_cut_norm = new TH2F("sel_channel_ampl_cut_norm","sel_channel_ampl_cut_norm",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
   TH2F* sel_channel_ampl_and_time_cut_norm = new TH2F("sel_channel_ampl_and_time_cut_norm","sel_channel_ampl_and_time_cut_norm",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
   TH2F* sel_fibre_norm = new TH2F("sel_fibre_norm","sel_fibre_norm",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
 
+  //correlation
+  TH2F* timeDiffVsAmpl = new TH2F("timeDiffVsAmpl","timeDiffVsAmpl",300,0.,300.,100,theConfiguration_.rangeXLow+10, theConfiguration_.rangeXUp+10);
+  TH2F* timeDiffVsAmpl_fibre = new TH2F("timeDiffVsAmpl_fibre","timeDiffVsAmpl_fibre",700,0.,700.,100,theConfiguration_.rangeXLow+10, theConfiguration_.rangeXUp+10);
+  TH2F* timeDiffVsTime = new TH2F("timeDiffVsTime","timeDiffVsTime",100,0,100,100, theConfiguration_.rangeXLow+10,theConfiguration_.rangeXUp+10);
+  TH2F* timeDiffVsTimeMcp = new TH2F("timeDiffVsTimeMcp","timeDiffVsTimeMcp",100,0,100,100, theConfiguration_.rangeXLow+10,theConfiguration_.rangeXUp+10);
+  TH2F* timeDiffVsTimeMcp_amplCut = new TH2F("timeDiffVsTimeMcp_amplCut","timeDiffVsTimeMcp_amplCut",100,0,100,100, theConfiguration_.rangeXLow+10,theConfiguration_.rangeXUp+10);
+  TH2F* timeDiffVsTime_amplCut = new TH2F("timeDiffVsTime_amplCut","timeDiffVsTime_amplCut",100,0,100,100, theConfiguration_.rangeXLow+10,theConfiguration_.rangeXUp+10);
+  TH2F* timeDiffVsTimeMaxMinusFifty = new TH2F("timeDiffVsTimeMaxMinusFifty","timeDiffVsTimeMaxMinusFifty",100,-20,20,100, theConfiguration_.rangeXLow+10,theConfiguration_.rangeXUp+10);
+  TH2F* timeDiffVsTimeMaxMinusFifty_amplCut = new TH2F("timeDiffVsTimeMaxMinusFifty_amplCut","timeDiffVsTimeMaxMinusFifty_amplCut",100,-20,20,100, theConfiguration_.rangeXLow+10,theConfiguration_.rangeXUp+10);
+  TH2F* timeDiffVsTimeMaxMinusFifty_amplCut_zoom = new TH2F("timeDiffVsTimeMaxMinusFifty_amplCut_zoom","timeDiffVsTimeMaxMinusFifty_amplCut_zoom",100,2,6,100, theConfiguration_.rangeXLow+10,theConfiguration_.rangeXUp+10);
+  TH1F* timeMaxMinusFifty = new TH1F("timeMaxMinusFifty","timeMaxMinusFifty",100,-20,20);
+  TH1F* timeMaxMinusFifty_amplCut = new TH1F("timeMaxMinusFifty_amplCut","timeMaxMinusFifty_amplCut",100,-20,20);
+  TH1F* timeMaxMinusFifty_timeCut = new TH1F("timeMaxMinusFifty_timeCut","timeMaxMinusFifty_timeCut",100,-20,20);
+
+
+
 
 
   int dummyCounter=0;
   float lowerBeamEnergy=0.;//cuts are sliding in energy
    Long64_t nbytes = 0, nb = 0;
-   for (Long64_t jentry=0; jentry<nentries;jentry++) {
+  for (Long64_t jentry=0; jentry<nentries;jentry++) {
       Long64_t ientry = t.LoadTree(jentry);
       if (ientry < 0) break;
       nb = t.fChain->GetEntry(jentry);   nbytes += nb;
@@ -171,10 +194,20 @@ int main( int argc, char* argv[] ) {
 
       if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy){ 
 	if(deltaTNoCorr>theConfiguration_.rangeXLow && deltaTNoCorr<theConfiguration_.rangeXUp && ampl>0 && ampl<4000){
+	  timeDiffVsAmpl_fibre->Fill(ampl,deltaTNoCorr+10);
 	  amplitude_map_sel_fibre->Fill(X,Y,ampl);
 	  timing_map_sel_fibre->Fill(X,Y,deltaTNoCorr+10);
 	  sel_fibre_norm->Fill(X,Y);
 	  maxAmpl_sel_fibre->Fill(ampl);
+	  if(ampl>100.){
+	    timing_map_sel_fibre_ampl_cut->Fill(X,Y,deltaTNoCorr+10);
+	    sel_fibre_ampl_cut_norm->Fill(X,Y);
+	    if(deltaTNoCorr>-5.4){
+	    timing_map_sel_fibre_ampl_and_time_cut->Fill(X,Y,deltaTNoCorr+10);
+	    sel_fibre_ampl_and_time_cut_norm->Fill(X,Y);
+	    }
+	  }
+
 	}
 
 	  
@@ -185,12 +218,26 @@ int main( int argc, char* argv[] ) {
 	      timing_map_sel_channel->Fill(X,Y,deltaTNoCorr+10);
 	      sel_channel_norm->Fill(X,Y);
 	      maxAmpl_sel_channel->Fill(ampl);
+	      timeDiffVsAmpl->Fill(ampl,deltaTNoCorr+10);
+	      timeDiffVsTime->Fill(t.cef3_time_at_frac50->at(1),deltaTNoCorr+10);
+	      timeDiffVsTimeMcp->Fill(t.mcp_time_frac50,deltaTNoCorr+10);
+	      timeMaxMinusFifty->Fill(t.cef3_maxAmpl_time->at(1)-t.cef3_time_at_frac50->at(1));
+	      timeDiffVsTimeMaxMinusFifty->Fill(t.cef3_maxAmpl_time->at(1)-t.cef3_time_at_frac50->at(1),deltaTNoCorr+10);
 	      if(ampl>100.){
+		timeDiffVsTimeMcp_amplCut->Fill(t.mcp_time_frac50,deltaTNoCorr+10);
+		timeDiffVsTime_amplCut->Fill(t.cef3_time_at_frac50->at(1),deltaTNoCorr+10);
+		timeMaxMinusFifty_amplCut->Fill(t.cef3_maxAmpl_time->at(1)-t.cef3_time_at_frac50->at(1));
 		amplitude_map_sel_channel_ampl_cut->Fill(X,Y,ampl);
 		timing_map_sel_channel_ampl_cut->Fill(X,Y,deltaTNoCorr+10);
 		amplitude_map_fibre2_sel_channel_ampl_cut->Fill(X,Y,t.cef3_maxAmpl->at(2));
 		sel_channel_ampl_cut_norm->Fill(X,Y);
-		if(deltaTNoCorr>-5.5)sel_channel_ampl_and_time_cut_norm->Fill(X,Y);
+		timeDiffVsTimeMaxMinusFifty_amplCut->Fill(t.cef3_maxAmpl_time->at(1)-t.cef3_time_at_frac50->at(1),deltaTNoCorr+10);
+		timeDiffVsTimeMaxMinusFifty_amplCut_zoom->Fill(t.cef3_maxAmpl_time->at(1)-t.cef3_time_at_frac50->at(1),deltaTNoCorr+10);
+		if(deltaTNoCorr>-5.4){
+		  timeMaxMinusFifty_timeCut->Fill(t.cef3_maxAmpl_time->at(1)-t.cef3_time_at_frac50->at(1));
+		  timing_map_sel_channel_ampl_and_time_cut->Fill(X,Y,deltaTNoCorr+10);
+		  sel_channel_ampl_and_time_cut_norm->Fill(X,Y);
+		}
 	      }
 	    }
 
@@ -235,6 +282,24 @@ int main( int argc, char* argv[] ) {
    timing_map_sel_channel_ampl_cut->GetYaxis()->SetTitle("Y [mm]");
    timing_map_sel_channel_ampl_cut->GetXaxis()->SetTitle("X [mm]");
 
+   timing_map_sel_fibre_ampl_cut->Divide(sel_fibre_ampl_cut_norm);
+   timing_map_sel_fibre_ampl_cut->GetYaxis()->SetTitle("Y [mm]");
+   timing_map_sel_fibre_ampl_cut->GetXaxis()->SetTitle("X [mm]");
+
+   timing_map_sel_fibre_ampl_and_time_cut->Divide(sel_fibre_ampl_and_time_cut_norm);
+   timing_map_sel_fibre_ampl_and_time_cut->GetYaxis()->SetTitle("Y [mm]");
+   timing_map_sel_fibre_ampl_and_time_cut->GetXaxis()->SetTitle("X [mm]");
+
+   sel_channel_ampl_cut_norm->GetYaxis()->SetTitle("Y [mm]");
+   sel_channel_ampl_cut_norm->GetXaxis()->SetTitle("X [mm]");
+
+   sel_channel_ampl_and_time_cut_norm->GetYaxis()->SetTitle("Y [mm]");
+   sel_channel_ampl_and_time_cut_norm->GetXaxis()->SetTitle("X [mm]");
+
+   timing_map_sel_channel_ampl_and_time_cut->Divide(sel_channel_ampl_and_time_cut_norm);
+   timing_map_sel_channel_ampl_and_time_cut->GetYaxis()->SetTitle("Y [mm]");
+   timing_map_sel_channel_ampl_and_time_cut->GetXaxis()->SetTitle("X [mm]");
+
 
    amplitude_map_fibre2->Divide(timing_map_channel_norm);
    amplitude_map_fibre2->GetYaxis()->SetTitle("Y [mm]");
@@ -270,6 +335,34 @@ int main( int argc, char* argv[] ) {
    maxAmpl_sel_channel->SetLineColor(kRed);
    maxAmpl_sel_channel->GetXaxis()->SetTitle("Signal Amplitude [ADC channel]");
 
+   timeDiffVsAmpl->GetXaxis()->SetTitle("Signal Amplitude [ADC channel]");
+   timeDiffVsAmpl->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+
+   timeDiffVsAmpl_fibre->GetXaxis()->SetTitle("Signal Amplitude [ADC channel]");
+   timeDiffVsAmpl_fibre->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+
+
+   timeDiffVsTime->GetXaxis()->SetTitle("time_{fibre}");
+   timeDiffVsTime->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+
+   timeDiffVsTimeMcp->GetXaxis()->SetTitle("time_{mcp}");
+   timeDiffVsTimeMcp->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+
+   timeDiffVsTimeMcp_amplCut->GetXaxis()->SetTitle("time_{mcp}");
+   timeDiffVsTimeMcp_amplCut->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+
+   timeDiffVsTime_amplCut->GetXaxis()->SetTitle("time_{fibre}");
+   timeDiffVsTime_amplCut->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+
+   timeDiffVsTimeMaxMinusFifty->GetXaxis()->SetTitle("time_{max}-time_{frac50}");
+   timeDiffVsTimeMaxMinusFifty->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+
+   timeDiffVsTimeMaxMinusFifty_amplCut->GetXaxis()->SetTitle("time_{max}-time_{frac50}");
+   timeDiffVsTimeMaxMinusFifty_amplCut->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+
+   timeDiffVsTimeMaxMinusFifty_amplCut_zoom->GetXaxis()->SetTitle("time_{max}-time_{frac50}");
+   timeDiffVsTimeMaxMinusFifty_amplCut_zoom->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+
 
    std::string constDirName = "plots_timingPerformance_";
    constDirName+=theConfiguration_.setup;
@@ -299,6 +392,10 @@ int main( int argc, char* argv[] ) {
   amplitude_map_sel_fibre->Write();
   amplitude_map_sel_channel->Write();
 
+  sel_channel_ampl_and_time_cut_norm->Divide(sel_channel_ampl_cut_norm);
+  sel_channel_ampl_cut_norm->Divide(sel_channel_norm);
+
+
   sel_fibre_norm->Write();
   sel_channel_norm->Write();
   sel_channel_ampl_cut_norm->Write();
@@ -311,10 +408,23 @@ int main( int argc, char* argv[] ) {
 
   amplitude_map_sel_channel_ampl_cut->Write();
   timing_map_sel_channel_ampl_cut->Write();
+  timing_map_sel_fibre_ampl_cut->Write();
+  timing_map_sel_fibre_ampl_and_time_cut->Write();
+  timing_map_sel_channel_ampl_and_time_cut->Write();
   amplitude_map_fibre2_sel_channel_ampl_cut->Write();
 
-
-
+  timeDiffVsAmpl->Write();
+  timeDiffVsAmpl_fibre->Write();
+  timeDiffVsTime->Write();
+  timeDiffVsTimeMcp->Write();
+  timeDiffVsTimeMcp_amplCut->Write();
+  timeDiffVsTime_amplCut->Write();
+  timeMaxMinusFifty->Write();
+  timeMaxMinusFifty_timeCut->Write();
+  timeMaxMinusFifty_amplCut->Write();
+  timeDiffVsTimeMaxMinusFifty->Write();
+  timeDiffVsTimeMaxMinusFifty_amplCut->Write();
+  timeDiffVsTimeMaxMinusFifty_amplCut_zoom->Write();
   outFile->Write();
   outFile->Close();
 
