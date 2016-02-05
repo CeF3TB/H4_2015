@@ -122,6 +122,8 @@ int main( int argc, char* argv[] ) {
   dummyRecoTree t(recoTree);
   Long64_t nentries = t.fChain->GetEntries();
 
+
+
   int dummyCounter=0;
   float lowerBeamEnergy=0.;//cuts are sliding in energy
    Long64_t nbytes = 0, nb = 0;
@@ -136,14 +138,14 @@ int main( int argc, char* argv[] ) {
 	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre){
 
 	    reso_histo_fibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
-	    if(t.cef3_maxAmpl->at(1)>100)reso_histo_fibre_total->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
+	    if(t.cef3_maxAmpl->at(1)>150)reso_histo_fibre_total->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);//FIXME
 	    break;
 	  }
       }
 	  if(passesChannelTopologicalSelection(t)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel*t.beamEnergy/lowerBeamEnergy && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
 	    if(t.cef3_maxAmpl->at(1)>i*theConfiguration_.stepAmplChannel && t.cef3_maxAmpl->at(1)<(i+1)*theConfiguration_.stepAmplChannel){
 	    reso_histo_channel_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
-	    if(t.cef3_maxAmpl->at(1)>100)reso_histo_channel_total->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
+	    if(t.cef3_maxAmpl->at(1)>150)reso_histo_channel_total->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);//FIXME
 	    break;
 	    }
 	  }
