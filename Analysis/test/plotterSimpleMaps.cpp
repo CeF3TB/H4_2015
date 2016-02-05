@@ -29,6 +29,7 @@
 #include "TVectorD.h"
 #include "TF1.h"
 #include "TGraphErrors.h"
+#include "TKey.h"
 
 #include "interface/Configurator.h"
 #include "plotOverallPerformancesConfigurator.h"
@@ -71,194 +72,63 @@ int main( int argc, char* argv[] ) {
   
   TString dir(constDirName);
 
+  
+  
+  TString filename= "plots_timingPerformance_"+theConfiguration_.setup+"/mapCreatorOutput_"+tag+".root";
+  
+  TFile* file = TFile::Open(filename.Data());
 
+  std::map<TString,TH1F*> histoNames;
+  std::map<TString,TH2F*> histoNames2D;
+  
 
-  std::vector<int> runs;
-  std::vector<float> energies;
+  TList* list = file->GetListOfKeys() ;
+  if (!list) { printf("<E> No keys found in file\n") ; exit(1) ; }
+  TIter next(list) ;
+  TKey* key ;
+  TObject* obj ;
 
-
-    TString filename= "plots_timingPerformance_"+theConfiguration_.setup+"/mapCreatorOutput_"+tag+".root";
-
-    TFile* file = TFile::Open(filename.Data());
-    
-    TH2F* timing_map_total=(TH2F*)file->Get("timing_map_channel");
-    TH2F* amplitude_map_total=(TH2F*)file->Get("amplitude_map_channel");
-    TH2F* amplitude_map_fibre2=(TH2F*)file->Get("amplitude_map_fibre2");
-
-    TH2F* timing_map_sel_channel=(TH2F*)file->Get("timing_map_sel_channel");
-    TH2F* timing_map_sel_channel_ampl_cut=(TH2F*)file->Get("timing_map_sel_channel_ampl_cut");
-    TH2F* timing_map_sel_fibre_ampl_cut=(TH2F*)file->Get("timing_map_sel_fibre_ampl_cut");
-    TH2F* timing_map_sel_fibre_ampl_and_time_cut=(TH2F*)file->Get("timing_map_sel_fibre_ampl_and_time_cut");
-    TH2F* timing_map_sel_channel_ampl_and_time_cut=(TH2F*)file->Get("timing_map_sel_channel_ampl_and_time_cut");
-    TH2F* amplitude_map_sel_channel=(TH2F*)file->Get("amplitude_map_sel_channel");
-    TH2F* amplitude_map_sel_channel_ampl_cut=(TH2F*)file->Get("amplitude_map_sel_channel_ampl_cut");
-    TH2F* amplitude_map_sel_channel_ampl_and_time_cut=(TH2F*)file->Get("amplitude_map_sel_channel_ampl_and_time_cut");
-
-    TH2F* timeDiffVsAmpl=(TH2F*)file->Get("timeDiffVsAmpl");
-    TH2F* timeDiffVsAmpl_fibre=(TH2F*)file->Get("timeDiffVsAmpl_fibre");
-    TH2F* timeDiffVsTime=(TH2F*)file->Get("timeDiffVsTime");
-    TH2F* timeDiffVsTimeMcp=(TH2F*)file->Get("timeDiffVsTimeMcp");
-    TH2F* timeDiffVsTime_amplCut=(TH2F*)file->Get("timeDiffVsTime_amplCut");
-    TH2F* timeDiffVsTimeMcp_amplCut=(TH2F*)file->Get("timeDiffVsTimeMcp_amplCut");
-    TH2F* timeDiffVsTimeMaxMinusFifty=(TH2F*)file->Get("timeDiffVsTimeMaxMinusFifty");
-    TH2F* timeDiffVsTimeMaxMinusFifty_amplCut=(TH2F*)file->Get("timeDiffVsTimeMaxMinusFifty_amplCut");
-    TH2F* timeDiffVsTimeMaxMinusFifty_amplCut_zoom=(TH2F*)file->Get("timeDiffVsTimeMaxMinusFifty_amplCut_zoom");
-
-    TH2F* timing_map_sel_fibre=(TH2F*)file->Get("timing_map_sel_fibre");
-    TH2F* amplitude_map_sel_fibre=(TH2F*)file->Get("amplitude_map_sel_fibre");
-
-    TH2F* sel_channel_ampl_cut_norm=(TH2F*)file->Get("sel_channel_ampl_cut_norm");
-    TH2F* sel_channel_ampl_and_time_cut_norm=(TH2F*)file->Get("sel_channel_ampl_and_time_cut_norm");
-
-    TH1F* maxAmpl_sel_fibre=(TH1F*)file->Get("maxAmpl_sel_fibre");
-    TH1F* maxAmpl_sel_channel=(TH1F*)file->Get("maxAmpl_sel_channel");
+  
+  while ( key = (TKey*)next() ) {
+    obj = key->ReadObj() ;
+    if (    (strcmp(obj->IsA()->GetName(),"TProfile")!=0)
+	    && (!obj->InheritsFrom("TH2"))
+	    && (!obj->InheritsFrom("TH1")) 
+	    ) {
+      printf("<W> Object %s is not 1D or 2D histogram : "
+	     "will not be converted\n",obj->GetName()) ;
+    }
+    printf("Histo name:%s title:%s\n",obj->GetName(),obj->GetTitle());
+    if((strcmp(obj->IsA()->GetName(),"TH1F"))==0){
+      histoNames[obj->GetName()]=(TH1F*)obj;
+    }else if ((strcmp(obj->IsA()->GetName(),"TH2F"))==0){
+      histoNames2D[obj->GetName()]=(TH2F*)obj;
+    }
+  }
 
 
 
-    gStyle->SetPadRightMargin(0.17);//for the palette
+  for(std::map<TString,TH2F*>::const_iterator out=histoNames2D.begin();out!=histoNames2D.end();++out){
+
+    gStyle->SetPadRightMargin(0.19);//for the palette and ztitle
     TCanvas c1;
-    amplitude_map_total->Draw("colz");
-    c1.SaveAs(dir+"/amplitude_map.pdf");
-    c1.SaveAs(dir+"/amplitude_map.png");
-
-    c1.Clear();
-    amplitude_map_fibre2->Draw("colz");
-    c1.SaveAs(dir+"/amplitude_map_fibre2.pdf");
-    c1.SaveAs(dir+"/amplitude_map_fibre2.png");
-
-
-    c1.Clear();
-    timing_map_total->Draw("colz");
-    c1.SaveAs(dir+"/timing_map.pdf");
-    c1.SaveAs(dir+"/timing_map.png");
-
-    c1.Clear();
-    amplitude_map_sel_channel->Draw("colz");
-    c1.SaveAs(dir+"/amplitude_map_sel_channel.pdf");
-    c1.SaveAs(dir+"/amplitude_map_sel_channel.png");
-
-    c1.Clear();
-    amplitude_map_sel_channel_ampl_cut->SetAxisRange(100,250,"Z");
-    amplitude_map_sel_channel_ampl_cut->Draw("colz");
-    c1.SaveAs(dir+"/amplitude_map_sel_channel_ampl_cut.pdf");
-    c1.SaveAs(dir+"/amplitude_map_sel_channel_ampl_cut.png");
+    TH2F* histo=(TH2F*)out->second->Clone(out->first+"_clone");
+    histo->GetZaxis()->SetTitleOffset(1.4);
+    if(out->first.Contains("amplitude"))histo->SetZTitle("Amplitude [ADC]");
+    if(out->first.Contains("timing"))histo->SetZTitle("#DeltaT [ns]");
+    histo->Draw("colz");
+    c1.SaveAs(dir+"/"+out->first+".pdf");
+    c1.SaveAs(dir+"/"+out->first+".png");
+  }
 
 
-    c1.Clear();
-    timing_map_sel_channel_ampl_cut->SetAxisRange(3.5,5.5,"Z");
-    timing_map_sel_channel_ampl_cut->Draw("colz");
-    c1.SaveAs(dir+"/timing_map_sel_channel_ampl_cut.pdf");
-    c1.SaveAs(dir+"/timing_map_sel_channel_ampl_cut.png");
-
-    c1.Clear();
-    timing_map_sel_fibre_ampl_cut->SetAxisRange(3.5,5,"Z");
-    timing_map_sel_fibre_ampl_cut->Draw("colz");
-    c1.SaveAs(dir+"/timing_map_sel_fibre_ampl_cut.pdf");
-    c1.SaveAs(dir+"/timing_map_sel_fibre_ampl_cut.png");
-
-    c1.Clear();
-    timing_map_sel_fibre_ampl_and_time_cut->SetAxisRange(3.5,5,"Z");
-    timing_map_sel_fibre_ampl_and_time_cut->Draw("colz");
-    c1.SaveAs(dir+"/timing_map_sel_fibre_ampl_and_time_cut.pdf");
-    c1.SaveAs(dir+"/timing_map_sel_fibre_ampl_and_time_cut.png");
-
-
-
-    c1.Clear();
-    timing_map_sel_channel_ampl_and_time_cut->SetAxisRange(3.5,5.5,"Z");
-    timing_map_sel_channel_ampl_and_time_cut->Draw("colz");
-    c1.SaveAs(dir+"/timing_map_sel_channel_ampl_and_time_cut.pdf");
-    c1.SaveAs(dir+"/timing_map_sel_channel_ampl_and_time_cut.png");
-
-
-    c1.Clear();
-    timing_map_sel_channel->SetAxisRange(3.5,5.5,"Z");
-    timing_map_sel_channel->Draw("colz");
-    c1.SaveAs(dir+"/timing_map_sel_channel.pdf");
-    c1.SaveAs(dir+"/timing_map_sel_channel.png");
-
-
-    c1.Clear();
-    amplitude_map_sel_fibre->Draw("colz");
-    c1.SaveAs(dir+"/amplitude_map_sel_fibre.pdf");
-    c1.SaveAs(dir+"/amplitude_map_sel_fibre.png");
-
-    c1.Clear();
-    sel_channel_ampl_cut_norm->Draw("colz");
-    c1.SaveAs(dir+"/sel_channel_ampl_cut_norm.pdf");
-    c1.SaveAs(dir+"/sel_channel_ampl_cut_norm.png");
-
-    c1.Clear();
-    sel_channel_ampl_and_time_cut_norm->Draw("colz");
-    c1.SaveAs(dir+"/sel_channel_ampl_and_time_cut_norm.pdf");
-    c1.SaveAs(dir+"/sel_channel_ampl_and_time_cut_norm.png");
-
-
-
-    c1.Clear();
-    timing_map_sel_fibre->Draw("colz");
-    c1.SaveAs(dir+"/timing_map_sel_fibre.pdf");
-    c1.SaveAs(dir+"/timing_map_sel_fibre.png");
-
-    c1.Clear();
-    timeDiffVsAmpl->Draw("colz");
-    c1.SaveAs(dir+"/timeDiffVsAmpl.pdf");
-    c1.SaveAs(dir+"/timeDiffVsAmpl.png");
-
-    c1.Clear();
-    timeDiffVsAmpl_fibre->Draw("colz");
-    c1.SaveAs(dir+"/timeDiffVsAmpl_fibre.pdf");
-    c1.SaveAs(dir+"/timeDiffVsAmpl_fibre.png");
-
-
-    c1.Clear();
-    timeDiffVsTime->SetAxisRange(10,40,"X");
-    timeDiffVsTime->Draw("colz");
-    c1.SaveAs(dir+"/timeDiffVsTime.pdf");
-    c1.SaveAs(dir+"/timeDiffVsTime.png");
-
-    c1.Clear();
-    timeDiffVsTime_amplCut->SetAxisRange(10,40,"X");
-    timeDiffVsTime_amplCut->Draw("colz");
-    c1.SaveAs(dir+"/timeDiffVsTime_amplCut.pdf");
-    c1.SaveAs(dir+"/timeDiffVsTime_amplCut.png");
-
-
-    c1.Clear();
-    timeDiffVsTimeMcp->SetAxisRange(10,40,"X");
-    timeDiffVsTimeMcp->Draw("colz");
-    c1.SaveAs(dir+"/timeDiffVsTimeMcp.pdf");
-    c1.SaveAs(dir+"/timeDiffVsTimeMcp.png");
-
-    c1.Clear();
-    timeDiffVsTimeMcp_amplCut->SetAxisRange(10,40,"X");
-    timeDiffVsTimeMcp_amplCut->Draw("colz");
-    c1.SaveAs(dir+"/timeDiffVsTimeMcp_amplCut.pdf");
-    c1.SaveAs(dir+"/timeDiffVsTimeMcp_amplCut.png");
-
-
-
-    c1.Clear();
-    timeDiffVsTimeMaxMinusFifty->SetAxisRange(-2,15,"X");
-    timeDiffVsTimeMaxMinusFifty->Draw("colz");
-    c1.SaveAs(dir+"/timeDiffVsTimeMaxMinusFifty.pdf");
-    c1.SaveAs(dir+"/timeDiffVsTimeMaxMinusFifty.png");
-
-
-    c1.Clear();
-    timeDiffVsTimeMaxMinusFifty_amplCut->SetAxisRange(-2,15,"X");
-    timeDiffVsTimeMaxMinusFifty_amplCut->Draw("colz");
-    c1.SaveAs(dir+"/timeDiffVsTimeMaxMinusFifty_amplCut.pdf");
-    c1.SaveAs(dir+"/timeDiffVsTimeMaxMinusFifty_amplCut.png");
-
-    c1.Clear();
-    timeDiffVsTimeMaxMinusFifty_amplCut_zoom->Draw("colz");
-    c1.SaveAs(dir+"/timeDiffVsTimeMaxMinusFifty_amplCut_zoom.pdf");
-    c1.SaveAs(dir+"/timeDiffVsTimeMaxMinusFifty_amplCut_zoom.png");
 
 
 
     gStyle->SetPadRightMargin(0.10);
+    TH1F* maxAmpl_sel_fibre=(TH1F*)file->Get("maxAmpl_sel_fibre");
+    TH1F* maxAmpl_sel_channel=(TH1F*)file->Get("maxAmpl_sel_channel");
+
     TCanvas c2;
     maxAmpl_sel_channel->GetXaxis()->SetRangeUser(0,800.);
     maxAmpl_sel_channel->SetLineWidth(2);

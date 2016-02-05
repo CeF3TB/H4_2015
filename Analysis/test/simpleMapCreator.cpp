@@ -137,7 +137,7 @@ int main( int argc, char* argv[] ) {
         
   TH2F* timing_map_sel_fibre_ampl_and_time_cut = new TH2F("timing_map_sel_fibre_ampl_and_time_cut","timing_map_sel_fibre_ampl_and_time_cut",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
   TH2F* sel_fibre_ampl_cut_norm = new TH2F("sel_fibre_ampl_cut_norm","sel_fibre_ampl_cut_norm",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
-  TH2F* sel_fibre_ampl_and_time_cut_norm = new TH2F("sel_fibre_ampl_cut_norm","sel_fibre_ampl_cut_norm",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
+  TH2F* sel_fibre_ampl_and_time_cut_norm = new TH2F("sel_fibre_ampl_and_time_cut_norm","sel_fibre_ampl_and_time_cut_norm",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
 
   TH2F* sel_channel_norm = new TH2F("sel_channel_norm","sel_channel_norm",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
   TH2F* sel_channel_ampl_cut_norm = new TH2F("sel_channel_ampl_cut_norm","sel_channel_ampl_cut_norm",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
@@ -263,7 +263,7 @@ int main( int argc, char* argv[] ) {
    timing_map_sel_fibre->Divide(sel_fibre_norm);
    timing_map_sel_fibre->GetYaxis()->SetTitle("Y [mm]");
    timing_map_sel_fibre->GetXaxis()->SetTitle("X [mm]");
-
+   timing_map_sel_fibre->SetAxisRange(3.5,5.5,"Z");
 
    amplitude_map_sel_channel->Divide(sel_channel_norm);
    amplitude_map_sel_channel->GetYaxis()->SetTitle("Y [mm]");
@@ -272,23 +272,28 @@ int main( int argc, char* argv[] ) {
    amplitude_map_sel_channel_ampl_cut->Divide(sel_channel_ampl_cut_norm);
    amplitude_map_sel_channel_ampl_cut->GetYaxis()->SetTitle("Y [mm]");
    amplitude_map_sel_channel_ampl_cut->GetXaxis()->SetTitle("X [mm]");
+   amplitude_map_sel_channel_ampl_cut->SetAxisRange(100,250,"Z");
 
 
    timing_map_sel_channel->Divide(sel_channel_norm);
    timing_map_sel_channel->GetYaxis()->SetTitle("Y [mm]");
    timing_map_sel_channel->GetXaxis()->SetTitle("X [mm]");
+    timing_map_sel_channel->SetAxisRange(3.5,5.5,"Z");
 
    timing_map_sel_channel_ampl_cut->Divide(sel_channel_ampl_cut_norm);
    timing_map_sel_channel_ampl_cut->GetYaxis()->SetTitle("Y [mm]");
    timing_map_sel_channel_ampl_cut->GetXaxis()->SetTitle("X [mm]");
+   timing_map_sel_channel_ampl_cut->SetAxisRange(3.5,5.5,"Z");
 
    timing_map_sel_fibre_ampl_cut->Divide(sel_fibre_ampl_cut_norm);
    timing_map_sel_fibre_ampl_cut->GetYaxis()->SetTitle("Y [mm]");
    timing_map_sel_fibre_ampl_cut->GetXaxis()->SetTitle("X [mm]");
+   timing_map_sel_fibre_ampl_cut->SetAxisRange(3.5,5,"Z");
 
    timing_map_sel_fibre_ampl_and_time_cut->Divide(sel_fibre_ampl_and_time_cut_norm);
    timing_map_sel_fibre_ampl_and_time_cut->GetYaxis()->SetTitle("Y [mm]");
    timing_map_sel_fibre_ampl_and_time_cut->GetXaxis()->SetTitle("X [mm]");
+   timing_map_sel_fibre_ampl_and_time_cut->SetAxisRange(3.5,5,"Z");
 
    sel_channel_ampl_cut_norm->GetYaxis()->SetTitle("Y [mm]");
    sel_channel_ampl_cut_norm->GetXaxis()->SetTitle("X [mm]");
@@ -296,9 +301,11 @@ int main( int argc, char* argv[] ) {
    sel_channel_ampl_and_time_cut_norm->GetYaxis()->SetTitle("Y [mm]");
    sel_channel_ampl_and_time_cut_norm->GetXaxis()->SetTitle("X [mm]");
 
+
    timing_map_sel_channel_ampl_and_time_cut->Divide(sel_channel_ampl_and_time_cut_norm);
    timing_map_sel_channel_ampl_and_time_cut->GetYaxis()->SetTitle("Y [mm]");
    timing_map_sel_channel_ampl_and_time_cut->GetXaxis()->SetTitle("X [mm]");
+   timing_map_sel_channel_ampl_and_time_cut->SetAxisRange(3.5,5.5,"Z");
 
 
    amplitude_map_fibre2->Divide(timing_map_channel_norm);
@@ -344,21 +351,27 @@ int main( int argc, char* argv[] ) {
 
    timeDiffVsTime->GetXaxis()->SetTitle("time_{fibre}");
    timeDiffVsTime->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+   timeDiffVsTime->SetAxisRange(10,40,"X");
 
    timeDiffVsTimeMcp->GetXaxis()->SetTitle("time_{mcp}");
    timeDiffVsTimeMcp->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+   timeDiffVsTimeMcp->SetAxisRange(10,40,"X");
 
    timeDiffVsTimeMcp_amplCut->GetXaxis()->SetTitle("time_{mcp}");
    timeDiffVsTimeMcp_amplCut->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+   timeDiffVsTimeMcp_amplCut->SetAxisRange(10,40,"X");
 
    timeDiffVsTime_amplCut->GetXaxis()->SetTitle("time_{fibre}");
    timeDiffVsTime_amplCut->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+    timeDiffVsTime_amplCut->SetAxisRange(10,40,"X");
 
    timeDiffVsTimeMaxMinusFifty->GetXaxis()->SetTitle("time_{max}-time_{frac50}");
    timeDiffVsTimeMaxMinusFifty->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+   timeDiffVsTimeMaxMinusFifty->SetAxisRange(-2,15,"X");
 
    timeDiffVsTimeMaxMinusFifty_amplCut->GetXaxis()->SetTitle("time_{max}-time_{frac50}");
    timeDiffVsTimeMaxMinusFifty_amplCut->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
+   timeDiffVsTimeMaxMinusFifty_amplCut->SetAxisRange(-2,15,"X");
 
    timeDiffVsTimeMaxMinusFifty_amplCut_zoom->GetXaxis()->SetTitle("time_{max}-time_{frac50}");
    timeDiffVsTimeMaxMinusFifty_amplCut_zoom->GetYaxis()->SetTitle("time_{fibre}-time_{mcp}");
