@@ -5,7 +5,7 @@
 #include <sstream> 
 
 #include "DrawTools.h"
-#include "dummyRecoTree.h"
+#include "RecoTree.h"
 #include "channelInfo.h"
 
 
@@ -32,10 +32,9 @@
 
 #include "interface/Configurator.h"
 #include "plotOverallPerformancesConfigurator.h"
+#include "interface/TopologicalSelectionHelper.h"
 
 plotOverallPerformances_Config_t readConfiguration(std::string configName);
-bool passesFibreTopologicalSelection(dummyRecoTree &t);
-bool passesChannelTopologicalSelection(dummyRecoTree &t);
 
 
 int main( int argc, char* argv[] ) {
@@ -124,7 +123,7 @@ int main( int argc, char* argv[] ) {
   TFile* file = TFile::Open(haddFile.Data());
 
   TTree* recoTree=(TTree*)file->Get("recoTree");
-  dummyRecoTree t(recoTree);
+  RecoTree t(recoTree);
   Long64_t nentries = t.fChain->GetEntries();
 
 
@@ -141,7 +140,7 @@ int main( int argc, char* argv[] ) {
       for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
 	bool filled_channel=false;
 	bool filled_channelPlusFibre=false;
-      if(passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy){ 
+      if(TopologicalSelectionHelper::passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy){ 
 	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre){
 
 	    reso_histo_fibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
@@ -150,7 +149,7 @@ int main( int argc, char* argv[] ) {
 	    break;
 	  }
       }
-	  if(passesChannelTopologicalSelection(t)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel*t.beamEnergy/lowerBeamEnergy && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
+	  if(TopologicalSelectionHelper::passesChannelTopologicalSelection(t)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel*t.beamEnergy/lowerBeamEnergy && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
 
 	    if(t.cef3_maxAmpl->at(1)>i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<(i+1)*theConfiguration_.stepAmplFibre){
 	      reso_histo_channelPlusFibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
@@ -716,29 +715,4 @@ plotOverallPerformances_Config_t readConfiguration(std::string configName){
 
 }
 
-bool passesFibreTopologicalSelection(dummyRecoTree &t){
-  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)/2.;
-  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)/2.;
 
-  //  if(Y>-3.5 && Y<-0.5 && X<-2.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-  if(Y>-3 && Y<0. && X<-2.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-    //    if(0.66*X+4.16+Y<0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
-    if(X+5.5+1.5*Y<0){//line passing through (-5.5,-0.) and (-2.5,2)
-      return true; 
-    }
-}
-
-  return false;
-}
-
-bool passesChannelTopologicalSelection(dummyRecoTree &t){
-  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)/2.;
-  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)/2.;
-
-  if(Y>-2 && Y<5.5 && X<5.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-    //    if(0.66*X+4.16+Y>0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
-    if(X+5.5+1.5*Y>0){//line passing through (-5.5,-0.) and (-2.5,2)
-      return true; 
-    }
-  }
-}

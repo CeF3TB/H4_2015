@@ -30,10 +30,9 @@
 
 #include "interface/Configurator.h"
 #include "timingPlotsConfigurator.h"
+#include "interface/TopologicalSelectionHelper.h"
 
 timingPlots_Config_t readConfiguration(std::string configName, float beamEnergy);
-bool passesFibreTopologicalSelection(RecoTree &t, bool isNinoRun=false);
-bool passesChannelTopologicalSelection(RecoTree &t,bool isNinoRun=false);
 
 
 int main( int argc, char* argv[] ) {
@@ -146,9 +145,9 @@ int main( int argc, char* argv[] ) {
       if( t.mcp_time_frac50<0 ||t.mcp_max_amplitude<200)continue;
       float deltaT=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50;
       if(theConfiguration_.setup=="Nino")deltaT=t.nino_LEtime-t.mcp_time_frac50;
-      if(passesFibreTopologicalSelection(t,(theConfiguration_.setup=="Nino")) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre)   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce remaining events hitting the channel
+      if(TopologicalSelectionHelper::passesFibreTopologicalSelection(t,(theConfiguration_.setup=="Nino")) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre)   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce remaining events hitting the channel
 	reso_histo_fibre->Fill(deltaT);
-      if(passesChannelTopologicalSelection(t,(theConfiguration_.setup=="Nino"))  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel)   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
+      if(TopologicalSelectionHelper::passesChannelTopologicalSelection(t,(theConfiguration_.setup=="Nino"))  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel)   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
 	reso_histo_channel->Fill(deltaT);
    }
 
@@ -222,7 +221,7 @@ int main( int argc, char* argv[] ) {
 	}
 
 
-	if(passesFibreTopologicalSelection(t,(theConfiguration_.setup=="Nino"))){
+	if(TopologicalSelectionHelper::passesFibreTopologicalSelection(t,(theConfiguration_.setup=="Nino"))){
 	float deltaTCorr=deltaTNoCorr-reso_mean_fibre+reso_sigma_fibre/2;
 	if(t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce remaining events hitting the channel
 
@@ -238,7 +237,7 @@ int main( int argc, char* argv[] ) {
 	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<(theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre)) reso_histo_fibre_corr_Amplitude[i]->Fill(deltaTCorr);
 	}
 	}
-	}else if(passesChannelTopologicalSelection(t,(theConfiguration_.setup=="Nino"))){
+	}else if(TopologicalSelectionHelper::passesChannelTopologicalSelection(t,(theConfiguration_.setup=="Nino"))){
 	float deltaTCorr=deltaTNoCorr-reso_mean_channel+reso_sigma_channel/2;
 	if(t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){ //cuts on channel position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination
 	if(deltaTCorr>-2 && deltaTCorr<2 && ampl>0 && ampl<4000){
@@ -686,54 +685,6 @@ timingPlots_Config_t readConfiguration(std::string configName, float beamEnergy)
    conf.nBinsChannel= Configurator::GetInt(Configurable::getElementContent(*configurator_,"nBinsChannel",configurator_->root_element));
  
    return conf;
-}
-
-bool passesFibreTopologicalSelection(RecoTree &t,bool isNinoRun){
-  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)/2.;
-  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)/2.;
-
-  if(!isNinoRun){
-    if(Y>-3 && Y<0.5 && X<-2.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-      //    if(0.66*X+4.16+Y<0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
-      if(X+5.5+1.5*Y<0){//line passing through (-5.5,-0.) and (-2.5,2)
-	return true; 
-      }
-    }
-  }else {
-    if(Y>0.5 && Y<3.8 && X<0.3 && X>-5 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-      if(Y+0.85*X-0.655<0){//line passing through (-3.7,3.8) and (0.3,0.4)
-	return true;
-      }
-    }
-  }
-
-  return false;
-
-}
-
-
-
-bool passesChannelTopologicalSelection(RecoTree &t,bool isNinoRun){
-  float  X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)/2.;
-  float  Y=(t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2)/2.;
-  if(!isNinoRun){
-    if(Y>-2 && Y<5.5 && X<5.5 && X>-6 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-      //    if(0.66*X+4.16+Y>0){//line passing through (-5.5,-0.5) and (-2.5,2.5)
-      if(X+5.5+1.5*Y>0){//line passing through (-5.5,-0.) and (-2.5,2)
-	return true; 
-      }
-    }
-  }else{
-    if(Y>0.5 && Y<5 && X<5 && X>-3.7 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
-      if(Y+0.85*X-0.655 > 0){//line passing through (-3.7,3.8) and (0.3,0.4)
-	return true;
-      }
-    }
-
-  } 
-
-
-  return false;
 }
 
 //  LocalWords:  maxAmpl

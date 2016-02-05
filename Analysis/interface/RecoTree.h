@@ -273,6 +273,8 @@ void RecoTree::Init(TTree *tree)
    cef3_maxAmpl_time = 0;
    cef3_time_at_frac50 = 0;
    cef3_time_at_thresh = 0;
+   cef3_maxAmpl_cher = 0;
+   cef3_maxAmpl_wls = 0;
    cef3_maxAmpl_fit = 0;
    cef3_maxAmpl_fit_cher = 0;
    cef3_maxAmpl_fit_cher_status = 0;
