@@ -108,6 +108,7 @@ int main( int argc, char* argv[] ) {
   TH2F* timing_map_channel_norm = new TH2F("timing_map_channel_norm","timing_map_channel_norm",22,xLowChannel,xUpChannel,22,-5.5,4.5);
 
   TH2F* amplitude_map_fibre2 = new TH2F("amplitude_map_fibre2","amplitude_map_fibre2",22,xLowChannel,xUpChannel,22,-5.5,4.5);
+
   TH2F* amplitude_map_fibre0 = new TH2F("amplitude_map_fibre0","amplitude_map_fibre0",22,xLowChannel,xUpChannel,22,-5.5,4.5);
   TH2F* amplitude_map_fibre0and2 = new TH2F("amplitude_map_fibre0and2","amplitude_map_fibre0and2",22,xLowChannel,xUpChannel,22,-5.5,4.5);
   
@@ -117,13 +118,18 @@ int main( int argc, char* argv[] ) {
 
   int nBinsChannel=30, nBinsFibre=12;
 
-  TH2F* amplitude_map_sel_channel = new TH2F("amplitude_map_sel_channel","amplitude_map_sel_channel",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);//FIXME UNIFORMARE BINNING CON NORM
+  TH2F* amplitude_map_sel_channel = new TH2F("amplitude_map_sel_channel","amplitude_map_sel_channel",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
+  TH2F* amplitude_map_sel_channel_ampl_cut = new TH2F("amplitude_map_sel_channel_ampl_cut","amplitude_map_sel_channel_ampl_cut",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
+  TH2F* amplitude_map_fibre2_sel_channel_ampl_cut = new TH2F("amplitude_map_fibre2_sel_channel_ampl_cut","amplitude_map_fibre2_sel_channel_ampl_cut",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
   TH2F* amplitude_map_sel_fibre = new TH2F("amplitude_map_sel_fibre","amplitude_map_sel_fibre",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
 
   TH2F* timing_map_sel_channel = new TH2F("timing_map_sel_channel","timing_map_sel_channel",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
+  TH2F* timing_map_sel_channel_ampl_cut = new TH2F("timing_map_sel_channel_ampl_cut","timing_map_sel_channel_ampl_cut",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
   TH2F* timing_map_sel_fibre = new TH2F("timing_map_sel_fibre","timing_map_sel_fibre",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
 
   TH2F* sel_channel_norm = new TH2F("sel_channel_norm","sel_channel_norm",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
+  TH2F* sel_channel_ampl_cut_norm = new TH2F("sel_channel_ampl_cut_norm","sel_channel_ampl_cut_norm",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
+  TH2F* sel_channel_ampl_and_time_cut_norm = new TH2F("sel_channel_ampl_and_time_cut_norm","sel_channel_ampl_and_time_cut_norm",nBinsChannel,xLowChannel,xUpChannel,nBinsChannel,yLowChannel,yUpChannel);
   TH2F* sel_fibre_norm = new TH2F("sel_fibre_norm","sel_fibre_norm",nBinsFibre,xLowFibre,xUpFibre,nBinsFibre,yLowFibre,yUpFibre);
 
   if(theConfiguration_.setup=="Nino"){
@@ -194,7 +200,7 @@ int main( int argc, char* argv[] ) {
       //map_fibre of timing vs x and y
       float deltaTNoCorr=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50;
       if(theConfiguration_.setup=="Nino")deltaTNoCorr=t.nino_LEtime-t.mcp_time_frac50;
-      float deltaT=deltaTNoCorr-(reso_mean_channel+reso_mean_fibre)/2.+reso_sigma_channel/2;//for total maps we do an average of mean time of channel and fibre
+      float deltaT=deltaTNoCorr-(reso_mean_channel+reso_mean_fibre)/2.+reso_sigma_channel/2.;//for total maps we do an average of mean time of channel and fibre
 
 
       float X=(t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2)/2.;
@@ -204,10 +210,10 @@ int main( int argc, char* argv[] ) {
 
 	if(deltaT>-2 && deltaT<2 && ampl>0 && ampl<4000){
 	   timing_map_fibre_norm->Fill(X,Y);
-	   timing_map_fibre->Fill(X,Y,deltaT);
+	   timing_map_fibre->Fill(X,Y,deltaTNoCorr+10);
 	   amplitude_map_fibre->Fill(X,Y,ampl);
 	   timing_map_channel_norm->Fill(X,Y);
-	   timing_map_channel->Fill(X,Y,deltaT);
+	   timing_map_channel->Fill(X,Y,deltaTNoCorr+10);
 	   amplitude_map_channel->Fill(X,Y,ampl);
 	   //	  std::cout<<deltaT<<std::endl;
 	   amplitude_map_fibre2->Fill(X,Y,t.cef3_maxAmpl->at(2));
@@ -222,7 +228,7 @@ int main( int argc, char* argv[] ) {
 
 	if(deltaTCorr>-2 && deltaTCorr<2 && ampl>0 && ampl<4000){
 	  amplitude_map_sel_fibre->Fill(X,Y,ampl);
-	  timing_map_sel_fibre->Fill(X,Y,deltaTCorr);
+	  timing_map_sel_fibre->Fill(X,Y,deltaTNoCorr+10);
 	  sel_fibre_norm->Fill(X,Y);
 	  maxAmpl_sel_fibre->Fill(ampl);
 	}
@@ -237,9 +243,17 @@ int main( int argc, char* argv[] ) {
 	if(t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){ //cuts on channel position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination
 	if(deltaTCorr>-2 && deltaTCorr<2 && ampl>0 && ampl<4000){
 	  amplitude_map_sel_channel->Fill(X,Y,ampl);  
-	  timing_map_sel_channel->Fill(X,Y,deltaTCorr);
+	  timing_map_sel_channel->Fill(X,Y,deltaTNoCorr+10);
 	  sel_channel_norm->Fill(X,Y);
 	  maxAmpl_sel_channel->Fill(ampl);
+	  if(ampl>100.){
+	    amplitude_map_sel_channel_ampl_cut->Fill(X,Y,ampl);
+	    timing_map_sel_channel_ampl_cut->Fill(X,Y,deltaTNoCorr+10);
+	    amplitude_map_fibre2_sel_channel_ampl_cut->Fill(X,Y,t.cef3_maxAmpl->at(2));
+	    sel_channel_ampl_cut_norm->Fill(X,Y);
+	    if(deltaTNoCorr>-5.5)sel_channel_ampl_and_time_cut_norm->Fill(X,Y);
+	  }
+
 	}
 
 	for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
@@ -274,14 +288,28 @@ int main( int argc, char* argv[] ) {
    amplitude_map_sel_channel->GetYaxis()->SetTitle("Y [mm]");
    amplitude_map_sel_channel->GetXaxis()->SetTitle("X [mm]");
 
+   amplitude_map_sel_channel_ampl_cut->Divide(sel_channel_ampl_cut_norm);
+   amplitude_map_sel_channel_ampl_cut->GetYaxis()->SetTitle("Y [mm]");
+   amplitude_map_sel_channel_ampl_cut->GetXaxis()->SetTitle("X [mm]");
+
+
    timing_map_sel_channel->Divide(sel_channel_norm);
    timing_map_sel_channel->GetYaxis()->SetTitle("Y [mm]");
    timing_map_sel_channel->GetXaxis()->SetTitle("X [mm]");
+
+   timing_map_sel_channel_ampl_cut->Divide(sel_channel_ampl_cut_norm);
+   timing_map_sel_channel_ampl_cut->GetYaxis()->SetTitle("Y [mm]");
+   timing_map_sel_channel_ampl_cut->GetXaxis()->SetTitle("X [mm]");
 
 
    amplitude_map_fibre2->Divide(timing_map_channel_norm);
    amplitude_map_fibre2->GetYaxis()->SetTitle("Y [mm]");
    amplitude_map_fibre2->GetXaxis()->SetTitle("X [mm]");
+
+   amplitude_map_fibre2_sel_channel_ampl_cut->Divide(sel_channel_ampl_cut_norm);
+   amplitude_map_fibre2_sel_channel_ampl_cut->GetYaxis()->SetTitle("Y [mm]");
+   amplitude_map_fibre2_sel_channel_ampl_cut->GetXaxis()->SetTitle("X [mm]");
+
 
    amplitude_map_fibre0->Divide(timing_map_channel_norm);
    amplitude_map_fibre0->GetYaxis()->SetTitle("Y [mm]");
@@ -592,12 +620,17 @@ int main( int argc, char* argv[] ) {
 
   sel_fibre_norm->Write();
   sel_channel_norm->Write();
-
+  sel_channel_ampl_cut_norm->Write();
+  sel_channel_ampl_and_time_cut_norm->Write();
   timing_map_sel_fibre->Write();
   timing_map_sel_channel->Write();
 
   maxAmpl_sel_fibre->Write();
   maxAmpl_sel_channel->Write();
+
+  amplitude_map_sel_channel_ampl_cut->Write();
+  timing_map_sel_channel_ampl_cut->Write();
+  amplitude_map_fibre2_sel_channel_ampl_cut->Write();
 
   resValueTime_fibre.Write("resValueTime_fibre");
   resValueAmplitude_fibre.Write("resValueAmplitude_fibre");
