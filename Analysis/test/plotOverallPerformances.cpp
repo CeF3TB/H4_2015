@@ -422,9 +422,9 @@ int main( int argc, char* argv[] ) {
 
    
    TCanvas* c1 = new TCanvas( "c1", "", 600, 600 );
-   float yup=1.1*(resVsAmplitude_channel->GetY()[0]+resVsAmplitude_channel->GetEY()[1]);
+   float yup=1.1*(resVsAmplitude_channel->GetY()[1]+resVsAmplitude_channel->GetEY()[1]);
    float xup=(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1]+10; 
-   TH2D* h2_axes = new TH2D( "axes", "", 100,resVsAmplitude_channel->GetX()[1]-10 ,xup , 110, 0., yup);
+   TH2D* h2_axes = new TH2D( "axes", "", 100,resVsAmplitude_channel->GetX()[2]-10 ,xup , 110, 0., yup);
 
 
    //channel   
@@ -439,7 +439,8 @@ int main( int argc, char* argv[] ) {
    h2_axes->GetXaxis()->SetTitle("Amplitude [ADC]");
    h2_axes->Draw(""); 
 
-   TF1* f= new TF1("fun","[1]/x+[0]",(resVsAmplitude_channel->GetX())[1]-10,(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1] +10);
+   TF1* f= new TF1("fun","sqrt([1]*[1]/(x*x)+[0]*[0])",(resVsAmplitude_channel->GetX())[2]-2,(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1] +10);
+   f->SetParameter(1,14446);
    resVsAmplitude_channel->Fit("fun","R");
 
     resVsAmplitude_channel->Draw("p same");
@@ -478,21 +479,22 @@ int main( int argc, char* argv[] ) {
    h2_axes_2->GetXaxis()->SetTitle("Amplitude [ADC]");
    h2_axes_2->Draw(""); 
 
-   TF1* f2= new TF1("fun2","[1]/x+[0]",(resVsAmplitude_fibre->GetX())[1]-10,(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1] +10);
+   //   TF1* f2= new TF1("fun2","[1]/x+[0]",(resVsAmplitude_fibre->GetX())[1]-10,(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1] +10);
+  TF1* f2= new TF1("fun2","sqrt([1]*[1]/(x*x)+[0]*[0])",(resVsAmplitude_fibre->GetX())[1]-10,(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1] +10);
    resVsAmplitude_fibre->Fit("fun2","R");
 
    resVsAmplitude_fibre->Draw("p same");
    
 
    pave->Draw("same");
-   
+
    
    
    TLegend* lego_2 = new TLegend(0.47, 0.7, 0.8, 0.92);
    lego_2->SetTextSize(0.038);
    lego_2->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
-   lego_2->AddEntry(  (TObject*)0 ,Form("p0 = %.0f #pm %.0f", f->GetParameter(0), f->GetParError(0) ), "");
-   lego_2->AddEntry(  (TObject*)0 ,Form("p1 = %.0f #pm %.0f", f->GetParameter(1), f->GetParError(1) ), "");
+   lego_2->AddEntry(  (TObject*)0 ,Form("p0 = %.0f #pm %.0f", f2->GetParameter(0), f2->GetParError(0) ), "");
+   lego_2->AddEntry(  (TObject*)0 ,Form("p1 = %.0f #pm %.0f", f2->GetParameter(1), f2->GetParError(1) ), "");
    lego_2->SetFillColor(0);
    lego_2->Draw("same");
    
@@ -518,8 +520,8 @@ int main( int argc, char* argv[] ) {
    TLegend* lego_3 = new TLegend(0.47, 0.7, 0.8, 0.92);
    lego_3->SetTextSize(0.038);
    lego_3->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
-   lego_3->AddEntry(  (TObject*)0 ,Form("p0 = %.0f #pm %.0f", f->GetParameter(0), f->GetParError(0) ), "");
-   lego_3->AddEntry(  (TObject*)0 ,Form("p1 = %.0f #pm %.0f", f->GetParameter(1), f->GetParError(1) ), "");
+   lego_3->AddEntry(  (TObject*)0 ,Form("p0 = %.0f #pm %.0f", f2->GetParameter(0), f2->GetParError(0) ), "");
+   lego_3->AddEntry(  (TObject*)0 ,Form("p1 = %.0f #pm %.0f", f2->GetParameter(1), f2->GetParError(1) ), "");
    lego_3->SetFillColor(0);
    lego_3->Draw("same");
    
