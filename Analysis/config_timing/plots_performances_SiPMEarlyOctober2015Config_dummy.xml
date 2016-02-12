@@ -1,0 +1,19 @@
+<general>
+  <runs>4055,4051,4052,4053,4054</runs> 
+  <setup>SiPM</setup>
+  <nMaxAmplCuts>30</nMaxAmplCuts>
+  <stepAmplFibre>20</stepAmplFibre>
+  <stepAmplChannel>20</stepAmplChannel>
+  <rangeXLow>-8</rangeXLow>
+  <rangeXUp>-1</rangeXUp>
+  <channel2CutFibre>200</channel2CutFibre>
+  <channel1CutChannel>2000</channel1CutChannel>
+  <channel2CutChannel>140</channel2CutChannel>
+  <startCutFibre>0</startCutFibre>
+  <startCutChannel>0</startCutChannel>
+  <amplCut>150</amplCut>
+  <energies>20,50,100,150,200</energies>
+  <addTagFileName>1</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
+  <tagFileName>plotChannelFibre</tagFileName>
+</general>
+
