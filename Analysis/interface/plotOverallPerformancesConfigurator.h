@@ -11,6 +11,8 @@ typedef struct plotOverallPerformances_Config_t {
   float channel2CutChannel;
   std::vector<int> runs;
   float startCutFibre;
+  float startCutChannel;
+  float amplCut;
   int addTagFileName;
   std::string tagFileName;
   std::vector<float> energies;
