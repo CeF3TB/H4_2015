@@ -18,6 +18,9 @@
 #include "RooPlot.h"
 #include "RooCBShape.h"
 #include "RooCruijff.h"
+#include "RooGenericPdf.h"
+#include "RooChi2Var.h"
+#include "RooMinuit.h"
 
 #include "TCanvas.h"
 #include "TFile.h"
@@ -80,6 +83,13 @@ int main( int argc, char* argv[] ) {
   //  TVectorD resValueAmplitudeSingleEnergy_channel(theConfiguration_.runs.size());
   //  TVectorD resValueAmplitudeSingleEnergy_fibre(theConfiguration_.runs.size());
 
+  float shift=10;
+  bool isNino=false;
+
+  if(theConfiguration_.setup=="Nino"){
+    shift=11.5;
+    isNino=true;
+  }
 
 
    for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
@@ -90,8 +100,8 @@ int main( int argc, char* argv[] ) {
     reso_histo_channelPlusFibre_corr_Amplitude[i] = new TH1F("reso_histo_channelPlusFibre_corr_Amplitude_"+icut,"reso_histo_channelPlusFibre_corr_Amplitude_"+icut,200,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);
    }
    
-   reso_histo_fibre_total = new TH1F("reso_histo_fibre_total","reso_histo_fibre_total",200,theConfiguration_.rangeXLow+10,theConfiguration_.rangeXUp+10);
-   reso_histo_channel_total = new TH1F("reso_histo_channel_total","reso_histo_channel_total",200,theConfiguration_.rangeXLow+10,theConfiguration_.rangeXUp+10);
+   reso_histo_fibre_total = new TH1F("reso_histo_fibre_total","reso_histo_fibre_total",200,theConfiguration_.rangeXLow+shift,theConfiguration_.rangeXUp+shift);
+   reso_histo_channel_total = new TH1F("reso_histo_channel_total","reso_histo_channel_total",200,theConfiguration_.rangeXLow+shift,theConfiguration_.rangeXUp+shift);
    
    
    std::vector<int> runs;
@@ -140,26 +150,24 @@ int main( int argc, char* argv[] ) {
       for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
 	bool filled_channel=false;
 	bool filled_channelPlusFibre=false;
-      if(TopologicalSelectionHelper::passesFibreTopologicalSelection(t) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy){ 
+	if(TopologicalSelectionHelper::passesFibreTopologicalSelection(t,isNino) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy){ 
 	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre){
-
 	    reso_histo_fibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
-	    if(t.cef3_maxAmpl->at(1)>150)reso_histo_fibre_total->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50+10);//FIXME
+	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.amplCut)reso_histo_fibre_total->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50+shift);
 	    reso_histo_channelPlusFibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
 	    break;
 	  }
       }
-	  if(TopologicalSelectionHelper::passesChannelTopologicalSelection(t)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel*t.beamEnergy/lowerBeamEnergy && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
-
+	if(TopologicalSelectionHelper::passesChannelTopologicalSelection(t,isNino)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel*t.beamEnergy/lowerBeamEnergy && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
 	    if(t.cef3_maxAmpl->at(1)>i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<(i+1)*theConfiguration_.stepAmplFibre){
 	      reso_histo_channelPlusFibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
 	      filled_channelPlusFibre=true;
 	      if(filled_channel)break;
 	    }
 
-	    if(t.cef3_maxAmpl->at(1)>i*theConfiguration_.stepAmplChannel && t.cef3_maxAmpl->at(1)<(i+1)*theConfiguration_.stepAmplChannel){
+	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutChannel+i*theConfiguration_.stepAmplChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutChannel+(i+1)*theConfiguration_.stepAmplChannel){
 	    reso_histo_channel_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
-	    if(t.cef3_maxAmpl->at(1)>150)reso_histo_channel_total->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50+10);//FIXME
+	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.amplCut)reso_histo_channel_total->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50+shift);
 	    filled_channel=true;
 	    if(filled_channelPlusFibre) break;
 	    }
@@ -183,7 +191,7 @@ int main( int argc, char* argv[] ) {
    for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
      //fibre
      std::cout<<"#####################################"<<i<<" "<<reso_histo_fibre_corr_Amplitude[i]->GetEntries()<<std::endl;
-     if(reso_histo_fibre_corr_Amplitude[i]->GetEntries()>=25){
+     if(reso_histo_fibre_corr_Amplitude[i]->GetEntries()>=25 && !isNino){
      TH1F* histo;
      histo=reso_histo_fibre_corr_Amplitude[i];
      double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
@@ -250,7 +258,7 @@ int main( int argc, char* argv[] ) {
      }
 
      //channel
-     if(reso_histo_channel_corr_Amplitude[i]->GetEntries()>25){
+     if(reso_histo_channel_corr_Amplitude[i]->GetEntries()>25  && !isNino){
        TH1F* histo;
        histo=reso_histo_channel_corr_Amplitude[i];
        double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
@@ -287,8 +295,12 @@ int main( int argc, char* argv[] ) {
        fit_fct.plotOn(frame);//this will show fit overlay on canvas  
 
        double rms,rmsErr;
-       rms = (widthL.getVal()+widthR.getVal())/2;
+       //       rms = (widthL.getVal()+widthR.getVal())/2; FIXME
+       //       rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
+
+       rms = (widthL.getVal()+widthR.getVal())/2; 
        rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
+
 
        resValueAmplitude_channel[i]=rms*1.e3; 
        resErrValueAmplitude_channel[i]=rmsErr*1.e3; 
@@ -317,7 +329,7 @@ int main( int argc, char* argv[] ) {
 
 
      //channelPlusFibre
-     if(reso_histo_channelPlusFibre_corr_Amplitude[i]->GetEntries()>25){
+     if(reso_histo_channelPlusFibre_corr_Amplitude[i]->GetEntries()>25  && !isNino){
        TH1F* histo;
        histo=reso_histo_channelPlusFibre_corr_Amplitude[i];
        double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
@@ -387,32 +399,36 @@ int main( int argc, char* argv[] ) {
    }
 	  
 
-   //plot res vs amplitude
    TGraphErrors*   resVsAmplitude_fibre = new TGraphErrors(0);
    TGraphErrors*   resVsAmplitude_channel = new TGraphErrors(0);
    TGraphErrors*   resVsAmplitude_channelPlusFibre = new TGraphErrors(0);
 
-   resVsAmplitude_channel->SetName("resVsAmplitude_channel");
-   resVsAmplitude_fibre->SetName("resVsAmplitude_fibre");
-   resVsAmplitude_channelPlusFibre->SetName("resVsAmplitude_channelPlusFibre");
-   
-   for(int i=0;i<resValueAmplitude_channel.GetNoElements();i++){
-     if(resValueAmplitude_channel[i]!=0){ 
-       //     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.<<" "<<resValueAmplitude_channel[i]<<std::endl;
-     resVsAmplitude_channel->SetPoint(i,(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.,resValueAmplitude_channel[i]); 
-     resVsAmplitude_channel->SetPointError(i,0,resErrValueAmplitude_channel[i]);
-     }
-     if(resValueAmplitude_fibre[i]!=0){
-       //     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplFibre/2.<<" "<<resValueAmplitude_fibre[i]<<std::endl;
-       resVsAmplitude_fibre->SetPoint(i,theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre-theConfiguration_.stepAmplFibre/2.,resValueAmplitude_fibre[i]);
-       resVsAmplitude_fibre->SetPointError(i,0,resErrValueAmplitude_fibre[i]);
-     }
-     if(resValueAmplitude_channelPlusFibre[i]!=0){ 
-       //     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.<<" "<<resValueAmplitude_channel[i]<<std::endl;
-     resVsAmplitude_channelPlusFibre->SetPoint(i,(i+1)*theConfiguration_.stepAmplFibre-theConfiguration_.stepAmplFibre/2.,resValueAmplitude_channelPlusFibre[i]); 
-     resVsAmplitude_channelPlusFibre->SetPointError(i,0,resErrValueAmplitude_channelPlusFibre[i]);
-     }
 
+   if(!isNino){
+     //plot res vs amplitude
+
+     resVsAmplitude_channel->SetName("resVsAmplitude_channel");
+     resVsAmplitude_fibre->SetName("resVsAmplitude_fibre");
+     resVsAmplitude_channelPlusFibre->SetName("resVsAmplitude_channelPlusFibre");
+   
+     for(int i=0;i<resValueAmplitude_channel.GetNoElements();i++){
+       if(resValueAmplitude_channel[i]!=0){ 
+	 //     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.<<" "<<resValueAmplitude_channel[i]<<std::endl;
+	 resVsAmplitude_channel->SetPoint(i,(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.,resValueAmplitude_channel[i]); 
+	 resVsAmplitude_channel->SetPointError(i,0,resErrValueAmplitude_channel[i]);
+       }
+       if(resValueAmplitude_fibre[i]!=0){
+	 //     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplFibre/2.<<" "<<resValueAmplitude_fibre[i]<<std::endl;
+	 resVsAmplitude_fibre->SetPoint(i,theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre-theConfiguration_.stepAmplFibre/2.,resValueAmplitude_fibre[i]);
+	 resVsAmplitude_fibre->SetPointError(i,0,resErrValueAmplitude_fibre[i]);
+       }
+       if(resValueAmplitude_channelPlusFibre[i]!=0){ 
+	 //     std::cout<<"setting value"<<i<<" "<<(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.<<" "<<resValueAmplitude_channel[i]<<std::endl;
+	 resVsAmplitude_channelPlusFibre->SetPoint(i,(i+1)*theConfiguration_.stepAmplFibre-theConfiguration_.stepAmplFibre/2.,resValueAmplitude_channelPlusFibre[i]); 
+	 resVsAmplitude_channelPlusFibre->SetPointError(i,0,resErrValueAmplitude_channelPlusFibre[i]);
+       }
+
+     }
    }
 	 
 	 
@@ -420,130 +436,147 @@ int main( int argc, char* argv[] ) {
    outFileName = dir+"/plotOverallPerformances_"+tag+".root";
    TFile* outFile = TFile::Open(outFileName.c_str(),"recreate");
 
+   if(!isNino){
+     TCanvas* c1 = new TCanvas( "c1", "", 600, 600 );
+     float yup=1.1*(resVsAmplitude_channel->GetY()[2]+resVsAmplitude_channel->GetEY()[0]);
+     float xup=(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-5]+10; 
+     TH2D* h2_axes = new TH2D( "axes", "", 100,resVsAmplitude_channel->GetX()[2]-10 ,xup , 110, 0., yup);
+
+
+     //channel   
+     resVsAmplitude_channel->SetName("resVsAmplitude_channel");
+     resVsAmplitude_channel->SetMarkerStyle(20);
+     resVsAmplitude_channel->SetMarkerSize(1.6);
+     resVsAmplitude_channel->SetMarkerColor(kBlue);
+
+
+     resVsAmplitude_channel->Write();
+     h2_axes->SetYTitle("#sigma_{t} [ps]");
+     h2_axes->GetXaxis()->SetTitle("Amplitude [ADC]");
+     h2_axes->Draw(""); 
+
+     TF1* f= new TF1("fun","sqrt([1]*[1]/(x*x)+[0]*[0])",(resVsAmplitude_channel->GetX())[2]-2,(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-5] +10);
+     //      TF1* f= new TF1("fun","sqrt([1]*[1]/(x*x)+[0]*[0])",(resVsAmplitude_channel->GetX())[1]-2,(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-7] +10);
+     f->SetParLimits(0,50,180);
+     f->SetParameter(0,100);
+     f->SetParameter(1,1.12135e+04);
+     //   f->SetParameter(1,300);
+     //     f->SetParameter(2,1.41901e+03);
+     //   f->SetParameter(2,100);
+     //   f->SetParLimits(2,100,1000);
+     std::cout<<" ROOT FIT::::"<<f->Eval(60.)<<std::endl;
+
+     //     f->SetParLimits(1,10,1.19257e+02);
+     resVsAmplitude_channel->Fit("fun","R");
    
-   TCanvas* c1 = new TCanvas( "c1", "", 600, 600 );
-   float yup=1.1*(resVsAmplitude_channel->GetY()[1]+resVsAmplitude_channel->GetEY()[1]);
-   float xup=(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1]+10; 
-   TH2D* h2_axes = new TH2D( "axes", "", 100,resVsAmplitude_channel->GetX()[2]-10 ,xup , 110, 0., yup);
+     resVsAmplitude_channel->Draw("p same");
 
 
-   //channel   
-   resVsAmplitude_channel->SetName("resVsAmplitude_channel");
-   resVsAmplitude_channel->SetMarkerStyle(20);
-   resVsAmplitude_channel->SetMarkerSize(1.6);
-   resVsAmplitude_channel->SetMarkerColor(kBlue);
-
-
-   resVsAmplitude_channel->Write();
-   h2_axes->SetYTitle("#sigma_{t} [ps]");
-   h2_axes->GetXaxis()->SetTitle("Amplitude [ADC]");
-   h2_axes->Draw(""); 
-
-   TF1* f= new TF1("fun","sqrt([1]*[1]/(x*x)+[0]*[0])",(resVsAmplitude_channel->GetX())[2]-2,(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1] +10);
-   f->SetParameter(1,14446);
-   resVsAmplitude_channel->Fit("fun","R");
-
-    resVsAmplitude_channel->Draw("p same");
-
-
-    TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
-    pave->Draw("same");
+     TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+     pave->Draw("same");
 
 
 
-    TLegend* lego = new TLegend(0.47, 0.7, 0.8, 0.92);
-    lego->SetTextSize(0.038);
-    lego->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
-    lego->AddEntry(  (TObject*)0 ,Form("p0 = %.0f #pm %.0f", f->GetParameter(0), f->GetParError(0) ), "");
-    lego->AddEntry(  (TObject*)0 ,Form("p1 = %.0f #pm %.0f", f->GetParameter(1), f->GetParError(1) ), "");
-    lego->SetFillColor(0);
-    lego->Draw("same");
+     TLegend* lego = new TLegend(0.47, 0.7, 0.8, 0.92);
+     lego->SetTextSize(0.038);
+     //    lego->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
+     lego->AddEntry(  (TObject*)0 ,Form("C = %.0f #pm %.0f ps", f->GetParameter(0), f->GetParError(0) ), "");
+     //    lego->AddEntry(  (TObject*)0 ,Form("N = %.0f #pm %.0f", f->GetParameter(1), f->GetParError(1) ), "");
+     lego->SetFillColor(0);
+     lego->Draw("same");
 
-    c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channel.png");
-    c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channel.pdf");  
+     c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channel.png");
+     c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channel.pdf");  
 
-    //fibre
-    c1->Clear();
-    yup=1.1*(resVsAmplitude_fibre->GetY()[0]+resVsAmplitude_fibre->GetEY()[1]);
-    xup=(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1]+10; 
-    TH2D* h2_axes_2 = new TH2D( "axes_2", "", 100, resVsAmplitude_channel->GetX()[1],xup , 110, 0., yup);
+     std::cout<<resVsAmplitude_channel->GetN()<<" "<<(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1]<< " "<< (resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()]<<std::endl;
+
+     //fibre
+     c1->Clear();
+     yup=1.1*(resVsAmplitude_fibre->GetY()[0]+resVsAmplitude_fibre->GetEY()[1]);
+     xup=(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1]+10; 
+     TH2D* h2_axes_2 = new TH2D( "axes_2", "", 100, resVsAmplitude_channel->GetX()[1],xup , 110, 0., yup);
 
 
-   //fibre   
-   resVsAmplitude_fibre->SetName("resVsAmplitude_fibre");
-   resVsAmplitude_fibre->SetMarkerStyle(20);
-   resVsAmplitude_fibre->SetMarkerSize(1.6);
-   resVsAmplitude_fibre->SetMarkerColor(kBlue);
-   resVsAmplitude_fibre->Write();
-   h2_axes_2->SetYTitle("#sigma_{t} [ps]");
-   h2_axes_2->GetXaxis()->SetTitle("Amplitude [ADC]");
-   h2_axes_2->Draw(""); 
-
-   //   TF1* f2= new TF1("fun2","[1]/x+[0]",(resVsAmplitude_fibre->GetX())[1]-10,(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1] +10);
-  TF1* f2= new TF1("fun2","sqrt([1]*[1]/(x*x)+[0]*[0])",(resVsAmplitude_fibre->GetX())[1]-10,(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1] +10);
-   resVsAmplitude_fibre->Fit("fun2","R");
-
-   resVsAmplitude_fibre->Draw("p same");
+     //fibre   
+     resVsAmplitude_fibre->SetName("resVsAmplitude_fibre");
+     resVsAmplitude_fibre->SetMarkerStyle(20);
+     resVsAmplitude_fibre->SetMarkerSize(1.6);
+     resVsAmplitude_fibre->SetMarkerColor(kBlue);
+     resVsAmplitude_fibre->Write();
+     h2_axes_2->SetYTitle("#sigma_{t} [ps]");
+     h2_axes_2->GetXaxis()->SetTitle("Amplitude [ADC]");
+     h2_axes_2->Draw(""); 
    
+     //   TF1* f2= new TF1("fun2","[1]/x+[0]",(resVsAmplitude_fibre->GetX())[1]-10,(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1] +10);
+     TF1* f2= new TF1("fun2","sqrt([1]*[1]/(x*x)+[0]*[0])",(resVsAmplitude_fibre->GetX())[1]-10,(resVsAmplitude_fibre->GetX())[resVsAmplitude_fibre->GetN()-1] +10);
+     //    f2->SetParLimits(0,50,150);
+     //  f2->FixParameter(1,1.66061e+04);
+     //  f2->FixParameter(2,8.02308e+02);
+     resVsAmplitude_fibre->Fit("fun2","R");
+  
+     resVsAmplitude_fibre->Draw("p same");
 
-   pave->Draw("same");
+
+     pave->Draw("same");
 
    
    
-   TLegend* lego_2 = new TLegend(0.47, 0.7, 0.8, 0.92);
-   lego_2->SetTextSize(0.038);
-   lego_2->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
-   lego_2->AddEntry(  (TObject*)0 ,Form("p0 = %.0f #pm %.0f", f2->GetParameter(0), f2->GetParError(0) ), "");
-   lego_2->AddEntry(  (TObject*)0 ,Form("p1 = %.0f #pm %.0f", f2->GetParameter(1), f2->GetParError(1) ), "");
-   lego_2->SetFillColor(0);
-   lego_2->Draw("same");
+     TLegend* lego_2 = new TLegend(0.47, 0.7, 0.8, 0.92);
+     lego_2->SetTextSize(0.038);
+     //   lego_2->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
+     lego_2->AddEntry(  (TObject*)0 ,Form("C = %.0f #pm %.0f ps", f2->GetParameter(0), f2->GetParError(0) ), "");
+     //   lego_2->AddEntry(  (TObject*)0 ,Form("N = %.0f #pm %.0f", f2->GetParameter(1), f2->GetParError(1) ), "");
+     lego_2->SetFillColor(0);
+     lego_2->Draw("same");
    
-   c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_fibre.png");
-   c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_fibre.pdf");  
+     c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_fibre.png");
+     c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_fibre.pdf");  
 
 
-   c1->Clear();
-   h2_axes_2->Draw("");
-   resVsAmplitude_channelPlusFibre->SetName("resVsAmplitude_channelPlusFibre");
-   resVsAmplitude_channelPlusFibre->SetMarkerStyle(20);
-   resVsAmplitude_channelPlusFibre->SetMarkerSize(1.6);
-   resVsAmplitude_channelPlusFibre->SetMarkerColor(kBlue);
-   resVsAmplitude_channelPlusFibre->Write();
 
-   resVsAmplitude_channelPlusFibre->Fit("fun2","R");
+     c1->Clear();
+     h2_axes_2->Draw("");
+     resVsAmplitude_channelPlusFibre->SetName("resVsAmplitude_channelPlusFibre");
+     resVsAmplitude_channelPlusFibre->SetMarkerStyle(20);
+     resVsAmplitude_channelPlusFibre->SetMarkerSize(1.6);
+     resVsAmplitude_channelPlusFibre->SetMarkerColor(kBlue);
+     resVsAmplitude_channelPlusFibre->Write();
 
-   resVsAmplitude_channelPlusFibre->Draw("p same");
+     resVsAmplitude_channelPlusFibre->Fit("fun2","R");
+
+     resVsAmplitude_channelPlusFibre->Draw("p same");
    
 
-   pave->Draw("same");
+     pave->Draw("same");
    
-   TLegend* lego_3 = new TLegend(0.47, 0.7, 0.8, 0.92);
-   lego_3->SetTextSize(0.038);
-   lego_3->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
-   lego_3->AddEntry(  (TObject*)0 ,Form("p0 = %.0f #pm %.0f", f2->GetParameter(0), f2->GetParError(0) ), "");
-   lego_3->AddEntry(  (TObject*)0 ,Form("p1 = %.0f #pm %.0f", f2->GetParameter(1), f2->GetParError(1) ), "");
-   lego_3->SetFillColor(0);
-   lego_3->Draw("same");
+     TLegend* lego_3 = new TLegend(0.47, 0.7, 0.8, 0.92);
+     lego_3->SetTextSize(0.038);
+     //   lego_3->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
+     lego_3->AddEntry(  (TObject*)0 ,Form("C = %.0f #pm %.0f ps", f2->GetParameter(0), f2->GetParError(0) ), "");
+     //   lego_3->AddEntry(  (TObject*)0 ,Form("N = %.0f #pm %.0f", f2->GetParameter(1), f2->GetParError(1) ), "");
+     lego_3->SetFillColor(0);
+     lego_3->Draw("same");
    
-   c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channelPlusFibre.png");
-   c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channelPlusFibre.pdf");  
+     c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channelPlusFibre.png");
+     c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_channelPlusFibre.pdf");  
 
 
 
-    c1->Clear();
-    h2_axes_2->Draw(""); 
-    resVsAmplitude_fibre->GetFunction("fun2")->SetBit(TF1::kNotDraw);
-    resVsAmplitude_fibre->Draw("p same");
-    resVsAmplitude_channel->SetLineColor(kRed);
-    resVsAmplitude_channel->GetFunction("fun")->SetBit(TF1::kNotDraw);
-    resVsAmplitude_channel->SetMarkerColor(kRed);
-    resVsAmplitude_channel->Draw("p same");
-    c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_fibreAndChannel.png");
-    c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_fibreAndChannel.pdf");  
-
+     c1->Clear();
+     h2_axes_2->Draw(""); 
+     resVsAmplitude_fibre->GetFunction("fun2")->SetBit(TF1::kNotDraw);
+     resVsAmplitude_fibre->Draw("p same");
+     resVsAmplitude_channel->SetLineColor(kRed);
+     resVsAmplitude_channel->GetFunction("fun")->SetBit(TF1::kNotDraw);
+     resVsAmplitude_channel->SetMarkerColor(kRed);
+     resVsAmplitude_channel->Draw("p same");
+     c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_fibreAndChannel.png");
+     c1->SaveAs(dir+"/timingResolutionVsAmplitudeSiPM_fibreAndChannel.pdf");  
+   }
 
    //fit histos for all energies with reasonable cut on ampl
    //fibre
+    std::cout<<reso_histo_fibre_total->GetEntries();
    if(reso_histo_fibre_total->GetEntries()>=25){
      TH1F* histo;
      histo=reso_histo_fibre_total;
@@ -704,6 +737,10 @@ plotOverallPerformances_Config_t readConfiguration(std::string configName){
    conf.channel1CutChannel= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"channel1CutChannel",configurator_->root_element));
 
    conf.startCutFibre= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"startCutFibre",configurator_->root_element));
+
+   conf.startCutChannel= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"startCutChannel",configurator_->root_element));
+
+   conf.amplCut= Configurator::GetDouble(Configurable::getElementContent(*configurator_,"amplCut",configurator_->root_element));
 
    conf.addTagFileName= Configurator::GetInt(Configurable::getElementContent(*configurator_,"addTagFileName",configurator_->root_element));
 
