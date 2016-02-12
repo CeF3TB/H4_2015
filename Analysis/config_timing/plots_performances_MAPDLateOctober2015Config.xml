@@ -2,14 +2,16 @@
   <runs>4498,4495,4494,4491</runs> 
   <setup>Nino</setup>
   <nMaxAmplCuts>30</nMaxAmplCuts>
-  <stepAmplFibre>15</stepAmplFibre>
+  <stepAmplFibre>20</stepAmplFibre>
   <stepAmplChannel>20</stepAmplChannel>
-  <rangeXLow>-12</rangeXLow>
-  <rangeXUp>5</rangeXUp>
-  <channel2CutFibre>200</channel2CutFibre>
-  <channel1CutChannel>2000</channel1CutChannel>
-  <channel2CutChannel>140</channel2CutChannel>
-  <startCutFibre>0</startCutFibre>
+  <rangeXLow>-10</rangeXLow>
+  <rangeXUp>-2</rangeXUp>
+  <channel2CutFibre>300</channel2CutFibre>
+  <channel1CutChannel>4000</channel1CutChannel>
+  <channel2CutChannel>300</channel2CutChannel>
+  <startCutFibre>650</startCutFibre>
+  <startCutChannel>650</startCutChannel>
+  <amplCut>650</amplCut>
   <energies>50,100,150,200</energies>
 </general>
 
