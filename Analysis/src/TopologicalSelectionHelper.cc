@@ -14,7 +14,7 @@ bool TopologicalSelectionHelper::passesFibreTopologicalSelection(RecoTree &t,boo
       }
     }
   }else {
-    if(Y>1.2 && Y<3.8 && X<0.3 && X>-5 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
+    if(Y>1.8 && Y<3.5 && X<0.3 && X>-5 && t.nClusters_hodoX1>0 && t.cluster_pos_corr_hodoX1>-100 && t.cluster_pos_corr_hodoY1>-100&& t.cluster_pos_corr_hodoX2>-100 && t.cluster_pos_corr_hodoY2>-100 && t.wc_x_corr>-20){
       if(Y+0.85*X-0.655<0){//line passing through (-3.7,3.8) and (0.3,0.4)
 	return true;
       }
