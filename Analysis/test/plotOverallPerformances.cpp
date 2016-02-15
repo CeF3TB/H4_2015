@@ -150,24 +150,31 @@ int main( int argc, char* argv[] ) {
       for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
 	bool filled_channel=false;
 	bool filled_channelPlusFibre=false;
+	if(t.cef3_maxAmpl->at(1)<theConfiguration_.startCutFibre && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutChannel)continue;
+	if(isNino && t.nino_maxAmpl<32)continue;
+
+	float deltaTNoCorr=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50;
+	if(theConfiguration_.setup=="Nino")deltaTNoCorr=t.nino_LEtime-t.mcp_time_frac50;
+
 	if(TopologicalSelectionHelper::passesFibreTopologicalSelection(t,isNino) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy){ 
+	  //	  std::cout<<t.cef3_maxAmpl->at(1)<<" "<<theConfiguration_.startCutFibre<<" "<<theConfiguration_.amplCut<<" "<<t.nino_maxAmpl<<std::endl;
 	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre){
-	    reso_histo_fibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
-	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.amplCut)reso_histo_fibre_total->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50+shift);
-	    reso_histo_channelPlusFibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
+	    reso_histo_fibre_corr_Amplitude[i]->Fill(deltaTNoCorr);
+	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.amplCut)reso_histo_fibre_total->Fill(deltaTNoCorr+shift);
+	    reso_histo_channelPlusFibre_corr_Amplitude[i]->Fill(deltaTNoCorr);
 	    break;
 	  }
       }
 	if(TopologicalSelectionHelper::passesChannelTopologicalSelection(t,isNino)  && t.cef3_maxAmpl->at(2) > theConfiguration_.channel2CutChannel*t.beamEnergy/lowerBeamEnergy && t.cef3_maxAmpl->at(1)<theConfiguration_.channel1CutChannel){   //cuts on fibre position with hodos and wc. cut on cef3_maxAmpl[2] to reduce hadron contamination, cef3_maxAmpl[1] cut to reduce remaining events hitting the fibre
 	    if(t.cef3_maxAmpl->at(1)>i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<(i+1)*theConfiguration_.stepAmplFibre){
-	      reso_histo_channelPlusFibre_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
+	      reso_histo_channelPlusFibre_corr_Amplitude[i]->Fill(deltaTNoCorr);
 	      filled_channelPlusFibre=true;
 	      if(filled_channel)break;
 	    }
 
 	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutChannel+i*theConfiguration_.stepAmplChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutChannel+(i+1)*theConfiguration_.stepAmplChannel){
-	    reso_histo_channel_corr_Amplitude[i]->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50);
-	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.amplCut)reso_histo_channel_total->Fill(t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50+shift);
+	    reso_histo_channel_corr_Amplitude[i]->Fill(deltaTNoCorr);
+	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.amplCut)reso_histo_channel_total->Fill(deltaTNoCorr+shift);
 	    filled_channel=true;
 	    if(filled_channelPlusFibre) break;
 	    }
