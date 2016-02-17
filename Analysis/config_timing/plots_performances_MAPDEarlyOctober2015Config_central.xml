@@ -6,12 +6,12 @@
   <stepAmplChannel>30</stepAmplChannel>
   <rangeXLow>3</rangeXLow>
   <rangeXUp>10</rangeXUp>
-  <channel2CutFibre>200</channel2CutFibre>
+  <channel2CutFibre>800</channel2CutFibre>
   <channel1CutChannel>2000</channel1CutChannel>
-  <channel2CutChannel>140</channel2CutChannel>
+  <channel2CutChannel>700</channel2CutChannel>
   <startCutFibre>0</startCutFibre>
   <startCutChannel>400</startCutChannel>
-  <amplCut>150</amplCut>
-  <energies>20,50,100,150,200</energies>
+  <amplCut>450</amplCut>
+  <energies>50,100,150,200</energies>
 </general>
 
