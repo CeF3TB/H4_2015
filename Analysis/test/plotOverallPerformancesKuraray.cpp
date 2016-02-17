@@ -69,11 +69,13 @@ int main( int argc, char* argv[] ) {
 
   TH1F* maxAmplHisto=new TH1F("maxAmplHisto","maxAmplHisto",1000,0,1000);
 
-  TH1F* reso_histo_channel_total;
+  std::vector<TH1F*> reso_histo_channel_total;
 
   TVectorD resValueAmplitude_channel(theConfiguration_.nMaxAmplCuts);
   TVectorD resErrValueAmplitude_channel(theConfiguration_.nMaxAmplCuts);
 
+  TVectorD resValueEnergy_channel(theConfiguration_.nMaxAmplCuts);
+  TVectorD resErrValueEnergy_channel(theConfiguration_.nMaxAmplCuts);
 
   for (int i=0;i<theConfiguration_.nMaxAmplCuts;++i){
     TString icut;
@@ -81,10 +83,13 @@ int main( int argc, char* argv[] ) {
     reso_histo_channel_corr_Amplitude[i] = new TH1F("reso_histo_channel_corr_Amplitude_"+icut,"reso_histo_channel_corr_Amplitude_"+icut,200,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);
   }
    
-  reso_histo_channel_total = new TH1F("reso_histo_channel_total","reso_histo_channel_total",200,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);
+
+
+
 
    
   std::vector<int> runs;
+  std::vector<float> energies;
 
   TString haddFile = "analysisTrees_"+tag+"/"+theConfiguration_.setup+"_centralRuns.root";
 
@@ -101,9 +106,13 @@ int main( int argc, char* argv[] ) {
   for (int i=0;i<theConfiguration_.runs.size();++i){
     TString fileNameString = "analysisTrees_"+tag+"/Reco_";
     runs.push_back(theConfiguration_.runs[i]);
+    energies.push_back(theConfiguration_.energies[i]);
     fileNameString+=runs[i];
     haddString+=fileNameString;
     haddString+= ".root ";
+    TString icut;
+    icut.Form("%d",(int)energies[i]); 
+    reso_histo_channel_total.push_back(new TH1F("reso_histo_channel_total_"+icut,"reso_histo_channel_total_"+icut,200,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp));
   }
 
   system(haddString.Data());
@@ -133,8 +142,15 @@ int main( int argc, char* argv[] ) {
 	  if(TMath::Abs(0.5* (t.cluster_pos_corr_hodoX1+t.cluster_pos_corr_hodoX2))< 3 && TMath::Abs( 0.5* (t.cluster_pos_corr_hodoY1+t.cluster_pos_corr_hodoY2))< 3 && (t.wc_x_corr-t.cluster_pos_corr_hodoX2)<4 && (t.wc_y_corr-t.cluster_pos_corr_hodoY2)< 4  && TMath::Abs( (t.cluster_pos_corr_hodoX1-t.cluster_pos_corr_hodoX2))<1.5 &&TMath::Abs( (t.cluster_pos_corr_hodoY1-t.cluster_pos_corr_hodoY2))<1.5){
 	    
 	    reso_histo_channel_corr_Amplitude[i]->Fill(deltaTNoCorr);
-	    if(t.cef3_maxAmpl->at(2)>500)	    reso_histo_channel_total->Fill(deltaTNoCorr);
-	    
+	    if(t.cef3_maxAmpl->at(2)>theConfiguration_.amplCut)	   {
+	      for(int j=0;j<energies.size();j++){
+		  if(t.beamEnergy==150 && t.cef3_maxAmpl->at(2)<theConfiguration_.channel2CutChannel)continue; //FIXME we use channel for 150 and fibre for 200 to not add variables
+		  if(t.beamEnergy==200 && t.cef3_maxAmpl->at(2)<theConfiguration_.channel2CutFibre)continue;
+		  if(t.beamEnergy==energies[j]) 
+		    reso_histo_channel_total[j]->Fill(deltaTNoCorr);
+		  continue;
+	      }
+	    }
 	  }
 	}
       }
@@ -229,13 +245,87 @@ int main( int argc, char* argv[] ) {
 
    }
 
+
    //total with reasonable cut on ampl
+
+     //channel
+   for(int j=0;j<energies.size();j++){
+   if(reso_histo_channel_total[j]->GetEntries()>25 ){
+     TH1F* histo;
+     histo=reso_histo_channel_total[j];
+     double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
+     double sigma = histo->GetRMS();
+     
+     double fitmin;
+     double fitmax;
+     
+  
+     fitmin = peakpos-4*sigma;
+     fitmax = peakpos+4*sigma;
+     
+     RooRealVar x("x","deltaT", fitmin, fitmax);
+     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
+     
+     RooRealVar meanr("meanr","Mean",peakpos,peakpos-3*sigma, peakpos+3*sigma);
+     RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
+     RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
+     RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
+     RooRealVar alphaR("alphaR","#alpha",5.08615e-02, 0., 1.);
+     int ndf;
+     
+     RooPlot* frame;
+     
+     RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); ndf = 5;
+     fit_fct.fitTo(data);
+     
+     std::string ytitle = Form("Events");
+     frame = x.frame("Title");
+     frame->SetXTitle("time_{fibre}-time_{mcp} [ns]");
+     frame->SetYTitle(ytitle.c_str());
+     
+     data.plotOn(frame);  //this will show histogram data points on canvas 
+     fit_fct.plotOn(frame);//this will show fit overlay on canvas  
+     
+     double rms,rmsErr;
+     //       rms = (widthL.getVal()+widthR.getVal())/2; FIXME
+     //       rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
+     
+     rms = (widthL.getVal()+widthR.getVal())/2; 
+     rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
+     
+     
+     resValueEnergy_channel[j]=rms*1.e3; 
+     resErrValueEnergy_channel[j]=rmsErr*1.e3; 
+     
+     
+     TCanvas* cans = new TCanvas();
+     cans->cd();
+     frame->Draw();
+     TLegend* lego = new TLegend(0.57, 0.8, 0.89, 0.9);;
+     lego->SetTextSize(0.036);
+     lego->SetTextAlign(32); // align right
+     lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.1f #pm %.1f ps", rms*1.e3, rmsErr*1.e3), "");
+     
+     lego->SetFillColor(0);
+     lego->Draw("same");
+     
+     TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+     pave->Draw("same");
+     
+    TString icut;
+    icut.Form("%d",(int)energies[j]); 
+
+     cans->SaveAs(dir+"/reso_histo_channel_cruijff_total"+icut+".png");
+     cans->SaveAs(dir+"/reso_histo_channel_cruijff_total"+icut+".pdf");
+   }
+   }
+
    TCanvas* cans = new TCanvas();
    cans->cd();
-   reso_histo_channel_total->GetXaxis()->SetTitle("time_{fibre}-time_{mcp} [ns]");
-   reso_histo_channel_total->Draw();
-   cans->SaveAs(dir+"/reso_histo_channel_total.png");
-   cans->SaveAs(dir+"/reso_histo_channel_total.pdf");
+   //   reso_histo_channel_total->GetXaxis()->SetTitle("time_{fibre}-time_{mcp} [ns]");
+   //   reso_histo_channel_total->Draw();
+   //   cans->SaveAs(dir+"/reso_histo_channel_total.png");
+   //   cans->SaveAs(dir+"/reso_histo_channel_total.pdf");
   
    cans->Clear();
    cans->cd();
@@ -247,18 +337,28 @@ int main( int argc, char* argv[] ) {
 
    //res vs ampl
    TGraphErrors*   resVsAmplitude_channel = new TGraphErrors(0);
-   
+   TGraphErrors*   resVsEnergy_channel = new TGraphErrors(0);
+
    for(int i=0;i<resValueAmplitude_channel.GetNoElements();i++){
      if(resValueAmplitude_channel[i]!=0){ 
-       resVsAmplitude_channel->SetPoint(i,(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.,resValueAmplitude_channel[i]); 
+       resVsAmplitude_channel->SetPoint(i,theConfiguration_.startCutChannel+(i+1)*theConfiguration_.stepAmplChannel-theConfiguration_.stepAmplChannel/2.,resValueAmplitude_channel[i]); 
        resVsAmplitude_channel->SetPointError(i,0,resErrValueAmplitude_channel[i]);
      }
    }
 
+
+   for(int i=0;i<resValueEnergy_channel.GetNoElements();i++){
+     if(resValueEnergy_channel[i]!=0){ 
+       resVsEnergy_channel->SetPoint(i,energies[i],resValueEnergy_channel[i]); 
+       resVsEnergy_channel->SetPointError(i,0,resErrValueEnergy_channel[i]);
+     }
+   }
+
+
    cans->Clear();
    float yup=1.1*(resVsAmplitude_channel->GetY()[0]+resVsAmplitude_channel->GetEY()[0]);
    float xup=(resVsAmplitude_channel->GetX())[resVsAmplitude_channel->GetN()-1]+10; 
-   TH2D* h2_axes = new TH2D( "axes", "", 100,resVsAmplitude_channel->GetX()[0]-10 ,xup , 110, 0., yup);
+   TH2D* h2_axes = new TH2D( "axes", "", 100,resVsAmplitude_channel->GetX()[0]-10 ,xup , 110, 50, 500);
    
    h2_axes->SetYTitle("#sigma_{t} [ps]");
    h2_axes->GetXaxis()->SetTitle("Amplitude [ADC]");
@@ -277,21 +377,59 @@ int main( int argc, char* argv[] ) {
    resVsAmplitude_channel->Draw("p same");
    
    
-   TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+   TPaveText* pave;
+   if(runs.size()>1) pave= DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+   else {
+     std::string energy(Form("%.0f", energies[0]));
+     pave= DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
+   }
+
    pave->Draw("same");
+
+
+   cans->Clear();
+   float yup_2=1.1*(resVsEnergy_channel->GetY()[0]+resVsEnergy_channel->GetEY()[0]);
+   float xup_2=(resVsEnergy_channel->GetX())[resVsEnergy_channel->GetN()-1]+10; 
+   TH2D* h2_axes_2 = new TH2D( "axes_2", "", 100,resVsEnergy_channel->GetX()[0]-10 ,xup_2 , 110, 50, yup_2);
+   
+   h2_axes_2->SetYTitle("#sigma_{t} [ps]");
+   h2_axes_2->GetXaxis()->SetTitle("Energy [GeV]");
+   h2_axes_2->Draw(""); 
+   resVsEnergy_channel->SetName("resVsEnergy_channel");
+   resVsEnergy_channel->SetMarkerStyle(20);
+   resVsEnergy_channel->SetMarkerSize(1.6);
+   resVsEnergy_channel->SetMarkerColor(kBlue);
+   
+
+   TF1* f2= new TF1("fun2","sqrt([1]*[1]/(x*x)+[0]*[0])",(resVsEnergy_channel->GetX())[0]-2,(resVsEnergy_channel->GetX())[resVsEnergy_channel->GetN()-1] +10);
+   
+   
+   resVsEnergy_channel->Fit("fun2","R");
+   
+   resVsEnergy_channel->Draw("p same");
+   
+   
+   if(runs.size()>1) pave= DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+   else {
+     std::string energy(Form("%.0f", energies[0]));
+     pave= DrawTools::getLabelTop_expOnXaxis(energy+" GeV Electron Beam");
+   }
+
+   pave->Draw("same");
+
    
    
    
-   TLegend* lego = new TLegend(0.47, 0.7, 0.8, 0.92);
+   TLegend* lego = new TLegend(0.47, 0.8, 0.8, 0.92);
    lego->SetTextSize(0.038);
    //    lego->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
-   lego->AddEntry(  (TObject*)0 ,Form("C = %.0f #pm %.0f ps", f->GetParameter(0), f->GetParError(0) ), "");
+   lego->AddEntry(  (TObject*)0 ,Form("C = %.0f #pm %.0f ps", f2->GetParameter(0), f2->GetParError(0) ), "");
    //    lego->AddEntry(  (TObject*)0 ,Form("N = %.0f #pm %.0f", f->GetParameter(1), f->GetParError(1) ), "");
    lego->SetFillColor(0);
    lego->Draw("same");
    
-   cans->SaveAs(dir+"/timingResolutionVsAmplitudeMAPD_channel.png");
-   cans->SaveAs(dir+"/timingResolutionVsAmplitudeMAPD_channel.pdf");  
+   cans->SaveAs(dir+"/timingResolutionVsEnergyMAPD_channel.png");
+   cans->SaveAs(dir+"/timingResolutionVsEnergyMAPD_channel.pdf");  
    
 
    return 0;  
