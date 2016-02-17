@@ -1,0 +1,19 @@
+<general>
+  <runs>4001</runs> 
+  <setup>MAPD</setup>
+  <nMaxAmplCuts>30</nMaxAmplCuts>
+  <stepAmplFibre>35</stepAmplFibre>
+  <stepAmplChannel>10</stepAmplChannel>
+  <rangeXLow>3</rangeXLow>
+  <rangeXUp>10</rangeXUp>
+  <channel2CutFibre>200</channel2CutFibre>
+  <channel1CutChannel>2000</channel1CutChannel>
+  <channel2CutChannel>140</channel2CutChannel>
+  <startCutFibre>0</startCutFibre>
+  <startCutChannel>720</startCutChannel>
+  <amplCut>400</amplCut>
+  <energies>150</energies>
+  <addTagFileName>1</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
+  <tagFileName>150GeV</tagFileName>
+</general>
+
