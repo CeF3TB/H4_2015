@@ -1,0 +1,17 @@
+<general>
+  <runs>3971,3990,4001,4026</runs> 
+  <setup>MAPD</setup>
+  <nMaxAmplCuts>30</nMaxAmplCuts>
+  <stepAmplFibre>35</stepAmplFibre>
+  <stepAmplChannel>30</stepAmplChannel>
+  <rangeXLow>3</rangeXLow>
+  <rangeXUp>10</rangeXUp>
+  <channel2CutFibre>200</channel2CutFibre>
+  <channel1CutChannel>2000</channel1CutChannel>
+  <channel2CutChannel>140</channel2CutChannel>
+  <startCutFibre>0</startCutFibre>
+  <startCutChannel>400</startCutChannel>
+  <amplCut>150</amplCut>
+  <energies>20,50,100,150,200</energies>
+</general>
+
