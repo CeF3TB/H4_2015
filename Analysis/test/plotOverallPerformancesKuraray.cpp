@@ -67,7 +67,13 @@ int main( int argc, char* argv[] ) {
   
   TH1F* reso_histo_channel_corr_Amplitude[theConfiguration_.nMaxAmplCuts];
 
-  TH1F* maxAmplHisto=new TH1F("maxAmplHisto","maxAmplHisto",1000,0,1000);
+  int isMAPDDiff=0;
+
+  if(theConfiguration_.setup=="MAPDDiff"){
+    MAPDDiff=1;
+  }
+
+  TH1F* maxAmplHisto=new TH1F("maxAmplHisto","maxAmplHisto",1000,0,1000+3000*isMAPDDiff);
 
   std::vector<TH1F*> reso_histo_channel_total;
 
