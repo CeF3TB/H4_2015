@@ -392,6 +392,16 @@ int main( int argc, char* argv[] ) {
 
    pave->Draw("same");
 
+
+   TLegend* lego = new TLegend(0.47, 0.8, 0.8, 0.92);
+   lego->SetTextSize(0.038);
+   //    lego->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
+   lego->AddEntry(  (TObject*)0 ,Form("C = %.0f #pm %.0f ps", f->GetParameter(0), f->GetParError(0) ), "");
+   //    lego->AddEntry(  (TObject*)0 ,Form("N = %.0f #pm %.0f", f->GetParameter(1), f->GetParError(1) ), "");
+   lego->SetFillColor(0);
+   lego->Draw("same");
+
+
    cans->SaveAs(dir+"/timingResolutionVsAmplitudeMAPD_channel.png");
    cans->SaveAs(dir+"/timingResolutionVsAmplitudeMAPD_channel.pdf");  
 
@@ -428,13 +438,13 @@ int main( int argc, char* argv[] ) {
    
    
    
-   TLegend* lego = new TLegend(0.47, 0.8, 0.8, 0.92);
-   lego->SetTextSize(0.038);
-   //    lego->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
-   lego->AddEntry(  (TObject*)0 ,Form("C = %.0f #pm %.0f ps", f2->GetParameter(0), f2->GetParError(0) ), "");
-   //    lego->AddEntry(  (TObject*)0 ,Form("N = %.0f #pm %.0f", f->GetParameter(1), f->GetParError(1) ), "");
-   lego->SetFillColor(0);
-   lego->Draw("same");
+   TLegend* lego2 = new TLegend(0.47, 0.8, 0.8, 0.92);
+   lego2->SetTextSize(0.038);
+   //    lego2->AddEntry(  (TObject*)0 ,"f(x) = p0 + p1/x", "");
+   lego2->AddEntry(  (TObject*)0 ,Form("C = %.0f #pm %.0f ps", f2->GetParameter(0), f2->GetParError(0) ), "");
+   //    lego2->AddEntry(  (TObject*)0 ,Form("N = %.0f #pm %.0f", f->GetParameter(1), f->GetParError(1) ), "");
+   lego2->SetFillColor(0);
+   lego2->Draw("same");
    
    cans->SaveAs(dir+"/timingResolutionVsEnergyMAPD_channel.png");
    cans->SaveAs(dir+"/timingResolutionVsEnergyMAPD_channel.pdf");  
