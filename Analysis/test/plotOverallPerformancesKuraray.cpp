@@ -70,7 +70,7 @@ int main( int argc, char* argv[] ) {
   int isMAPDDiff=0;
 
   if(theConfiguration_.setup=="MAPDDiff"){
-    MAPDDiff=1;
+    isMAPDDiff=1;
   }
 
   TH1F* maxAmplHisto=new TH1F("maxAmplHisto","maxAmplHisto",1000,0,1000+3000*isMAPDDiff);
@@ -150,7 +150,7 @@ int main( int argc, char* argv[] ) {
 	    reso_histo_channel_corr_Amplitude[i]->Fill(deltaTNoCorr);
 	    if(t.cef3_maxAmpl->at(2)>theConfiguration_.amplCut)	   {
 	      for(int j=0;j<energies.size();j++){
-		  if(t.beamEnergy==150 && t.cef3_maxAmpl->at(2)<theConfiguration_.channel2CutChannel)continue; //FIXME we use channel for 150 and fibre for 200 to not add variables
+		  if(t.beamEnergy==150 && t.cef3_maxAmpl->at(2)<theConfiguration_.channel2CutChannel)continue; //FIXME we use channel for 150 and fibre for 200 to not add variables. this cut is for hadron contamination
 		  if(t.beamEnergy==200 && t.cef3_maxAmpl->at(2)<theConfiguration_.channel2CutFibre)continue;
 		  if(t.beamEnergy==energies[j]) 
 		    reso_histo_channel_total[j]->Fill(deltaTNoCorr);
@@ -392,6 +392,8 @@ int main( int argc, char* argv[] ) {
 
    pave->Draw("same");
 
+   cans->SaveAs(dir+"/timingResolutionVsAmplitudeMAPD_channel.png");
+   cans->SaveAs(dir+"/timingResolutionVsAmplitudeMAPD_channel.pdf");  
 
    cans->Clear();
    float yup_2=1.1*(resVsEnergy_channel->GetY()[0]+resVsEnergy_channel->GetEY()[0]);

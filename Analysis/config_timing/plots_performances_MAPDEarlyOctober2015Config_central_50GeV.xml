@@ -12,7 +12,7 @@
   <startCutFibre>0</startCutFibre>
   <startCutChannel>400</startCutChannel>
   <amplCut>400</amplCut>
-  <energies>100</energies>
+  <energies>50</energies>
   <addTagFileName>1</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
   <tagFileName>50GeV</tagFileName>
 </general>
