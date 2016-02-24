@@ -38,7 +38,7 @@
 #include "interface/TopologicalSelectionHelper.h"
 
 plotOverallPerformances_Config_t readConfiguration(std::string configName);
-
+float correctTimeWalk(float ampl, TF1* fun);
 
 int main( int argc, char* argv[] ) {
 
@@ -86,9 +86,24 @@ int main( int argc, char* argv[] ) {
   float shift=10;
   bool isNino=false;
 
+  TFile* timeWalkFile;
   if(theConfiguration_.setup=="Nino"){
     shift=11.5;
     isNino=true;
+    std::string constDirName = "timeWalkFiles_";
+    constDirName+=theConfiguration_.setup;
+
+    if(theConfiguration_.addTagFileName){
+      constDirName+="_";
+      constDirName+=theConfiguration_.tagFileName;
+    } 
+
+    TString dir(constDirName);
+
+    std::string timeWalkName;
+    timeWalkName = dir+"/timeWalkFile_"+tag+".root";
+    timeWalkFile = TFile::Open(timeWalkName.c_str());
+
   }
 
 
@@ -762,3 +777,10 @@ plotOverallPerformances_Config_t readConfiguration(std::string configName){
 }
 
 
+float correctTimeWalk(float ampl, TF1* fun){
+  float corr=0;
+
+  corr=fun->Eval(ampl);
+
+  return corr;
+}
