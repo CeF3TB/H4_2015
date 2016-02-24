@@ -353,6 +353,9 @@ int main( int argc, char* argv[] ) {
    float mcp_max_amplitude;
    outTree->Branch( "mcp_max_amplitude", &mcp_max_amplitude, "mcp_max_amplitude/F");
 
+   int nino_triggered;
+   outTree->Branch( "nino_triggered", &nino_triggered, "nino_triggered/I");
+
    float nino_LEtime;
    outTree->Branch( "nino_LEtime", &nino_LEtime, "nino_LEtime/F");
 
@@ -852,6 +855,11 @@ int main( int argc, char* argv[] ) {
 	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,300,1,1,80,120,timeSampleUnit(inputTree->digi_frequency));//window without sync
 	  nino_LEtime=timeInfo.first*1.e9;
 	  nino_LEchi2=timeInfo.second;
+
+	  float timeThr = WaveformFit::GetTimeAboveThr(waveform.at(iChannel),600,80,120,timeSampleUnit(inputTree->digi_frequency));//check if there is a signal in nino (signal >650 adc)
+	  if(timeThr>0) nino_triggered=1;
+	  else nino_triggered=0;
+
 	  nino_maxAmpl=inputTree->digi_max_amplitude_bare_noise_sub->at(6);//FIXME move to config!
 	  if(nino_LEtime>0){
 	    //	    std::cout<<(int)(timeInfo.first/timeSampleUnit(inputTree->digi_frequency))-5<<std::endl; 
