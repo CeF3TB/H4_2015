@@ -107,6 +107,7 @@ public :
    Float_t         mcp_time_frac50;
    Float_t         mcp_time_at_thresh;
    Float_t         mcp_max_amplitude;
+   Float_t         nino_triggered;
    Float_t         nino_LEtime;
    Float_t         nino_LEchi2;
    Float_t         nino_maxAmpl;
@@ -196,6 +197,7 @@ public :
    TBranch        *b_mcp_time_at_thresh;   //!
    TBranch        *b_mcp_max_amplitude;   //!
    TBranch        *b_nino_LEtime;   //!
+   TBranch        *b_nino_triggered;   //!
    TBranch        *b_nino_LEchi2;   //!
    TBranch        *b_nino_maxAmpl;   //!
    TBranch        *b_nino_chInt;   //!
@@ -377,6 +379,7 @@ void RecoTree::Init(TTree *tree)
    fChain->SetBranchAddress("mcp_time_frac50", &mcp_time_frac50, &b_mcp_time_frac50);
    fChain->SetBranchAddress("mcp_time_at_thresh", &mcp_time_at_thresh, &b_mcp_time_at_thresh);
    fChain->SetBranchAddress("mcp_max_amplitude", &mcp_max_amplitude, &b_mcp_max_amplitude);
+   fChain->SetBranchAddress("nino_triggered", &nino_triggered, &b_nino_triggered);
    fChain->SetBranchAddress("nino_LEtime", &nino_LEtime, &b_nino_LEtime);
    fChain->SetBranchAddress("nino_LEchi2", &nino_LEchi2, &b_nino_LEchi2);
    fChain->SetBranchAddress("nino_maxAmpl", &nino_maxAmpl, &b_nino_maxAmpl);
