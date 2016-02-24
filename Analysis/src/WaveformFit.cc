@@ -369,6 +369,34 @@ namespace WaveformFit
   }
 
 
+  //-----------Get time signal crosses a thresh---------------------------------------------
+  float GetTimeAboveThr(Waveform* wave,float thr, int min, int max,float timeUnit){
+
+    float leThr=-1;
+    float leSample=-1;
+    float leTime=-100;
+    
+    if(thr != leThr || leSample != -1)
+      {
+        //---find first sample above thr
+        leThr = thr;
+	if(max>(*wave)._samples.size()) return -100;
+        for(int iSample=min; iSample<max; ++iSample)
+	  {
+	    //	    std::cout<<iSample<<" "<<(*wave)._samples[iSample]<<std::endl;
+            if((*wave)._samples[iSample] > leThr) 
+	      {
+                leSample = iSample;
+                break;
+	      }
+	  }
+	if(leSample<1) return -100;
+      }
+    return(leSample*timeUnit);
+	
+  }
+
+
   //----------Get the signal integral around the the max-------------------------------------
   std::pair<float,float> GetSignalIntegral(Waveform* wave,int thr, int min=-1)
   {
