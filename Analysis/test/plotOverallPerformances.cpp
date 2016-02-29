@@ -71,7 +71,9 @@ int main( int argc, char* argv[] ) {
   TH1F* reso_histo_channelPlusFibre_corr_Amplitude[theConfiguration_.nMaxAmplCuts];
 
   TH1F* reso_histo_fibre_total;//all events at different energies all together with reasonable cut on amplitude
+  TH1F* reso_histo_fibre_total_notCorr;//all events at different energies all together with reasonable cut on amplitude
   TH1F* reso_histo_channel_total;
+  TH1F* reso_histo_channel_total_notCorr;//all events at different energies all together with reasonable cut on amplitude
 
   TVectorD resValueAmplitude_fibre(theConfiguration_.nMaxAmplCuts);
   TVectorD resErrValueAmplitude_fibre(theConfiguration_.nMaxAmplCuts);
@@ -87,8 +89,11 @@ int main( int argc, char* argv[] ) {
   bool isNino=false;
 
   TFile* timeWalkFile;
+  TF1*   timeWalkCorr_channel;
+  TF1*   timeWalkCorr_fibre;
   if(theConfiguration_.setup=="Nino"){
     shift=11.5;
+    //shift=5;
     isNino=true;
     std::string constDirName = "timeWalkFiles_";
     constDirName+=theConfiguration_.setup;
@@ -103,7 +108,8 @@ int main( int argc, char* argv[] ) {
     std::string timeWalkName;
     timeWalkName = dir+"/timeWalkFile_"+tag+".root";
     timeWalkFile = TFile::Open(timeWalkName.c_str());
-
+    timeWalkCorr_channel = (TF1*)timeWalkFile->Get("fit_log_channel");
+    timeWalkCorr_fibre = (TF1*)timeWalkFile->Get("fit_log_fibre");
   }
 
 
@@ -114,9 +120,15 @@ int main( int argc, char* argv[] ) {
     reso_histo_channel_corr_Amplitude[i] = new TH1F("reso_histo_channel_corr_Amplitude_"+icut,"reso_histo_channel_corr_Amplitude_"+icut,200,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);
     reso_histo_channelPlusFibre_corr_Amplitude[i] = new TH1F("reso_histo_channelPlusFibre_corr_Amplitude_"+icut,"reso_histo_channelPlusFibre_corr_Amplitude_"+icut,200,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);
    }
-   
-   reso_histo_fibre_total = new TH1F("reso_histo_fibre_total","reso_histo_fibre_total",200,theConfiguration_.rangeXLow+shift,theConfiguration_.rangeXUp+shift);
-   reso_histo_channel_total = new TH1F("reso_histo_channel_total","reso_histo_channel_total",200,theConfiguration_.rangeXLow+shift,theConfiguration_.rangeXUp+shift);
+  
+      reso_histo_fibre_total_notCorr = new TH1F("reso_histo_fibre_total_notCorr","reso_histo_fibre_total_notCorr",200,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);
+   //   reso_histo_fibre_total = new TH1F("reso_histo_fibre_total","reso_histo_fibre_total",200,theConfiguration_.rangeXLow+shift,theConfiguration_.rangeXUp+shift);
+   reso_histo_fibre_total = new TH1F("reso_histo_fibre_total","reso_histo_fibre_total",200,-4,4);
+   //   reso_histo_fibre_total_notCorr = new TH1F("reso_histo_fibre_total_notCorr","reso_histo_fibre_total_notCorr",200,-4,4);
+   //   reso_histo_channel_total = new TH1F("reso_histo_channel_total","reso_histo_channel_total",200,theConfiguration_.rangeXLow+shift,theConfiguration_.rangeXUp+shift);
+   reso_histo_channel_total_notCorr = new TH1F("reso_histo_channel_total_notCorr","reso_histo_channel_total_notCorr",200,theConfiguration_.rangeXLow,theConfiguration_.rangeXUp);
+   reso_histo_channel_total = new TH1F("reso_histo_channel_total","reso_histo_channel_total",200,-4,4);
+   //   reso_histo_channel_total_notCorr = new TH1F("reso_histo_channel_total_notCorr","reso_histo_channel_total_notCorr",200,-4,4);
    
    
    std::vector<int> runs;
@@ -166,7 +178,7 @@ int main( int argc, char* argv[] ) {
 	bool filled_channel=false;
 	bool filled_channelPlusFibre=false;
 	if(t.cef3_maxAmpl->at(1)<theConfiguration_.startCutFibre && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutChannel)continue;
-	if(isNino && t.nino_maxAmpl<32)continue;
+	if(isNino && t.nino_maxAmpl<25)continue;
 
 	float deltaTNoCorr=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50;
 	if(theConfiguration_.setup=="Nino")deltaTNoCorr=t.nino_LEtime-t.mcp_time_frac50;
@@ -175,7 +187,21 @@ int main( int argc, char* argv[] ) {
 	  //	  std::cout<<t.cef3_maxAmpl->at(1)<<" "<<theConfiguration_.startCutFibre<<" "<<theConfiguration_.amplCut<<" "<<t.nino_maxAmpl<<std::endl;
 	  if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutFibre+i*theConfiguration_.stepAmplFibre && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutFibre+(i+1)*theConfiguration_.stepAmplFibre){
 	    reso_histo_fibre_corr_Amplitude[i]->Fill(deltaTNoCorr);
-	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.amplCut)reso_histo_fibre_total->Fill(deltaTNoCorr+shift);
+	    if(isNino){
+	      if(t.nino_triggered){
+		float corr=correctTimeWalk(t.nino_maxAmpl,timeWalkCorr_fibre);
+		//		float valueRef=correctTimeWalk(60,timeWalkCorr);
+		//		float valueRef=timeWalkCorr->GetParameter(0);
+		//		std::cout<<deltaTNoCorr<<" "<<corr<<" "<<deltaTNoCorr-corr<<std::endl;
+		//				reso_histo_fibre_total->Fill(deltaTNoCorr-(corr-valueRef)+shift);
+		//		std::cout<<deltaTNoCorr<<" "<<corr<<" "<<" "<<deltaTNoCorr-(corr-valueRef)<<std::endl;
+		reso_histo_fibre_total->Fill(deltaTNoCorr-corr);
+		reso_histo_fibre_total_notCorr->Fill(deltaTNoCorr);
+		//		reso_histo_fibre_total->Fill(deltaTNoCorr+shift);
+	      }
+	    }else{
+	      if(t.cef3_maxAmpl->at(1)>theConfiguration_.amplCut)reso_histo_channel_total->Fill(deltaTNoCorr+shift);
+	    }
 	    reso_histo_channelPlusFibre_corr_Amplitude[i]->Fill(deltaTNoCorr);
 	    break;
 	  }
@@ -189,7 +215,21 @@ int main( int argc, char* argv[] ) {
 
 	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.startCutChannel+i*theConfiguration_.stepAmplChannel && t.cef3_maxAmpl->at(1)<theConfiguration_.startCutChannel+(i+1)*theConfiguration_.stepAmplChannel){
 	    reso_histo_channel_corr_Amplitude[i]->Fill(deltaTNoCorr);
+	    if(isNino){
+	      if(t.nino_triggered){
+		float corr=correctTimeWalk(t.nino_maxAmpl,timeWalkCorr_channel);
+		//		std::cout<<deltaTNoCorr<<" "<<corr<<std::endl;
+		//		std::cout<<t.nino_maxAmpl<<" "<<deltaTNoCorr+shift<<" "<<(deltaTNoCorr+shift-corr)<<" "<<corr<<std::endl;
+		//		float valueRef=timeWalkCorr->GetParameter(0);
+		reso_histo_channel_total->Fill(deltaTNoCorr-corr);
+		reso_histo_channel_total_notCorr->Fill(deltaTNoCorr);
+
+
+	      }
+
+	    }else{
 	    if(t.cef3_maxAmpl->at(1)>theConfiguration_.amplCut)reso_histo_channel_total->Fill(deltaTNoCorr+shift);
+	    }
 	    filled_channel=true;
 	    if(filled_channelPlusFibre) break;
 	    }
@@ -659,6 +699,69 @@ int main( int argc, char* argv[] ) {
 
      }
 
+
+   if( isNino && reso_histo_fibre_total_notCorr->GetEntries()>=25){
+     TH1F* histo;
+     histo=reso_histo_fibre_total_notCorr;
+     double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
+     double sigma = histo->GetRMS();
+     
+     double fitmin;
+     double fitmax;
+  
+  
+     fitmin = peakpos-4*sigma;
+     fitmax = peakpos+4*sigma;
+  
+     RooRealVar x("x","deltaT", fitmin, fitmax);
+     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
+
+     RooRealVar meanr("meanr","Mean",peakpos,peakpos-3*sigma, peakpos+3*sigma);
+     RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
+     RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
+     RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
+     RooRealVar alphaR("alphaR","#alpha",5.08615e-02, 0., 1.);
+     int ndf;
+     
+     RooPlot* frame;
+
+     RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); ndf = 5;
+     fit_fct.fitTo(data);
+    
+     std::string ytitle = Form("Events");
+     frame = x.frame("Title");
+     frame->SetXTitle("time_{fibre}-time_{mcp} [ns]");
+     frame->SetYTitle(ytitle.c_str());
+     
+     data.plotOn(frame);  //this will show histogram data points on canvas 
+     fit_fct.plotOn(frame);//this will show fit overlay on canvas  
+
+     double rms,rmsErr;
+     rms = (widthL.getVal()+widthR.getVal())/2;
+     rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
+
+     TCanvas* cans = new TCanvas();
+     cans->cd();
+     frame->Draw();
+     TLegend* lego = new TLegend(0.57, 0.8, 0.89, 0.9);
+     lego->SetTextAlign(32); // align right
+     lego->SetTextSize(0.036);
+     lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.1f #pm %.1f ps", rms*1.e3, rmsErr*1.e3), "");
+     
+     lego->SetFillColor(0);
+     lego->Draw("same");
+     
+     TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+     pave->Draw("same");
+     
+
+     cans->SaveAs(dir+"/reso_histo_fibre_total_notCorr.png");
+     cans->SaveAs(dir+"/reso_histo_fibre_total_notCorr.pdf");
+
+     }
+
+
+
      //channel
      if(reso_histo_channel_total->GetEntries()>25){
        TH1F* histo;
@@ -676,7 +779,7 @@ int main( int argc, char* argv[] ) {
        RooRealVar x("x","deltaT", fitmin, fitmax);
        RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
 
-       RooRealVar meanr("meanr","Mean",peakpos,peakpos-3*sigma, peakpos+3*sigma);
+       RooRealVar meanr("meanr","Mean",peakpos+sigma,peakpos-3*sigma, peakpos+3*sigma);
        RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
        RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
        RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
@@ -719,6 +822,66 @@ int main( int argc, char* argv[] ) {
        cans->SaveAs(dir+"/reso_histo_channel_total.pdf");
      }
 
+
+   if( isNino && reso_histo_channel_total_notCorr->GetEntries()>=25){
+     TH1F* histo;
+     histo=reso_histo_channel_total_notCorr;
+     double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
+     double sigma = histo->GetRMS();
+     
+     double fitmin;
+     double fitmax;
+  
+  
+     fitmin = peakpos-4*sigma;
+     fitmax = peakpos+4*sigma;
+  
+     RooRealVar x("x","deltaT", fitmin, fitmax);
+     RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
+
+     RooRealVar meanr("meanr","Mean",peakpos,peakpos-3*sigma, peakpos+3*sigma);
+     RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
+     RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
+     RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
+     RooRealVar alphaR("alphaR","#alpha",5.08615e-02, 0., 1.);
+     int ndf;
+     
+     RooPlot* frame;
+
+     RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); ndf = 5;
+     fit_fct.fitTo(data);
+    
+     std::string ytitle = Form("Events");
+     frame = x.frame("Title");
+     frame->SetXTitle("time_{channel}-time_{mcp} [ns]");
+     frame->SetYTitle(ytitle.c_str());
+     
+     data.plotOn(frame);  //this will show histogram data points on canvas 
+     fit_fct.plotOn(frame);//this will show fit overlay on canvas  
+
+     double rms,rmsErr;
+     rms = (widthL.getVal()+widthR.getVal())/2;
+     rmsErr = 0.5*sqrt(widthL.getError()*widthL.getError()+widthR.getError()*widthR.getError());
+
+     TCanvas* cans = new TCanvas();
+     cans->cd();
+     frame->Draw();
+     TLegend* lego = new TLegend(0.57, 0.8, 0.89, 0.9);
+     lego->SetTextAlign(32); // align right
+     lego->SetTextSize(0.036);
+     lego->AddEntry(  (TObject*)0 ,Form("#sigma = %.1f #pm %.1f ps", rms*1.e3, rmsErr*1.e3), "");
+     
+     lego->SetFillColor(0);
+     lego->Draw("same");
+     
+     TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+     pave->Draw("same");
+     
+
+     cans->SaveAs(dir+"/reso_histo_channel_total_notCorr.png");
+     cans->SaveAs(dir+"/reso_histo_channel_total_notCorr.pdf");
+
+     }
 
 
    
