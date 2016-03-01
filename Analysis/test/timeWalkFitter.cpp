@@ -88,15 +88,15 @@ int main( int argc, char* argv[] ) {
   TFile* file = TFile::Open(haddFile.Data());
 
   shift=0;//FIXME
-  TProfile* deltaTvsAmpl=new TProfile("timeWalk","timeWalk",50,0,100,-10+shift,0+shift);
-  TH2F* deltaTvsAmplHisto=new TH2F("timeWalkHisto","timeWalkHisto",50,0,100,100,-10+shift,0+shift);
+  TProfile* deltaTvsAmpl=new TProfile("timeWalk","timeWalk",50,0,100,-10.,0.);
+  TH2F* deltaTvsAmplHisto=new TH2F("timeWalkHisto","timeWalkHisto",50,0,100,100,-10.,0.);
 
-  TH2F* deltaTvsAmplHisto_channel=new TH2F("timeWalkHisto_channel","timeWalkHisto_channel",50,0,100,100,-10+shift,0+shift);
-  TH2F* deltaTvsAmplHisto_fibre=new TH2F("timeWalkHisto_fibre","timeWalkHisto_fibre",50,0,100,100,-10+shift,0+shift);
+  TH2F* deltaTvsAmplHisto_channel=new TH2F("timeWalkHisto_channel","timeWalkHisto_channel",50,0,100,100,-10.,0.);
+  TH2F* deltaTvsAmplHisto_fibre=new TH2F("timeWalkHisto_fibre","timeWalkHisto_fibre",50,0,100,100,-10.,0.);
 
 
-  TProfile* deltaTvsAmpl_channel=new TProfile("timeWalk_channel","timeWalk_channel",50,0,100,-10+shift,0+shift);
-  TProfile* deltaTvsAmpl_fibre=new TProfile("timeWalk_fibre","timeWalk_fibre",50,0,100,-10+shift,0+shift);
+  TProfile* deltaTvsAmpl_channel=new TProfile("timeWalk_channel","timeWalk_channel",50,0,100,-10.,0.);
+  TProfile* deltaTvsAmpl_fibre=new TProfile("timeWalk_fibre","timeWalk_fibre",50,0,100,-10.,0.);
 
 
   std::vector<TH1F*> deltaTBinAmpl_channel;
@@ -111,8 +111,8 @@ int main( int argc, char* argv[] ) {
     TString icut;
     icut.Form("%d",i); 
     if(deltaTvsAmplHisto->GetXaxis()->GetBinLowEdge(i)>amplCut){
-      deltaTBinAmpl_channel.push_back(new TH1F("deltaTBinAmpl_channel"+icut,"deltaTBinAmpl_channel"+icut,200,-10,0));
-      deltaTBinAmpl_fibre.push_back(new TH1F("deltaTBinAmpl_fibre"+icut,"deltaTBinAmpl_fibre"+icut,200,-10,0));
+      deltaTBinAmpl_channel.push_back(new TH1F("deltaTBinAmpl_channel"+icut,"deltaTBinAmpl_channel"+icut,200,-10.,0.));
+      deltaTBinAmpl_fibre.push_back(new TH1F("deltaTBinAmpl_fibre"+icut,"deltaTBinAmpl_fibre"+icut,200,-10.,0.));
     }else{
       shiftBin++;
     }
@@ -204,6 +204,8 @@ int main( int argc, char* argv[] ) {
    TVectorD ampl_fibre(deltaTBinAmpl_fibre.size());
    TVectorD amplErr_fibre(deltaTBinAmpl_fibre.size());
 
+   int dimCounter_channel=0;
+   int dimCounter_fibre=0;
 
    for(int i=0;i<deltaTBinAmpl_channel.size();++i) {
      
@@ -212,12 +214,16 @@ int main( int argc, char* argv[] ) {
      TString icut;
      icut.Form("%d",i); 
      //channel
+
      if(deltaTBinAmpl_channel[i]->GetEntries()>25){     
+       dimCounter_channel++;
        if(i==0){
 	 ampl_channel[i]=amplCut+deltaTvsAmplHisto->GetXaxis()->GetBinWidth(0)/2.;
        }else{
 	 ampl_channel[i]=ampl_channel[i-1]+deltaTvsAmplHisto->GetXaxis()->GetBinWidth(0);
        }
+
+       std::cout<<i<<" "<<ampl_channel[i]<<" kkkkkkkkkkkkkkkkkkkkkkkkk"<<std::endl;
        
        amplErr_channel[i]=0;
        
@@ -228,13 +234,16 @@ int main( int argc, char* argv[] ) {
        deltaTBinAmpl_channel[i]->Draw("");
        mean_channel[i]=f_fit.GetParameter(1);
        sigma_channel[i]=f_fit.GetParError(1);
-       
+      
+
+ 
        c1.SaveAs(dir+"/deltaTBinAmpl_channel"+icut+".png");
        c1.SaveAs(dir+"/deltaTBinAmpl_channel"+icut+".pdf");
      }
 
      //fibre
      if(deltaTBinAmpl_fibre[i]->GetEntries()>25){     
+       dimCounter_fibre++;
        if(i==0){
 	 ampl_fibre[i]=amplCut+deltaTvsAmplHisto->GetXaxis()->GetBinWidth(0)/2.;
        }else{
@@ -258,15 +267,28 @@ int main( int argc, char* argv[] ) {
    }
    
 
+   ampl_channel.ResizeTo(dimCounter_channel);
+   mean_channel.ResizeTo(dimCounter_channel);
+   amplErr_channel.ResizeTo(dimCounter_channel);
+   sigma_channel.ResizeTo(dimCounter_channel);
+
+   ampl_fibre.ResizeTo(dimCounter_fibre);
+   mean_fibre.ResizeTo(dimCounter_fibre);
+   amplErr_fibre.ResizeTo(dimCounter_fibre);
+   sigma_fibre.ResizeTo(dimCounter_fibre);
+
+
    TGraphErrors* graph_fit_channel=new TGraphErrors(ampl_channel,mean_channel,amplErr_channel,sigma_channel);
    graph_fit_channel->SetMarkerColor(kGreen+2);
+   //   graph_fit_channel->SetMarkerSize(2);
+   graph_fit_channel->SetMarkerStyle(34);
    graph_fit_channel->SetLineColor(kGreen+2);
 
 
    TGraphErrors* graph_fit_fibre=new TGraphErrors(ampl_fibre,mean_fibre,amplErr_fibre,sigma_fibre);
    graph_fit_fibre->SetMarkerColor(kViolet);
    graph_fit_fibre->SetLineColor(kViolet);
-
+   graph_fit_fibre->SetMarkerStyle(34);
 
    TF1 f_channel("fit_log_channel","[0]*log([1]*x)",0.,100.);
    //   TF1 f("fit_log","[0]+[1]/x",14,100);

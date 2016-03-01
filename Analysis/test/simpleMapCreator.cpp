@@ -214,7 +214,7 @@ int main( int argc, char* argv[] ) {
       if(TopologicalSelectionHelper::passesFibreTopologicalSelection(t,isNino) &&  t.cef3_maxAmpl->at(2) < theConfiguration_.channel2CutFibre*t.beamEnergy/lowerBeamEnergy){ 
 	if(deltaTNoCorr>theConfiguration_.rangeXLow && deltaTNoCorr<theConfiguration_.rangeXUp && ampl>0 && ampl<4000){
 	  timeDiffVsAmpl_fibre->Fill(ampl,deltaTNoCorr+shift);
-	  if(isNino && t.nino_maxAmpl<32)continue;
+	  if(isNino && t.nino_maxAmpl<25)continue;
 	  amplitude_map_sel_fibre->Fill(X,Y,ampl);
 	  amplitude_map_fibre2_sel_fibre_ampl_cut->Fill(X,Y,t.cef3_maxAmpl->at(2));
 	  timing_map_sel_fibre->Fill(X,Y,deltaTNoCorr+shift);
@@ -240,7 +240,7 @@ int main( int argc, char* argv[] ) {
 	      timeDiffVsTimeMcp->Fill(t.mcp_time_frac50,deltaTNoCorr+shift);
 	      timeMaxMinusFifty->Fill(t.cef3_maxAmpl_time->at(1)-t.cef3_time_at_frac50->at(1));
 	      timeDiffVsTimeMaxMinusFifty->Fill(t.cef3_maxAmpl_time->at(1)-t.cef3_time_at_frac50->at(1),deltaTNoCorr+shift);
-	      if(isNino && t.nino_maxAmpl<32)continue;
+	      if(isNino && t.nino_maxAmpl<25)continue;
 	      amplitude_map_sel_channel->Fill(X,Y,ampl);  
 	      timing_map_sel_channel->Fill(X,Y,deltaTNoCorr+shift);
 	      sel_channel_norm->Fill(X,Y);
@@ -282,7 +282,7 @@ int main( int argc, char* argv[] ) {
    amplitude_map_sel_fibre->Divide(sel_fibre_norm);
    amplitude_map_sel_fibre->GetYaxis()->SetTitle("Y [mm]");
    amplitude_map_sel_fibre->GetXaxis()->SetTitle("X [mm]");
-   if(isNino) amplitude_map_sel_fibre->SetAxisRange(30,60,"Z");
+   if(isNino) amplitude_map_sel_fibre->SetAxisRange(25,45,"Z");
 
    amplitude_map_fibre2_sel_fibre_ampl_cut->Divide(sel_fibre_norm);
    amplitude_map_fibre2_sel_fibre_ampl_cut->GetYaxis()->SetTitle("Y [mm]");
@@ -296,13 +296,13 @@ int main( int argc, char* argv[] ) {
    amplitude_map_sel_channel->Divide(sel_channel_norm);
    amplitude_map_sel_channel->GetYaxis()->SetTitle("Y [mm]");
    amplitude_map_sel_channel->GetXaxis()->SetTitle("X [mm]");
-   if(isNino) amplitude_map_sel_channel->SetAxisRange(30,60,"Z");
+   if(isNino) amplitude_map_sel_channel->SetAxisRange(25,45,"Z");
 
    amplitude_map_sel_channel_ampl_cut->Divide(sel_channel_ampl_cut_norm);
    amplitude_map_sel_channel_ampl_cut->GetYaxis()->SetTitle("Y [mm]");
    amplitude_map_sel_channel_ampl_cut->GetXaxis()->SetTitle("X [mm]");
    if(!isNino)   amplitude_map_sel_channel_ampl_cut->SetAxisRange(100,250,"Z");
-   else amplitude_map_sel_channel_ampl_cut->SetAxisRange(30,60,"Z");
+   else amplitude_map_sel_channel_ampl_cut->SetAxisRange(25,45,"Z");
 
    timing_map_sel_channel->Divide(sel_channel_norm);
    timing_map_sel_channel->GetYaxis()->SetTitle("Y [mm]");
