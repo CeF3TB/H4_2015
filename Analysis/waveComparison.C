@@ -47,23 +47,33 @@
   histo_200->Draw("lsame");
   c1->SaveAs("wave_zoom.pdf");
 
+  c1->Clear();
   c1->cd();
   TPad *pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
-  pad1->SetBottomMargin(0); // Upper and lower plot are joined
+  pad1->SetBottomMargin(0.); // Upper and lower plot are joined
   pad1->SetGridx();         // Vertical grid
   pad1->Draw();             // Draw the upper pad: pad1
   pad1->cd();  
 
   histo_50->GetXaxis()->SetRangeUser(20,200);
+  histo_50->GetYaxis()->SetRangeUser(0.01,1.1);
   histo_50->Draw("l");
   histo_100->Draw("lsame");
 
+
+
+  //histo_50->GetYaxis()->SetLabelSize(0.);
+  //  TGaxis *axis = new TGaxis( -5, 20, -5, 220, 20,220,510,"");
+  //  TGaxis *axis = new TGaxis( 0, 400, 0, 1.1, 0,1.0,510,"");
+  //axis->SetLabelFont(43); // Absolute font size in pixel (precision 3)
+  //axis->SetLabelSize(15);
+  //axis->Draw();
 
   // lower plot will be in pad
   c1->cd();          // Go back to the main canvas before defining pad2
   TPad *pad2 = new TPad("pad2", "pad2", 0, 0.05, 1, 0.3);
   pad2->SetTopMargin(0);
-  pad2->SetBottomMargin(0.2);
+  pad2->SetBottomMargin(0.);
   pad2->SetGridx(); // vertical grid
   pad2->Draw();
   pad2->cd();
@@ -71,13 +81,155 @@
   TH1F *h3 = (TH1F*)histo_50->Clone("h3");
   h3->SetLineColor(kBlack);
   h3->SetMinimum(0.8);  // Define Y ..
-  h3->SetMaximum(1.35); // .. range
+  h3->SetMaximum(1.13); // .. range
   h3->Divide(histo_100);
 
+  h3->GetXaxis()->SetTitle("time [ns]");
   h3->SetMarkerStyle(21);
   h3->Draw("p");    
 
-  c1->SaveAs("wave_ratio.pdf");
+  gPad->RedrawAxis();
+
+  c1->SaveAs("wave_ratio50_100.pdf");
+
+  //50-200 ratio
+  c1->Clear();
+  c1->cd();
+  TPad *pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
+  pad1->SetBottomMargin(0.); // Upper and lower plot are joined
+  pad1->SetGridx();         // Vertical grid
+  pad1->Draw();             // Draw the upper pad: pad1
+  pad1->cd();  
+
+  histo_50->GetXaxis()->SetRangeUser(20,200);
+  histo_50->GetYaxis()->SetRangeUser(0.01,1.1);
+  histo_50->Draw("l");
+  histo_200->Draw("lsame");
+
+
+
+  //histo_50->GetYaxis()->SetLabelSize(0.);
+  //  TGaxis *axis = new TGaxis( -5, 20, -5, 220, 20,220,510,"");
+  //  TGaxis *axis = new TGaxis( 0, 400, 0, 1.1, 0,1.0,510,"");
+  //axis->SetLabelFont(43); // Absolute font size in pixel (precision 3)
+  //axis->SetLabelSize(15);
+  //axis->Draw();
+
+  // lower plot will be in pad
+  c1->cd();          // Go back to the main canvas before defining pad2
+  TPad *pad2 = new TPad("pad2", "pad2", 0, 0.05, 1, 0.3);
+  pad2->SetTopMargin(0);
+  pad2->SetBottomMargin(0.);
+  pad2->SetGridx(); // vertical grid
+  pad2->Draw();
+  pad2->cd();
+
+  TH1F *h3 = (TH1F*)histo_50->Clone("h3");
+  h3->SetLineColor(kBlack);
+  h3->SetMinimum(0.8);  // Define Y ..
+  h3->SetMaximum(1.13); // .. range
+  h3->Divide(histo_200);
+
+  h3->GetXaxis()->SetTitle("time [ns]");
+  h3->SetMarkerStyle(21);
+  h3->Draw("p");    
+
+  gPad->RedrawAxis();
+
+  c1->SaveAs("wave_ratio50_200.pdf");
+
+
+  //100-200 ratio
+  c1->Clear();
+  c1->cd();
+  TPad *pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
+  pad1->SetBottomMargin(0.); // Upper and lower plot are joined
+  pad1->SetGridx();         // Vertical grid
+  pad1->Draw();             // Draw the upper pad: pad1
+  pad1->cd();  
+
+  histo_100->GetXaxis()->SetRangeUser(20,200);
+  histo_100->GetYaxis()->SetRangeUser(0.01,1.1);
+  histo_100->Draw("l");
+  histo_200->Draw("lsame");
+
+
+
+  //histo_100->GetYaxis()->SetLabelSize(0.);
+  //  TGaxis *axis = new TGaxis( -5, 20, -5, 220, 20,220,510,"");
+  //  TGaxis *axis = new TGaxis( 0, 400, 0, 1.1, 0,1.0,510,"");
+  //axis->SetLabelFont(43); // Absolute font size in pixel (precision 3)
+  //axis->SetLabelSize(15);
+  //axis->Draw();
+
+  // lower plot will be in pad
+  c1->cd();          // Go back to the main canvas before defining pad2
+  TPad *pad2 = new TPad("pad2", "pad2", 0, 0.05, 1, 0.3);
+  pad2->SetTopMargin(0);
+  pad2->SetBottomMargin(0.);
+  pad2->SetGridx(); // vertical grid
+  pad2->Draw();
+  pad2->cd();
+
+  TH1F *h3 = (TH1F*)histo_100->Clone("h3");
+  h3->SetLineColor(kBlack);
+  h3->SetMinimum(0.8);  // Define Y ..
+  h3->SetMaximum(1.13); // .. range
+  h3->Divide(histo_200);
+
+  h3->GetXaxis()->SetTitle("time [ns]");
+  h3->SetMarkerStyle(21);
+  h3->Draw("p");    
+
+  gPad->RedrawAxis();
+
+  c1->SaveAs("wave_ratio100_200.pdf");
+
+  //100-150 ratio
+  c1->Clear();
+  c1->cd();
+  TPad *pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
+  pad1->SetBottomMargin(0.); // Upper and lower plot are joined
+  pad1->SetGridx();         // Vertical grid
+  pad1->Draw();             // Draw the upper pad: pad1
+  pad1->cd();  
+
+  histo_100->GetXaxis()->SetRangeUser(20,200);
+  histo_100->GetYaxis()->SetRangeUser(0.01,1.1);
+  histo_100->Draw("l");
+  histo_150->Draw("lsame");
+
+
+
+  //histo_100->GetYaxis()->SetLabelSize(0.);
+  //  TGaxis *axis = new TGaxis( -5, 20, -5, 220, 20,220,510,"");
+  //  TGaxis *axis = new TGaxis( 0, 400, 0, 1.1, 0,1.0,510,"");
+  //axis->SetLabelFont(43); // Absolute font size in pixel (precision 3)
+  //axis->SetLabelSize(15);
+  //axis->Draw();
+
+  // lower plot will be in pad
+  c1->cd();          // Go back to the main canvas before defining pad2
+  TPad *pad2 = new TPad("pad2", "pad2", 0, 0.05, 1, 0.3);
+  pad2->SetTopMargin(0);
+  pad2->SetBottomMargin(0.);
+  pad2->SetGridx(); // vertical grid
+  pad2->Draw();
+  pad2->cd();
+
+  TH1F *h3 = (TH1F*)histo_100->Clone("h3");
+  h3->SetLineColor(kBlack);
+  h3->SetMinimum(0.8);  // Define Y ..
+  h3->SetMaximum(1.13); // .. range
+  h3->Divide(histo_150);
+
+  h3->GetXaxis()->SetTitle("time [ns]");
+  h3->SetMarkerStyle(21);
+  h3->Draw("p");    
+
+  gPad->RedrawAxis();
+
+  c1->SaveAs("wave_ratio100_150.pdf");
 
 
 }
