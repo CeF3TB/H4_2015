@@ -312,7 +312,7 @@ int main( int argc, char* argv[] ) {
    //   deltaTvsAmpl->Draw("same");
    graph_fit_fibre->Draw("sameep");
    c1.SaveAs(dir+"/deltaTvsAmpl_fibre.png");
-   c1.SaveAs(dir+"/deltaTvsAmpl_channel.pdf");
+   c1.SaveAs(dir+"/deltaTvsAmpl_fibre.pdf");
 
 
    f_channel.Write();
