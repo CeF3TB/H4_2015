@@ -22,8 +22,8 @@
   <pedSigmaY>1.51,1.67</pedSigmaY>
   <pedSigmaX>2.04,1.83</pedSigmaX>
   <addTagFileName>1</addTagFileName> <!-- add a string to outfileName, useful for optimizations and tests -->
-  <tagFileName>dummy</tagFileName>
+  <tagFileName>waveComp</tagFileName>
   <fillWFtree>1</fillWFtree>
-  <prescaleWFtree>8</prescaleWFtree>
-  <limitNEntries>1</limitNEntries>
+  <prescaleWFtree>1</prescaleWFtree>
+  <limitNEntries>25000</limitNEntries>
 </general>
