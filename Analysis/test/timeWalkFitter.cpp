@@ -20,6 +20,20 @@
 #include "TGraphErrors.h"
 #include "TProfile.h"
 
+#include "RooDataHist.h"
+#include "RooRealVar.h"
+#include "RooDataSet.h"
+#include "RooGaussian.h"
+#include "RooLandau.h"
+#include "RooFFTConvPdf.h"
+#include "RooPlot.h"
+#include "RooCBShape.h"
+#include "RooCruijff.h"
+#include "RooGenericPdf.h"
+#include "RooChi2Var.h"
+#include "RooMinuit.h"
+
+
 #include "interface/Configurator.h"
 #include "plotOverallPerformancesConfigurator.h"
 #include "interface/TopologicalSelectionHelper.h"
@@ -102,7 +116,7 @@ int main( int argc, char* argv[] ) {
   std::vector<TH1F*> deltaTBinAmpl_channel;
   std::vector<TH1F*> deltaTBinAmpl_fibre;
 
-  float amplCut=10;
+  float amplCut=20;
   int shiftBin=0;
 
 
@@ -147,6 +161,8 @@ int main( int argc, char* argv[] ) {
       float deltaTNoCorr=t.cef3_time_at_frac50->at(1)-t.mcp_time_frac50;
       if(theConfiguration_.setup=="Nino")deltaTNoCorr=t.nino_LEtime-t.mcp_time_frac50;
 
+      bool notFilled=true;
+
       if(t.nino_triggered && t.cef3_maxAmpl->at(1)>700){
 	deltaTvsAmpl->Fill(t.nino_maxAmpl,deltaTNoCorr+shift);
 	deltaTvsAmplHisto->Fill(t.nino_maxAmpl,deltaTNoCorr+shift);
@@ -154,14 +170,20 @@ int main( int argc, char* argv[] ) {
 	for(int i=1;i<deltaTBinAmpl_channel.size();++i) {//i=0 is underflow
 	   
 	      if(TopologicalSelectionHelper::passesChannelTopologicalSelection(t,isNino)){
-		deltaTvsAmplHisto_channel->Fill(t.nino_maxAmpl,deltaTNoCorr+shift);
+		if(notFilled){
+		  deltaTvsAmplHisto_channel->Fill(t.nino_maxAmpl,deltaTNoCorr+shift);
+		  notFilled=false;
+		}
 		if(t.nino_maxAmpl<amplCut)break;
 		if(t.nino_maxAmpl>deltaTvsAmplHisto->GetXaxis()->GetBinLowEdge(i) && t.nino_maxAmpl<deltaTvsAmplHisto->GetXaxis()->GetBinUpEdge(i)) {
 		  deltaTBinAmpl_channel[i-shiftBin]->Fill(deltaTNoCorr);
 		  break;
 		}
 	      }else if(TopologicalSelectionHelper::passesFibreTopologicalSelection(t,isNino)){
-		deltaTvsAmplHisto_fibre->Fill(t.nino_maxAmpl,deltaTNoCorr+shift);
+		if(notFilled){
+		  deltaTvsAmplHisto_fibre->Fill(t.nino_maxAmpl,deltaTNoCorr+shift);
+		  notFilled=false;
+		}
 		if(t.nino_maxAmpl<amplCut)break;
 		if(t.nino_maxAmpl>deltaTvsAmplHisto->GetXaxis()->GetBinLowEdge(i) && t.nino_maxAmpl<deltaTvsAmplHisto->GetXaxis()->GetBinUpEdge(i)) {
 		  deltaTBinAmpl_fibre[i-shiftBin]->Fill(deltaTNoCorr);
@@ -229,12 +251,54 @@ int main( int argc, char* argv[] ) {
        
        TCanvas c1;
        c1.cd();
-       TF1 f_fit("f_fit","gaus",deltaTBinAmpl_channel[i]->GetMean()-deltaTBinAmpl_channel[i]->GetRMS()*2,deltaTBinAmpl_channel[i]->GetMean()+deltaTBinAmpl_channel[i]->GetRMS()/2.);
-       deltaTBinAmpl_channel[i]->Fit("f_fit","R","",deltaTBinAmpl_channel[i]->GetMean()-deltaTBinAmpl_channel[i]->GetRMS()*2,deltaTBinAmpl_channel[i]->GetMean()+deltaTBinAmpl_channel[i]->GetRMS()/2.);
-       deltaTBinAmpl_channel[i]->Draw("");
-       mean_channel[i]=f_fit.GetParameter(1);
-       sigma_channel[i]=f_fit.GetParError(1);
-      
+       
+       TH1F* histo;
+       histo=deltaTBinAmpl_channel[i];
+       double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
+       double sigma = histo->GetRMS();
+
+       double fitmin;
+       double fitmax;
+  
+  
+       fitmin = peakpos-4*sigma;
+       fitmax = peakpos+4*sigma;
+  
+       RooRealVar x("x","deltaT", fitmin, fitmax);
+       RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
+
+       RooRealVar meanr("meanr","Mean",peakpos+2*sigma,peakpos-3*sigma, peakpos+3*sigma);
+       RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
+       RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
+       RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
+       RooRealVar alphaR("alphaR","#alpha",5.08615e-02, 0., 1.);
+       int ndf;
+     
+       RooPlot* frame;
+
+       RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); ndf = 5;
+       fit_fct.fitTo(data);
+    
+       std::string ytitle = Form("Events");
+       frame = x.frame("Title");
+       frame->SetXTitle("time_{fibre}-time_{mcp} [ns]");
+       frame->SetYTitle(ytitle.c_str());
+     
+       data.plotOn(frame);  //this will show histogram data points on canvas 
+       fit_fct.plotOn(frame);//this will show fit overlay on canvas  
+
+       mean_channel[i]=meanr.getVal();
+       sigma_channel[i]=meanr.getError();
+    
+
+       frame->Draw();
+       TLegend* lego = new TLegend(0.57, 0.8, 0.89, 0.9);;
+       lego->SetTextSize(0.036);
+       lego->SetTextAlign(32); // align right
+
+       TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+       pave->Draw("same");
+
 
  
        c1.SaveAs(dir+"/deltaTBinAmpl_channel"+icut+".png");
@@ -254,11 +318,55 @@ int main( int argc, char* argv[] ) {
 
        TCanvas c1;
        c1.cd();
-       TF1 f_fit_fibre("f_fit_fibre","gaus",deltaTBinAmpl_fibre[i]->GetMean()-deltaTBinAmpl_fibre[i]->GetRMS()*2,deltaTBinAmpl_fibre[i]->GetMean()+deltaTBinAmpl_fibre[i]->GetRMS()/2.);
-       deltaTBinAmpl_fibre[i]->Fit("f_fit_fibre","R","",deltaTBinAmpl_fibre[i]->GetMean()-deltaTBinAmpl_fibre[i]->GetRMS()*2,deltaTBinAmpl_fibre[i]->GetMean()+deltaTBinAmpl_fibre[i]->GetRMS()/2.);
-       deltaTBinAmpl_fibre[i]->Draw("");
-       mean_fibre[i]=f_fit_fibre.GetParameter(1);
-       sigma_fibre[i]=f_fit_fibre.GetParError(1);
+       
+       TH1F* histo;
+       histo=deltaTBinAmpl_fibre[i];
+       double peakpos = histo->GetBinCenter(histo->GetMaximumBin());
+       double sigma = histo->GetRMS();
+
+       double fitmin;
+       double fitmax;
+  
+  
+       fitmin = peakpos-4*sigma;
+       fitmax = peakpos+4*sigma;
+  
+       RooRealVar x("x","deltaT", fitmin, fitmax);
+       RooDataHist data("data","dataset with x",x,RooFit::Import(*histo) );
+
+       RooRealVar meanr("meanr","Mean",peakpos+2*sigma,peakpos-3*sigma, peakpos+3*sigma);
+       RooRealVar widthL("widthL","#sigmaL",sigma , 0, 5*sigma);
+       RooRealVar widthR("widthR","#sigmaR",sigma , 0, 5*sigma);
+       RooRealVar alphaL("alphaL","#alpha",5.08615e-02 , 0., 1.);
+       RooRealVar alphaR("alphaR","#alpha",5.08615e-02, 0., 1.);
+       int ndf;
+     
+       RooPlot* frame;
+
+       RooCruijff fit_fct("fit_fct","fit_fct",x,meanr,widthL,widthR,alphaL,alphaR); ndf = 5;
+       fit_fct.fitTo(data);
+    
+       std::string ytitle = Form("Events");
+       frame = x.frame("Title");
+       frame->SetXTitle("time_{fibre}-time_{mcp} [ns]");
+       frame->SetYTitle(ytitle.c_str());
+     
+       data.plotOn(frame);  //this will show histogram data points on canvas 
+       fit_fct.plotOn(frame);//this will show fit overlay on canvas  
+
+       mean_fibre[i]=meanr.getVal();
+       sigma_fibre[i]=meanr.getError();
+    
+
+       frame->Draw();
+       TLegend* lego = new TLegend(0.57, 0.8, 0.89, 0.9);;
+       lego->SetTextSize(0.036);
+       lego->SetTextAlign(32); // align right
+
+       TPaveText* pave = DrawTools::getLabelTop_expOnXaxis("Electron Beam");
+       pave->Draw("same");
+
+
 
        c1.SaveAs(dir+"/deltaTBinAmpl_fibre"+icut+".png");
        c1.SaveAs(dir+"/deltaTBinAmpl_fibre"+icut+".pdf");
@@ -296,16 +404,18 @@ int main( int argc, char* argv[] ) {
    f_channel.SetLineColor(kGreen+2);
    //   deltaTvsAmpl->Fit("fit_log","R","",14,70);
    //   deltaTvsAmpl->Fit("fit_log","R","",20,100);
-   graph_fit_channel->Fit("fit_log_channel","R","",14,60);
+   graph_fit_channel->Fit("fit_log_channel","R","",20,60);
 
 
    TF1 f_fibre("fit_log_fibre","[0]*log([1]*x)",0.,100.);
    //   TF1 f("fit_log","[0]+[1]/x",14,100);
-   f_fibre.SetParameters(-1.,20.);
+      f_fibre.SetParameters(-4.98330e-01 ,4.06173e+04);
+   //   f_fibre.FixParameter(0,-4.98330e-01);
+   //   f_fibre.FixParameter(1, 4.06173e+04);
    f_fibre.SetLineColor(kViolet);  
    //   deltaTvsAmpl->Fit("fit_log","R","",14,70);
    //   deltaTvsAmpl->Fit("fit_log","R","",20,100);
-   graph_fit_fibre->Fit("fit_log_fibre","R","",14,60);
+   graph_fit_fibre->Fit("fit_log_fibre","R","",20,50);
 
 
    gStyle->SetPadRightMargin(0.17);//for the palette
