@@ -24,6 +24,11 @@
     histo_100->SetBinContent(wave_100->GetX()[i]*1.e9,wave_100->GetY()[i]/max_100);
     histo_150->SetBinContent(wave_150->GetX()[i]*1.e9,wave_150->GetY()[i]/max_150);
     histo_200->SetBinContent(wave_200->GetX()[i]*1.e9,wave_200->GetY()[i]/max_200);
+
+    histo_50->GetXaxis()->SetTitle("time [ns]");
+    histo_100->GetXaxis()->SetTitle("time [ns]");
+    histo_150->GetXaxis()->SetTitle("time [ns]");
+    histo_200->GetXaxis()->SetTitle("time [ns]");
   }
 
   histo_100->SetLineColor(kBlue);
@@ -73,7 +78,7 @@
   c1->cd();          // Go back to the main canvas before defining pad2
   TPad *pad2 = new TPad("pad2", "pad2", 0, 0.05, 1, 0.3);
   pad2->SetTopMargin(0);
-  pad2->SetBottomMargin(0.);
+  //  pad2->SetBottomMargin(0.);
   pad2->SetGridx(); // vertical grid
   pad2->Draw();
   pad2->cd();
@@ -119,7 +124,7 @@
   c1->cd();          // Go back to the main canvas before defining pad2
   TPad *pad2 = new TPad("pad2", "pad2", 0, 0.05, 1, 0.3);
   pad2->SetTopMargin(0);
-  pad2->SetBottomMargin(0.);
+  //  pad2->SetBottomMargin(0.);
   pad2->SetGridx(); // vertical grid
   pad2->Draw();
   pad2->cd();
@@ -166,7 +171,7 @@
   c1->cd();          // Go back to the main canvas before defining pad2
   TPad *pad2 = new TPad("pad2", "pad2", 0, 0.05, 1, 0.3);
   pad2->SetTopMargin(0);
-  pad2->SetBottomMargin(0.);
+  //  pad2->SetBottomMargin(0.);
   pad2->SetGridx(); // vertical grid
   pad2->Draw();
   pad2->cd();
@@ -212,7 +217,7 @@
   c1->cd();          // Go back to the main canvas before defining pad2
   TPad *pad2 = new TPad("pad2", "pad2", 0, 0.05, 1, 0.3);
   pad2->SetTopMargin(0);
-  pad2->SetBottomMargin(0.);
+  //  pad2->SetBottomMargin(0.);
   pad2->SetGridx(); // vertical grid
   pad2->Draw();
   pad2->cd();
