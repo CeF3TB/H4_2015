@@ -23,6 +23,7 @@ void CeF3InputTree::Init(){
    digi_max_amplitude = 0;
    digi_pedestal = 0;
    digi_pedestal_rms = 0;
+   digi_pedestal_bare_noise_sub_rms = 0;
    digi_time_at_frac30 = 0;
    digi_time_at_frac50_bare_noise_sub = 0;
    digi_time_at_1000_bare_noise_sub = 0;
@@ -71,6 +72,7 @@ void CeF3InputTree::SetBranches(){
    fChain->SetBranchAddress("digi_max_amplitude", &digi_max_amplitude, &b_digi_max_amplitude);
    fChain->SetBranchAddress("digi_pedestal", &digi_pedestal, &b_digi_pedestal);
    fChain->SetBranchAddress("digi_pedestal_rms", &digi_pedestal_rms, &b_digi_pedestal_rms);
+   fChain->SetBranchAddress("digi_pedestal_bare_noise_sub_rms", &digi_pedestal_bare_noise_sub_rms, &b_digi_pedestal_bare_noise_sub_rms);
    fChain->SetBranchAddress("digi_time_at_max_noise_sub", &digi_time_at_max_noise_sub, &b_digi_time_at_max_noise_sub);
    fChain->SetBranchAddress("digi_time_at_max_bare_noise_sub", &digi_time_at_max_bare_noise_sub, &b_digi_time_at_max_bare_noise_sub);
    fChain->SetBranchAddress("digi_time_at_frac50_bare_noise_sub", &digi_time_at_frac50_bare_noise_sub, &b_digi_time_at_frac50_bare_noise_sub);

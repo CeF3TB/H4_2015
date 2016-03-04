@@ -25,5 +25,5 @@
   <tagFileName>waveComp</tagFileName>
   <fillWFtree>1</fillWFtree>
   <prescaleWFtree>1</prescaleWFtree>
-  <limitNEntries>25000</limitNEntries>
+  <limitNEntries>5000</limitNEntries>
 </general>

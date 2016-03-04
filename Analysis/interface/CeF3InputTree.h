@@ -37,6 +37,7 @@ class CeF3InputTree
    std::vector<float>   *digi_charge_integrated_bare_noise_sub_slow;
    std::vector<float>   *digi_pedestal;
    std::vector<float>   *digi_pedestal_rms;
+   std::vector<float>   *digi_pedestal_bare_noise_sub_rms;
    std::vector<float>   *digi_time_at_frac30;
    std::vector<float>   *digi_time_at_frac50_bare_noise_sub;
    std::vector<float>   *digi_time_at_1000_bare_noise_sub;
@@ -90,6 +91,7 @@ class CeF3InputTree
    TBranch        *b_digi_max_amplitude_bare_noise_sub;   //!
    TBranch        *b_digi_pedestal;   //!
    TBranch        *b_digi_pedestal_rms;   //!
+   TBranch        *b_digi_pedestal_bare_noise_sub_rms;   //!
    TBranch        *b_digi_time_at_frac30;   //!
    TBranch        *b_digi_time_at_frac50_bare_noise_sub;   //!
    TBranch        *b_digi_time_at_1000_bare_noise_sub;   //!
