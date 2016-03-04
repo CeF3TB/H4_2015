@@ -390,6 +390,8 @@ int main( int argc, char* argv[] ) {
      isOctober2015EarlySiPMRun=inputTree->runNumber>=4051 && inputTree->runNumber<=4055;
    }
 
+   TH1F* signalOverNoise=new TH1F("signalOverNoise","signalOverNoise",200,0,40);
+
    std::cout <<"nentries:"<<nentries << std::endl;
    std::cout<< "using waveform average shape from file "<<waveformFile->GetName()<<std::endl;
    //get reference waveform for fits
@@ -702,6 +704,9 @@ int main( int argc, char* argv[] ) {
       waveform.at(i)->clear();
     
     }
+
+    Waveform* waveform_ninoAnalog;
+    if(isOctober2015LateRun){waveform_ninoAnalog=new Waveform();waveform_ninoAnalog->clear();}
     
     float timeOfTheEvent=inputTree->digi_time_at_1000_bare_noise_sub->at(theConfiguration_.triggerChannel);//synchronizing time of events with time of trigger
     float shiftTime=0;
@@ -850,6 +855,8 @@ int main( int argc, char* argv[] ) {
 	Waveform::max_amplitude_informations wave_max = waveform.at(iChannel)->max_amplitude(sampleIntegral,900,5);
 	Waveform::baseline_informations wave_pedestal = waveform.at(iChannel)->baseline(5,34);
 
+	if(i==1 && !isOctober2015LateRun)	if(wave_max.max_amplitude>0 && wave_pedestal.rms>0)	signalOverNoise->Fill(wave_max.max_amplitude/wave_pedestal.rms);
+
 	//fit for NINO in october 2015 runs
 	if(isOctober2015LateRun && iChannel==1){
 	  std::pair<float,float> timeInfo = WaveformFit::GetTimeLE(waveform.at(iChannel),wave_pedestal,300,1,1,80,120,timeSampleUnit(inputTree->digi_frequency));//window without sync
@@ -861,6 +868,9 @@ int main( int argc, char* argv[] ) {
 	  else nino_triggered=0;
 
 	  nino_maxAmpl=inputTree->digi_max_amplitude_bare_noise_sub->at(6);//FIXME move to config!
+
+	  if(wave_max.max_amplitude>0 && inputTree->digi_pedestal_bare_noise_sub_rms->at(6)>0)	signalOverNoise->Fill(nino_maxAmpl/inputTree->digi_pedestal_bare_noise_sub_rms->at(6));//FIXME move to config!
+
 	  if(nino_LEtime>0){
 	    //	    std::cout<<(int)(timeInfo.first/timeSampleUnit(inputTree->digi_frequency))-5<<std::endl; 
 	    //	    nino_chInt=waveform.at(iChannel)->charge_integrated(80,120);
@@ -1059,6 +1069,9 @@ int main( int argc, char* argv[] ) {
        
      }
    }
+
+   signalOverNoise->Write();
+
 
    outTree->Write();
    outfile->Close();
